@@ -120,3 +120,14 @@ def test_vector_pdf_figure_rendered_when_journal_wants_tiff(tmp_path):
     assert (tmp_path / "pkg" / "figures" / "Fig1.tif").exists()
     assert any("600 dpi" in d for d in r["done"])
     assert any("vector PDF" in c for c in r["checks"])
+
+
+def test_rerun_on_manuscript_inside_package(tmp_path):
+    # second /check run on the copy that the first run put in the package folder
+    ms, lk = setup(tmp_path)
+    req = write_req(tmp_path, {"type": "max_chars", "target": "title", "value": 500})
+    check.run(ms, lk, req, tmp_path / "pkg")
+    inside = tmp_path / "pkg" / "m.docx"
+    r = check.run(inside, lk, req, tmp_path / "pkg")
+    assert r["verdict"] == "READY", r["blocking"]
+    assert inside.exists() and inside.stat().st_size > 0

@@ -37,6 +37,18 @@ REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 
 # ---------------------------------------------------------------- figures
+
+def _copy(src: Path, dst: Path) -> None:
+    """Copy a file, skipping it when source and destination are the same file (input already in the package)."""
+    src, dst = Path(src), Path(dst)
+    if dst.exists() and src.resolve() == dst.resolve():
+        return
+    if dst.is_dir():
+        dst = dst / src.name
+    if dst.exists() and src.resolve() == dst.resolve():
+        return
+    shutil.copy(src, dst)
+
 def extract_embedded_figures(docx: Path, dest: Path) -> list[Path]:
     """Copy images embedded in the manuscript out, in order of appearance (the .docx is not changed)."""
     from lxml import etree
@@ -88,7 +100,7 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
         except Exception as e:
             row["problems"].append(f"cannot open ({e})")
             rows.append(row)
-            shutil.copy(f, dest / f.name)
+            _copy(f, dest / f.name)
             continue
         out_name = f.name
         if rule:
@@ -149,14 +161,14 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
                     row["converted_to"] = out_name
                 else:
                     row["problems"].append(f"format {ext.upper()} not accepted ({', '.join(f.upper() for f in fmts)})")
-                    shutil.copy(f, dest / f.name)
+                    _copy(f, dest / f.name)
             else:
                 out_name = f"{stem}{f.suffix.lower()}"
-                shutil.copy(f, dest / out_name)
+                _copy(f, dest / out_name)
                 if out_name != f.name:
                     actions.append(f"{f.name} -> {out_name}: renamed to the journal's pattern")
         else:
-            shutil.copy(f, dest / f.name)
+            _copy(f, dest / f.name)
         rows.append(row)
     return rows, actions
 
@@ -171,7 +183,7 @@ def _vector_figure(f: Path, n, rule: dict | None, dest: Path, actions: list) -> 
            "mb": round(f.stat().st_size / 1e6, 2), "problems": []}
     fmts = [x.lower() for x in (rule or {}).get("formats", [])]
     if not rule or not fmts or ext in fmts:
-        shutil.copy(f, dest / f.name)
+        _copy(f, dest / f.name)
         return row
     if ext == "pdf" and shutil.which("pdftoppm") and {"tif", "tiff"} & set(fmts):
         stem = rule.get("name_pattern", "{stem}").format(n=n, stem=f.stem) if n else f.stem
@@ -183,7 +195,7 @@ def _vector_figure(f: Path, n, rule: dict | None, dest: Path, actions: list) -> 
             row.setdefault("notes", []).append("vector PDF was rendered as a 600 dpi image; check that text and lines look sharp")
             return row
     row["problems"].append(f"{ext.upper()} figures are not accepted ({', '.join(x.upper() for x in fmts)}); export it in an accepted format")
-    shutil.copy(f, dest / f.name)
+    _copy(f, dest / f.name)
     return row
 
 
@@ -390,7 +402,7 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         tmp.mkdir(parents=True, exist_ok=True)
         for n, f in enumerate(found, 1):
             dst = tmp / f"Figure_{n}{f.suffix.lower()}"
-            shutil.copy(f, dst)
+            _copy(f, dst)
             fig_files.append(dst)
         if found:
             done.append(f"Collected {len(found)} figure files referenced by \\includegraphics")
@@ -426,7 +438,7 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     if supp_files:
         (out / "supplementary").mkdir(exist_ok=True)
         for f in supp_files:
-            shutil.copy(f, out / "supplementary" / f.name)
+            _copy(f, out / "supplementary" / f.name)
     elif facts["supplementary_items"]:
         checks.append("Supplementary items are cited but no supplementary folder was given (--supp)")
 
@@ -439,9 +451,9 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
                     and not f.name.endswith(".lock.json"):
                 target = dst_dir / f.relative_to(src_dir)
                 target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy(f, target)
+                _copy(f, target)
     else:
-        shutil.copy(manuscript, out / manuscript.name)
+        _copy(manuscript, out / manuscript.name)
 
     verdict = "READY" if not blocking else "NOT READY"
     summary = [
