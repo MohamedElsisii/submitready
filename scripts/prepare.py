@@ -156,8 +156,8 @@ def analyze_tex(path: Path) -> dict:
     full = latex.read_project(path)
     pre, body = latex.split_document(full)
     title = latex.detex(latex.command_arg(pre, "title") or latex.command_arg(body, "title") or "")
-    ab = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", body, re.S)
-    abstract = latex.detex(ab.group(1)) if ab else ""
+    ab = latex.abstract_text(body)
+    abstract = latex.detex(ab) if ab else ""
     kw = latex.command_arg(body, "keywords") or latex.command_arg(pre, "keywords")
     if kw is None:
         m = re.search(r"\\begin\{keywords?\}(.*?)\\end\{keywords?\}", body, re.S) or \
@@ -169,6 +169,8 @@ def analyze_tex(path: Path) -> dict:
     floats = list(re.finditer(r"\\begin\{(figure|table)\*?\}(.*?)\\end\{\1\*?\}", body, re.S))
     nofloat = re.sub(r"\\begin\{(figure|table)\*?\}.*?\\end\{\1\*?\}", " ", body, flags=re.S)
     nofloat = re.sub(r"\\begin\{abstract\}.*?\\end\{abstract\}", " ", nofloat, flags=re.S)
+    if ab:
+        nofloat = nofloat.replace(ab, " ", 1)
     parts = re.split(r"(\\(?:section|chapter)\*?\s*(?:\[[^\]]*\])?\s*\{[^}]*\})", nofloat)
     current, started, ended = "front", False, False
     if ab:
@@ -206,8 +208,8 @@ def analyze_tex(path: Path) -> dict:
     supp = sorted({(m[0] or m[3] or "").title() + " S" + (m[1] or m[2]) for m in SUPP_RE.findall(text)})
     supp_style = Counter("S1 Table" if m[2] else "Table S1" for m in SUPP_RE.findall(text))
     allx = pre + body
-    line_numbers = bool(re.search(r"\\usepackage\s*(\[[^\]]*\])?\s*\{lineno\}", pre)) and \
-        bool(re.search(r"\\linenumbers\b|\\usepackage\s*\[[^\]]*running[^\]]*\]\s*\{lineno\}", allx))
+    has_lineno, lineno_opts = latex.has_package(pre, "lineno")
+    line_numbers = has_lineno and bool(re.search(r"\\linenumbers\b", allx) or re.search(r"running|pagewise", lineno_opts))
     spacing = 1.0
     if re.search(r"\\doublespacing\b", allx):
         spacing = 2.0
@@ -545,7 +547,9 @@ def format_tex(src: Path, req: dict, out: Path) -> list[str]:
         return ["No \\begin{document} found; nothing changed"]
     pre, rest = text[:m.start()], text[m.start():]
     if "line_numbers" in wanted and wanted["line_numbers"].get("value", True):
-        if not re.search(r"^[^%\n]*\\usepackage\s*(\[[^\]]*\])?\s*\{lineno\}", pre, re.M):
+        import latex
+
+        if not latex.has_package(latex.strip_comments(pre), "lineno")[0]:
             pre += "\\usepackage{lineno} % added by SubmitReady\n"
         if not re.search(r"^[^%\n]*\\linenumbers\b", rest, re.M):
             rest = rest.replace("\\begin{document}", "\\begin{document}\n\\linenumbers % added by SubmitReady", 1)
@@ -556,7 +560,9 @@ def format_tex(src: Path, req: dict, out: Path) -> list[str]:
         if cmd:
             rest = re.sub(r"\\(singlespacing|onehalfspacing|doublespacing)\b", "", rest)
             pre = re.sub(r"\\(singlespacing|onehalfspacing|doublespacing)\b", "", pre)
-            if not re.search(r"\\usepackage\s*(\[[^\]]*\])?\s*\{setspace\}", pre):
+            import latex
+
+            if not latex.has_package(latex.strip_comments(pre), "setspace")[0]:
                 pre += "\\usepackage{setspace} % added by SubmitReady\n"
             pre += cmd + " % added by SubmitReady\n"
             done.append(f"Set line spacing to {v}")

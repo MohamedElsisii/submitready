@@ -42,7 +42,7 @@ from lxml import etree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 M = "http://schemas.openxmlformats.org/officeDocument/2006/math"
@@ -386,6 +386,10 @@ def verify(lock_path: Path, docx: Path) -> dict:
     cite_changes = sum(1 for a, b in zip(old_cites, new_cites) if a != b)
 
     unchanged_sentences = sum(old[i]["sentences"] for i in matched_old)
+    version_note = ""
+    if lock.get("version") != VERSION:
+        version_note = (f"This lock was made with SubmitReady lock {lock.get('version')}, and this is {VERSION}. "
+                        "If results look odd, create the lock again from the ORIGINAL manuscript.")
     status = 0
     if added:
         status = 1
@@ -407,6 +411,7 @@ def verify(lock_path: Path, docx: Path) -> dict:
         "citations_locked": len(old_cites),
         "citations_found": len(new_cites),
         "citation_markers_changed": cite_changes,
+        "version_note": version_note,
         "status": status,
     }
 
@@ -438,6 +443,10 @@ def report_markdown(r: dict) -> str:
         "",
         f"**{verdict}**",
         "",
+    ]
+    if r.get("version_note"):
+        lines += [f"Note: {r['version_note']}", ""]
+    lines += [
         f"- Sentences unchanged: **{r['sentences_unchanged']:,} of {r['sentences_locked']:,}**",
         f"- Paragraphs unchanged: {r['paragraphs_unchanged']:,} of {r['paragraphs_locked']:,}",
         f"- Paragraphs moved (text identical): {r['moved_paragraphs']}",

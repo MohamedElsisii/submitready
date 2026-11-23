@@ -101,3 +101,22 @@ def test_missing_supplementary_file_blocks(tmp_path):
     r = check.run(ms2, lk, req, tmp_path / "pkg", supp=supp)
     assert any("Table S2" in b and "no supplementary file" in b for b in r["blocking"])
     assert (tmp_path / "pkg" / "supplementary" / "Table S1.csv").exists()
+
+
+def test_vector_pdf_figure_rendered_when_journal_wants_tiff(tmp_path):
+    import shutil as sh
+
+    import pytest
+
+    if not sh.which("pdftoppm"):
+        pytest.skip("pdftoppm not installed")
+    ms, lk = setup(tmp_path)
+    figs = tmp_path / "figs"
+    figs.mkdir()
+    Image.new("RGB", (600, 400), (10, 120, 200)).save(figs / "Figure_1.pdf", "PDF", resolution=300)
+    req = write_req(tmp_path, {"id": "figure-files", "type": "figure_files", "formats": ["tif", "tiff"],
+                               "name_pattern": "Fig{n}"})
+    r = check.run(ms, lk, req, tmp_path / "pkg", figures=figs)
+    assert (tmp_path / "pkg" / "figures" / "Fig1.tif").exists()
+    assert any("600 dpi" in d for d in r["done"])
+    assert any("vector PDF" in c for c in r["checks"])

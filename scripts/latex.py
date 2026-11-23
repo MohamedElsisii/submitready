@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-CITE_RE = re.compile(r"\\(?:[a-zA-Z]*cite[a-zA-Z]*|footcite|textcite|parencite|autocite)\*?"
+CITE_RE = re.compile(r"\\(?!bstctlcite)(?:[a-zA-Z]*cite[a-zA-Z]*|footcite|textcite|parencite|autocite)\*?"
                      r"(?:\s*\[[^\]]*\]){0,2}\s*\{([^}]*)\}")
 SECTION_CMD = re.compile(r"\\(part|chapter|section|subsection|subsubsection|paragraph|subparagraph)\*?\s*(?:\[[^\]]*\])?\s*\{")
 LAYOUT_CMDS = [
@@ -27,7 +27,7 @@ LAYOUT_CMDS = [
     r"tiny|scriptsize|footnotesize|small|normalsize|large|Large|LARGE|huge|Huge|linenumbers|nolinenumbers|"
     r"doublespacing|singlespacing|onehalfspacing|maketitle|FloatBarrier|par|hline|toprule|midrule|bottomrule|"
     r"centerline|protect)(?![a-zA-Z])", r"\\cline\s*\{[^}]*\}", r"\\cmidrule(?:\([^)]*\))?\s*\{[^}]*\}",
-    r"\\setstretch\s*\{[^}]*\}", r"\\linespread\s*\{[^}]*\}", r"\\thispagestyle\s*\{[^}]*\}",
+    r"\\setstretch\s*\{[^}]*\}", r"\\bstctlcite\s*\{[^}]*\}", r"\\linespread\s*\{[^}]*\}", r"\\thispagestyle\s*\{[^}]*\}",
     r"\\pagestyle\s*\{[^}]*\}", r"\\addcontentsline\s*\{[^}]*\}\s*\{[^}]*\}\s*\{[^}]*\}",
 ]
 WRAPPERS = ["textbf", "textit", "emph", "textrm", "textsf", "texttt", "textsl", "textsc", "underline", "textup",
@@ -210,6 +210,24 @@ def cited_keys(tex: Path) -> list[str]:
     return keys
 
 
+def has_package(preamble: str, name: str) -> tuple[bool, str]:
+    """True if \\usepackage loads `name` (also inside lists like {graphicx,cite}); returns its options."""
+    for m in re.finditer(r"\\usepackage\s*(?:\[([^\]]*)\])?\s*\{([^}]*)\}", preamble):
+        if name in [p.strip() for p in m.group(2).split(",")]:
+            return True, m.group(1) or ""
+    return False, ""
+
+
+def abstract_text(body: str) -> str | None:
+    """The abstract: an abstract environment, or a (sub)section titled Abstract."""
+    m = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", body, re.S)
+    if m:
+        return m.group(1)
+    m = re.search(r"\\(?:sub)*section\*?\s*\{\s*Abstract\s*\}(.*?)(?=\\(?:sub)*section\*?\s*\{|\\input|\\noindent\\textbf\{Key|\\textbf\{Key|Keywords?\s*:|\Z)",
+                  body, re.S | re.I)
+    return m.group(1) if m else None
+
+
 def citation_style(tex: Path) -> str:
     pre, body = split_document(read_project(tex))
     allx = pre + body
@@ -220,16 +238,16 @@ def citation_style(tex: Path) -> str:
             return "author-date"
         if re.search(r"style\s*=\s*(numeric|ieee|nature|vancouver|science)", opts):
             return "numeric, square brackets"
-    nat = re.search(r"\\usepackage\s*(\[([^\]]*)\])?\s*\{natbib\}", allx)
+    has_nat, opts = has_package(pre, "natbib")
     bst = re.search(r"\\bibliographystyle\s*\{([^}]*)\}", allx)
     style = bst.group(1) if bst else ""
-    if nat:
-        opts = nat.group(2) or ""
+    if has_nat:
         if "numbers" in opts:
             return "numeric, parentheses" if "round" in opts else "numeric, square brackets"
         return "author-date"
-    if re.search(r"^(plain|unsrt|abbrv|ieeetr|alpha|vancouver|elsarticle-num|naturemag|acm)$", style):
+    if re.search(r"^(plain|unsrt|abbrv|ieeetr|ieeetran|alpha|vancouver|elsarticle-num|naturemag|acm\w*|nature|science|"
+                 r"plos\w*|bmc\w*|unsrtnat|splncs\w*|spbasic|sn-\w*num\w*)$", style, re.I):
         return "numeric, square brackets"
-    if re.search(r"(apa|harv|chicago|authordate|agu)", style):
+    if re.search(r"(apa|harv|chicago|authordate|agu)", style, re.I):
         return "author-date"
     return "unknown"

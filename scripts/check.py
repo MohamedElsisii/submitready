@@ -75,6 +75,9 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
     for f in sorted(files, key=lambda p: (_fig_number(p) or 999, p.name)):
         n = _fig_number(f)
         row = {"file": f.name, "number": n, "problems": []}
+        if f.suffix.lower() in (".pdf", ".eps", ".svg"):
+            rows.append(_vector_figure(f, n, rule, dest, actions))
+            continue
         try:
             im = Image.open(f)
             w, h = im.size
@@ -158,6 +161,32 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
     return rows, actions
 
 
+def _vector_figure(f: Path, n, rule: dict | None, dest: Path, actions: list) -> dict:
+    """PDF/EPS/SVG figures have no pixel size. Accept if the journal takes the format; otherwise
+    offer a 600 dpi raster copy (needs pdftoppm), clearly marked for the author to check."""
+    import subprocess
+
+    ext = f.suffix.lower().lstrip(".")
+    row = {"file": f.name, "number": n, "format": ext.upper() + " (vector)", "mode": "", "px": "", "dpi": "",
+           "mb": round(f.stat().st_size / 1e6, 2), "problems": []}
+    fmts = [x.lower() for x in (rule or {}).get("formats", [])]
+    if not rule or not fmts or ext in fmts:
+        shutil.copy(f, dest / f.name)
+        return row
+    if ext == "pdf" and shutil.which("pdftoppm") and {"tif", "tiff"} & set(fmts):
+        stem = rule.get("name_pattern", "{stem}").format(n=n, stem=f.stem) if n else f.stem
+        out = dest / stem
+        r = subprocess.run(["pdftoppm", "-r", "600", "-singlefile", "-tiff", "-tiffcompression", "lzw", str(f), str(out)],
+                           capture_output=True)
+        if r.returncode == 0 and (dest / f"{stem}.tif").exists():
+            actions.append(f"{f.name} -> {stem}.tif: vector PDF rendered as a 600 dpi LZW TIFF")
+            row.setdefault("notes", []).append("vector PDF was rendered as a 600 dpi image; check that text and lines look sharp")
+            return row
+    row["problems"].append(f"{ext.upper()} figures are not accepted ({', '.join(x.upper() for x in fmts)}); export it in an accepted format")
+    shutil.copy(f, dest / f.name)
+    return row
+
+
 # ---------------------------------------------------------------- cross-references
 def _supp_labels_in_files(files: list[Path]) -> dict[str, str]:
     """Map 'Table S4' style labels to the file that holds them (by name, or inside .docx files)."""
@@ -183,7 +212,42 @@ def _label(m) -> str:
     return f"{kind} S{m.group(2) or m.group(3)}"
 
 
+def tex_crossrefs(tex: Path) -> list[dict]:
+    """LaTeX: every figure/table label is \\ref'd, and first references follow the float order."""
+    import latex
+
+    _, body = latex.split_document(latex.read_project(tex))
+    issues = []
+    for env, kind in (("figure", "Figure"), ("table", "Table")):
+        labels = []
+        for f in re.finditer(rf"\\begin\{{{env}\*?\}}(.*?)\\end\{{{env}\*?\}}", body, re.S):
+            m = re.search(r"\\label\s*\{([^}]*)\}", f.group(1))
+            if "\\caption" in f.group(1):
+                labels.append(m.group(1) if m else None)
+        first = {}
+        for m in re.finditer(r"\\(?:ref|autoref|cref|Cref|eqref)\s*\{([^}]*)\}", body):
+            for lab in m.group(1).split(","):
+                first.setdefault(lab.strip(), m.start())
+        for n, lab in enumerate(labels, 1):
+            if lab is None:
+                issues.append({"severity": "CHECK", "item": f"{kind} {n}", "problem": "has no \\label, so it cannot be referenced"})
+            elif lab not in first:
+                issues.append({"severity": "FIX", "item": f"{kind} {n} ({lab})", "problem": "is never referenced in the text"})
+        order = [first[l] for l in labels if l in first]
+        if order != sorted(order):
+            issues.append({"severity": "FIX", "item": kind, "problem": "first referenced out of numerical order"})
+    return issues
+
+
 def crossrefs(facts: dict, docx: Path, supp_files: list[Path] | None) -> list[dict]:
+    if docx.suffix.lower() == ".tex":
+        issues = tex_crossrefs(docx)
+        supp_mentioned = {_norm_supp(s) for s in facts["supplementary_items"]}
+        if supp_files is not None:
+            have = {_norm_supp(k): v for k, v in _supp_labels_in_files(supp_files).items()}
+            for s_ in sorted(supp_mentioned - set(have)):
+                issues.append({"severity": "FIX", "item": s_, "problem": "cited in the manuscript but no supplementary file contains it"})
+        return issues
     issues = []
     for kind, nums in (("Figure", facts["figures"]), ("Table", facts["tables"])):
         if nums and nums != list(range(1, max(nums) + 1)):
@@ -285,8 +349,12 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
             if r["id"] != "figure-files":
                 blocking.append(f"{r['rule']} (found: {r['found']})")
         elif r["status"] == "STYLE":
-            blocking.append(f"Reference style: {r['rule']}. Pick '{req.get('csl_style', {}).get('title', 'the journal style')}' "
-                            "in your reference manager, then rerun /lock")
+            if is_tex:
+                blocking.append(f"Reference style: {r['rule']}. Change \\bibliographystyle (or the natbib/biblatex options) "
+                                "to the journal's style, ideally from its LaTeX template, then rerun /lock")
+            else:
+                blocking.append(f"Reference style: {r['rule']}. Pick '{req.get('csl_style', {}).get('title', 'the journal style')}' "
+                                "in your reference manager, then rerun /lock")
         elif r["status"] == "CHECK" and r["id"] != "figure-files":
             checks.append(r["rule"])
 
