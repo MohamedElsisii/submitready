@@ -211,7 +211,8 @@ def analyze_tex(path: Path) -> dict:
     leg = re.search(r"\\section\*?\s*\{\s*(figure|table)s?\s*(and tables?\s*)?(legends|captions)?", body, re.I)
     placement = Counter()
     for f in figs + tabs:
-        placement["end" if f.start() > end_marker or (leg and f.start() > leg.start()) else "in_text"] += 1
+        where = "end" if f.start() > end_marker or (leg and f.start() > leg.start()) else "in_text"
+        placement[f"{f.group(1)}_{where}"] += 1
     text = latex.detex(body)
     supp = sorted({(m[0] or m[3] or "").title() + " S" + (m[1] or m[2]) for m in SUPP_RE.findall(text)})
     supp_style = Counter("S1 Table" if m[2] else "Table S1" for m in SUPP_RE.findall(text))
@@ -344,13 +345,16 @@ def analyze(path: Path) -> dict:
             key = ("table" if kind.lower().startswith("t") else "figure", int(n))
             first_mention.setdefault(key, p["i"])
     placement = Counter()
+    seen_caps = Counter()
     for c in captions:
         if c["supp"]:
             continue
+        seen_caps[(c["kind"], c["n"])] += 1
         if c["section"] in ("figure_legends", "references", "supplementary") or c["i"] > len(paras) * 0.85:
-            placement["end"] += 1
+            placement[f"{c['kind']}_end"] += 1
         else:
-            placement["in_text"] += 1
+            placement[f"{c['kind']}_in_text"] += 1
+    caption_duplicates = [f"{k.title()} {n}" for (k, n), v in sorted(seen_caps.items()) if v > 1]
     supp = sorted({(m[0] or m[3] or "").title() + " S" + (m[1] or m[2]) for m in SUPP_RE.findall(" ".join(p["text"] for p in paras))})
     supp_style = Counter("S1 Table" if m[2] else "Table S1" for m in SUPP_RE.findall(" ".join(p["text"] for p in paras)))
 
@@ -398,6 +402,7 @@ def analyze(path: Path) -> dict:
         "figures": figs,
         "tables": tabs,
         "captions_placement": dict(placement),
+        "caption_duplicates": caption_duplicates,
         "figures_embedded": images,
         "supplementary_items": supp,
         "supplementary_label_style": supp_style.most_common(1)[0][0] if supp_style else None,
@@ -429,6 +434,10 @@ def _default_line_spacing(z) -> float | None:
 
 # ---------------------------------------------------------------- checking
 def check(facts: dict, req: dict) -> list[dict]:
+    """Check types: max_chars, max_words, keywords, section_present, section_absent, sections_order,
+    line_numbers, page_numbers, line_spacing, footnotes, figures_embedded,
+    captions_placement (value "in_text" or "end"; optional kind "figure" or "table", default both),
+    citation_format, supp_label_style, max_count, figure_files, manual."""
     out = []
     for r in req["requirements"]:
         c = r.get("check", {"type": "manual"})
@@ -477,10 +486,17 @@ def check(facts: dict, req: dict) -> list[dict]:
                 ok = (facts["figures_embedded"] > 0) == c.get("allowed", False) or facts["figures_embedded"] == 0
                 status, found = ("PASS" if ok else "FIX"), f"{facts['figures_embedded']} images inside the file"
             elif t == "captions_placement":
-                pl = facts["captions_placement"]
+                kind = c.get("kind")  # "figure", "table", or None for both
+                pl = {k: v for k, v in facts["captions_placement"].items() if not kind or k.startswith(kind + "_")}
                 want = c["value"]
-                ok = pl.get(want, 0) > 0 and sum(v for k, v in pl.items() if k != want) == 0
-                status, found = ("PASS" if ok else "FIX"), ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in pl.items()) or "no captions found"
+                good = sum(v for k, v in pl.items() if k.endswith("_" + want))
+                ok = good > 0 and sum(pl.values()) == good
+                found = ", ".join(f"{v} {k.split('_', 1)[0]} caption{'s' if v > 1 else ''} { {'end': 'at the end', 'in_text': 'in the text'}[k.split('_', 1)[1]] }"
+                                  for k, v in sorted(pl.items())) or "no captions found"
+                dups = [d for d in facts.get("caption_duplicates", []) if not kind or d.lower().startswith(kind)]
+                if dups:
+                    found += f"; caption appears twice: {', '.join(dups)}"
+                status = "PASS" if ok else "FIX"
             elif t == "citation_format":
                 ok = facts["citation_format"].startswith(c["value"])
                 status = "PASS" if ok else "STYLE"

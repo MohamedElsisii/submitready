@@ -64,3 +64,20 @@ def test_requirement_snapshots_have_sources():
             assert s["url"].startswith("https://") and s["checked"], p.name
         for r in data["requirements"]:
             assert 0 <= r.get("source", 0) < len(data["sources"]), (p.name, r["id"])
+
+
+def test_caption_placement_by_kind():
+    # ML-like layout: table captions in the text, figure captions at the end, table captions repeated at the end
+    facts = {"captions_placement": {"table_in_text": 2, "figure_end": 3, "table_end": 2},
+             "caption_duplicates": ["Table 1", "Table 2"]}
+    res = prepare.check(facts, req(
+        {"type": "captions_placement", "value": "in_text", "kind": "figure"},
+        {"type": "captions_placement", "value": "in_text", "kind": "table"},
+        {"type": "captions_placement", "value": "end"},
+    ))
+    fig, tab, both = res
+    assert fig["status"] == "FIX" and fig["found"] == "3 figure captions at the end"
+    assert tab["status"] == "FIX" and "appears twice: Table 1, Table 2" in tab["found"]
+    assert both["status"] == "FIX"
+    facts = {"captions_placement": {"figure_in_text": 3, "table_end": 1}, "caption_duplicates": []}
+    assert prepare.check(facts, req({"type": "captions_placement", "value": "in_text", "kind": "figure"}))[0]["status"] == "PASS"

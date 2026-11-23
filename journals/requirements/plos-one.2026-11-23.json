@@ -187,11 +187,23 @@
   {
    "id": "figure-captions",
    "rule": "Figure captions go right after the paragraph where the figure is first cited",
-   "quote": "",
+   "quote": "Figure captions must be inserted in the text of the manuscript",
    "source": 0,
    "check": {
     "type": "captions_placement",
-    "value": "in_text"
+    "value": "in_text",
+    "kind": "figure"
+   }
+  },
+  {
+   "id": "table-placement",
+   "rule": "Each table goes right after the paragraph where it is first cited",
+   "quote": "Place each table in your manuscript file directly after the paragraph in which it is first cited (read order).",
+   "source": 0,
+   "check": {
+    "type": "captions_placement",
+    "value": "in_text",
+    "kind": "table"
    }
   },
   {
