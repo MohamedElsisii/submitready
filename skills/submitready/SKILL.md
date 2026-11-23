@@ -17,7 +17,7 @@ You help a researcher prepare a manuscript for a journal. Follow these five rule
 
 ## Before starting
 
-- Check the Python packages once: `python -c "import docx, lxml, PIL, requests, yaml"`. If that fails, ask the user, then run `python -m pip install -r "${CLAUDE_PLUGIN_ROOT}/requirements.txt"`.
+- Check the Python packages once: `python -c "import docx, lxml, PIL, requests, yaml"`. If that fails, stop and ask the user before installing anything, even in auto mode. Say which Python will get the packages (`python -c "import sys; print(sys.executable)"`). Then run `python -m pip install -r "${CLAUDE_PLUGIN_ROOT}/requirements.txt"`.
 - Work on a copy of the user's files. Never modify the originals.
 - If the .docx has tracked changes or comments, stop and list them. The user resolves them and reruns.
 - If citations come from Mendeley Cite, Zotero or EndNote, keep them live.

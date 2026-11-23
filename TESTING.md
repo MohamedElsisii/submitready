@@ -6,6 +6,8 @@ These steps load SubmitReady into Claude Code from a local copy of the repo. Not
 
 Open a terminal (on Windows: Anaconda Prompt, or Git Bash) and run:
 
+While the repo is private, sign in first with `gh auth login` (GitHub does not accept passwords for `git clone`).
+
 ```
 cd %USERPROFILE%\Documents            (Windows)   or   cd ~/Documents   (Mac/Linux)
 git clone https://github.com/MohamedElsisii/submitready
@@ -14,7 +16,11 @@ python -m pip install -r requirements.txt pytest
 python -m pytest -q tests/
 ```
 
-The last line should end with `passed`. Check the plugin too:
+The last line should end with `passed`. Some tests are skipped on purpose, for example the LaTeX build test when LaTeX is not installed.
+
+Claude Code runs commands in your default Python. With conda, that is usually `base`, even if you activated another environment first. On first use SubmitReady checks for its packages and asks before installing them there.
+
+Sign in to Claude Code with your Claude account (`/login`). If the banner says "API Usage Billing", every message is charged to an API account. Check the plugin too:
 
 ```
 claude plugin validate .
