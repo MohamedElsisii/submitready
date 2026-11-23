@@ -23,4 +23,4 @@ You help a researcher prepare a manuscript for a journal. Follow these five rule
 
 ## Status
 
-Version 0.1 (scaffold). Commands are being built in this order: `/lock`, `/refs`, `/prepare`, `/check`.
+Version 0.1. Working: `/lock` (scripts/lock.py) and `/refs` (scripts/refs.py). Next: `/prepare`, `/check`.

@@ -1,0 +1,155 @@
+"""Tests for scripts/refs.py using made-up references and simulated Crossref answers."""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "tests"))
+
+import refs  # noqa: E402
+from docx_tools import make_sample  # noqa: E402
+
+RIS = """TY  - JOUR
+AU  - Doe, Jane
+AU  - Roe, Richard
+TI  - A study of things*
+T2  - Journal of Things
+PY  - 2021
+VL  - Volume 12 - 2021
+IS  - 3
+SP  - e100
+EP  - e100
+DO  - https://doi.org/10.1234/ABC.5678
+ER  -
+TY  - GEN
+AU  - W, Roberts Andrew
+AU  - S, Davids Matthew
+TI  - Targeting things with drugs
+T2  - New Journal
+PY  - 2016
+VL  - 374
+IS  - 4
+SP  - 311
+EP  - 322
+DO  - 10.1056/NEJMoa0000001
+ER  -
+TY  - JOUR
+AU  - Doe, Jane
+TI  - A Study of Things
+T2  - Journal of Things
+PY  - 2021
+VL  - 12
+DO  - 10.1234/abc.5678
+ER  -
+TY  - JOUR
+AU  - Smith, Ann
+TI  - Uncited but present
+T2  - Other Journal
+PY  - 2020
+VL  - 1
+ER  -
+"""
+
+
+def ris(tmp_path, text=RIS):
+    p = tmp_path / "lib.ris"
+    p.write_text(text, encoding="utf-8")
+    return p
+
+
+def codes(findings):
+    return {f.code for f in findings}
+
+
+def test_read_ris(tmp_path):
+    r = refs.read_ris(ris(tmp_path))
+    assert len(r) == 4
+    assert r[0].data["page"] == "e100"
+    assert r[1].data["type"] == "generic"
+
+
+def test_audit_catches_common_problems(tmp_path):
+    ms = refs.load(ris(tmp_path))
+    f = refs.audit(ms)
+    c = codes(f)
+    assert {"doi-as-url", "odd-volume", "title-trailing-mark", "type-generic", "author-swapped", "duplicate"} <= c
+    swapped = next(x for x in f if x.code == "author-swapped")
+    assert swapped.suggested.startswith("Roberts, Andrew W")
+    url = next(x for x in f if x.code == "doi-as-url")
+    assert url.suggested == "10.1234/ABC.5678"  # letter case kept
+
+
+def test_docx_citations_are_read(tmp_path):
+    ms = refs.read_docx(make_sample(tmp_path / "s.docx"))
+    assert ms.citations == 1 and len(ms.refs) == 1
+    assert ms.refs[0].data["author"][0]["family"] == "Obeagu"
+
+
+def test_uncited_library_entries(tmp_path):
+    ms = refs.ManuscriptRefs(refs=refs.read_ris(ris(tmp_path))[:1])
+    lib = refs.read_ris(ris(tmp_path))
+    f = refs.audit(ms, lib)
+    uncited = [x for x in f if x.code == "uncited"]
+    assert any("Uncited but present" in x.ref for x in uncited)
+
+
+def fake_crossref(records):
+    def fetch(url):
+        for key, value in records.items():
+            if key in url:
+                return value
+        return None
+    return fetch
+
+
+def test_verify_flags_mismatch_retraction_and_preprint(tmp_path):
+    ms = refs.ManuscriptRefs(refs=[
+        refs.Ref("a", {"type": "article-journal", "title": "A study of things", "DOI": "10.1234/abc.5678",
+                       "issued": {"date-parts": [[2021]]}, "volume": "12", "page": "e100",
+                       "author": [{"family": "Doe", "given": "Jane"}]}, "x"),
+        refs.Ref("b", {"type": "article-journal", "title": "Retracted work", "DOI": "10.9999/ret",
+                       "issued": {"date-parts": [[2019]]}, "author": [{"family": "Bad"}]}, "x"),
+        refs.Ref("c", {"type": "article-journal", "title": "A preprint", "DOI": "10.1101/2020.01.01.1",
+                       "issued": {"date-parts": [[2020]]}, "author": [{"family": "Pre"}]}, "x"),
+        refs.Ref("d", {"type": "article-journal", "title": "Ghost paper", "DOI": "10.5555/none",
+                       "author": [{"family": "Nobody"}]}, "x"),
+    ])
+    fetch = fake_crossref({
+        "10.1234/abc.5678": {"message": {"title": ["A study of things"], "issued": {"date-parts": [[2022]]},
+                                         "volume": "12", "page": "e100", "author": [{"family": "Doe"}],
+                                         "container-title": ["Journal of Things"]}},
+        "10.9999/ret": {"message": {"title": ["Retracted work"], "issued": {"date-parts": [[2019]]},
+                                 "author": [{"family": "Bad"}],
+                                 "updated-by": [{"type": "retraction", "DOI": "10.9999/notice"}]}},
+        "10.1101/2020.01.01.1": {"message": {"title": ["A preprint"], "issued": {"date-parts": [[2020]]},
+                                             "author": [{"family": "Pre"}], "type": "posted-content",
+                                             "relation": {"is-preprint-of": [{"id": "10.1/published"}]}}},
+    })
+    f, stats = refs.verify(ms, fetch, pause=0)
+    c = codes(f)
+    assert "mismatch-year" in c
+    assert "retracted" in c
+    assert "preprint-published" in c
+    assert "doi-not-found" in c
+    assert stats["matched"] == 3
+
+
+def test_verify_finds_missing_doi_by_title():
+    ms = refs.ManuscriptRefs(refs=[refs.Ref("q", {"type": "article-journal",
+                                                  "title": "The role of BCL-2 family proteins in regulating apoptosis",
+                                                  "issued": {"date-parts": [[2022]]},
+                                                  "author": [{"family": "Qian"}]}, "x")])
+    fetch = fake_crossref({"query.bibliographic": {"message": {"items": [
+        {"title": ["The role of BCL-2 family proteins in regulating apoptosis"], "DOI": "10.3389/fonc.2022.985363",
+         "issued": {"date-parts": [[2022]]}, "author": [{"family": "Qian"}]}]}}})
+    f, _ = refs.verify(ms, fetch, pause=0)
+    found = next(x for x in f if x.code == "doi-found")
+    assert found.suggested == "10.3389/fonc.2022.985363"
+
+
+def test_report_says_nothing_was_changed(tmp_path):
+    ms = refs.load(ris(tmp_path))
+    md = refs.report_markdown("lib.ris", ms, refs.audit(ms))
+    assert "Nothing was changed" in md and "| Reference |" in md
