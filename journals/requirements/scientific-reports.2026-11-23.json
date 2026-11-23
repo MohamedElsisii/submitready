@@ -1,0 +1,225 @@
+{
+ "journal": "Scientific Reports",
+ "article_type": "Article",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "Scientific Reports submission guidelines",
+   "url": "https://www.nature.com/srep/author-instructions/submission-guidelines",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: Scientific Reports",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/scientific-reports.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "scientific-reports",
+  "title": "Scientific Reports",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/scientific-reports.csl"
+ },
+ "requirements": [
+  {
+   "id": "title-words",
+   "rule": "Title at most 20 words",
+   "quote": "The title should be no more than 20 words",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "title",
+    "value": 20
+   }
+  },
+  {
+   "id": "abstract-words",
+   "rule": "Abstract at most 200 words",
+   "quote": "The abstract should be no more than 200 words",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 200
+   }
+  },
+  {
+   "id": "abstract-content",
+   "rule": "Abstract is unstructured, with no references or figures",
+   "quote": "Please do not include any references or figures in your Abstract.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "main-words",
+   "rule": "Main text at most 4,500 words, not counting Abstract, Methods, References and figure legends",
+   "quote": "The main text should be no more than 4,500 words",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "Up to 6 keywords",
+   "quote": "We allow the use of up to 6 keywords/key phrases",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 0,
+    "max": 6
+   }
+  },
+  {
+   "id": "structure",
+   "rule": "Suggested structure: Introduction, Results (with subheadings), Discussion (without subheadings), Methods",
+   "quote": "The following structure will be suitable in many cases:",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "display-items",
+   "rule": "At most 8 display items (figures and tables together)",
+   "quote": "Display items are limited to 8",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-legends",
+   "rule": "Figure legends at most 350 words each, starting with a brief title sentence",
+   "quote": "Please begin your figure legends with a brief title sentence for the whole figure",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references-count",
+   "rule": "About 60 references at most (not strictly enforced)",
+   "quote": "limited to 60 references, though not strictly enforced",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "footnotes",
+   "rule": "No footnotes",
+   "quote": "Please note, footnotes should not be used.",
+   "source": 0,
+   "check": {
+    "type": "footnotes"
+   }
+  },
+  {
+   "id": "line-numbers",
+   "rule": "Line and page numbers are encouraged",
+   "quote": "Please consider including those in your manuscript",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-first-submission",
+   "rule": "At first submission, figures may be in the manuscript file (up to 3 MB) or grouped at the end",
+   "quote": "you may incorporate the manuscript text and figures into a single file up to 3 MB in size",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author Contribution Statement is included",
+   "quote": "You must supply an Author Contribution Statement",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "contributions"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data Availability Statement is included",
+   "quote": "You must include a Data Availability Statement in all submitted manuscripts",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interests statement is included, under Additional Information",
+   "quote": "Additional Information (including a Competing Interests Statement)",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "supp-labels",
+   "rule": "Supplementary items are numbered like \"Supplementary Table S1\"",
+   "quote": "Number Supplementary Tables and Figures as, for example, \"Supplementary Table S1\"",
+   "source": 0,
+   "check": {
+    "type": "supp_label_style",
+    "value": "Table S1"
+   }
+  },
+  {
+   "id": "supp-file",
+   "rule": "Supplementary information is one separate file, preferably PDF, at most 50 MB",
+   "quote": "Supplementary information should be combined and supplied as a single separate file, preferably in PDF format.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Numbered citations in square brackets, per the journal's CSL style",
+   "quote": "",
+   "source": 1,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric, square brackets"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Final figures: line art in vector format (EPS or AI), images at 300 dpi if possible, each complete figure as one file",
+   "quote": "All digitized images submitted with the final revision of the manuscript should be 300 DPI if possible",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "affiliations",
+   "rule": "Affiliations in numerical order, each with city and country",
+   "quote": "Affiliations must be listed in numerical order (1,2,7, not 7,2,1).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cover-letter",
+   "rule": "Cover letter states any prior discussions with a Scientific Reports Editor",
+   "quote": "whether you have had any prior discussions with a Scientific Reports Editor",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

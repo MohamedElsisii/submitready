@@ -1,5 +1,7 @@
 <img src="assets/icon.png" width="96" alt="SubmitReady icon">
 
+[![tests](https://github.com/MohamedElsisii/submitready/actions/workflows/tests.yml/badge.svg)](https://github.com/MohamedElsisii/submitready/actions/workflows/tests.yml)
+
 # SubmitReady
 
 **Your manuscript, ready to submit. Not a single word of your science changed.**
@@ -62,6 +64,14 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 | `/match` | Cross-publisher journal shortlist with real review times | v2 |
 | `/respond` | Organizes reviewer comments and drafts replies for your approval | v3 |
 | `/resubmit <journal>` | After a rejection, prepares everything for the next journal | v3 |
+
+## Journals
+
+`/prepare` works with any journal: it reads the live author guidelines each time. These journals also have a checked starting profile, with a source link and date for every rule:
+
+PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon.
+
+Adding a journal is a good first contribution. Copy `journals/_TEMPLATE.yaml` and quote the guidelines page for each rule.
 
 ## Supported inputs (v1)
 

@@ -1,0 +1,128 @@
+{
+ "journal": "Heliyon",
+ "article_type": "Research article",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "Heliyon guide for authors",
+   "url": "https://www.cell.com/heliyon/guide-for-authors",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: Heliyon",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/heliyon.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "heliyon",
+  "title": "Heliyon",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/heliyon.csl"
+ },
+ "requirements": [
+  {
+   "id": "abstract-words",
+   "rule": "Abstract at most 300 words, stand-alone, without references",
+   "quote": "does not exceed 300 words",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 300
+   }
+  },
+  {
+   "id": "sections",
+   "rule": "Title, Abstract, Introduction, Materials and Methods, Results, Discussion and/or Conclusions; the order may vary",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "highlights",
+   "rule": "Highlights are optional: at most 5 bullets of 85 characters, between the title and the abstract",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-captions",
+   "rule": "Figure captions at the end of the manuscript, not inside the figures",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "captions_placement",
+    "value": "end",
+    "kind": "figure"
+   }
+  },
+  {
+   "id": "figure-size",
+   "rule": "Figures at most 20 cm wide (2400 px at 300 dpi)",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Tables in the manuscript file as editable text, notes below the table",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Numbered citations in square brackets, per the journal's CSL style",
+   "quote": "",
+   "source": 1,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric, square brackets"
+   }
+  },
+  {
+   "id": "refs-cited",
+   "rule": "Every reference is cited in the text and every citation is in the list; preprints marked [preprint], datasets marked [dataset]",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "acknowledgements",
+   "rule": "Acknowledgements in a separate section before the references",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "declarations",
+   "rule": "All necessary declarations are made",
+   "quote": "all necessary declarations have been made",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "single-column",
+   "rule": "Single-column layout, as simple as possible",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+name: "Heliyon"
+slug: heliyon
+publisher: "Cell Press"
+
+guidelines:
+  url: "https://www.cell.com/heliyon/guide-for-authors"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "heliyon"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/heliyon.csl"
+  checked: "2026-11-23"
+
+requirements_snapshot: "journals/requirements/heliyon.2026-11-23.json"
+
+known_quirks:
+  - text: "Figure captions go at the end of the manuscript"
+    source: "https://www.cell.com/heliyon/guide-for-authors"
+    checked: "2026-11-23"

@@ -1,0 +1,16 @@
+name: "Scientific Reports"
+slug: scientific-reports
+publisher: "Springer Nature"
+
+guidelines:
+  url: "https://www.nature.com/srep/author-instructions/submission-guidelines"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "scientific-reports"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/scientific-reports.csl"
+  checked: "2026-11-23"
+
+requirements_snapshot: "journals/requirements/scientific-reports.2026-11-23.json"
+
+known_quirks: []

@@ -1,0 +1,19 @@
+name: "PeerJ"
+slug: peerj
+publisher: "PeerJ"
+
+guidelines:
+  url: "https://peerj.com/about/author-instructions/"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "peerj"
+  source: "https://github.com/citation-style-language/styles/blob/master/peerj.csl"
+  checked: "2026-11-23"
+
+requirements_snapshot: "journals/requirements/peerj.2026-11-23.json"
+
+known_quirks:
+  - text: "Figures and tables are uploaded as separate files; the first page is an Author Cover Page"
+    source: "https://peerj.com/about/author-instructions/"
+    checked: "2026-11-23"

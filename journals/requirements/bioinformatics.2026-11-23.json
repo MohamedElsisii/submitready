@@ -1,0 +1,149 @@
+{
+ "journal": "Bioinformatics",
+ "article_type": "Original Paper",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "Bioinformatics author guidelines",
+   "url": "https://academic.oup.com/bioinformatics/pages/author-guidelines",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: Bioinformatics",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/bioinformatics.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "bioinformatics",
+  "title": "Bioinformatics",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/bioinformatics.csl"
+ },
+ "requirements": [
+  {
+   "id": "length",
+   "rule": "About 5,000 words (up to 7 pages), not counting figures",
+   "quote": "Up to 7 pages; this is approx. 5,000 words. excluding figures.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "main",
+    "value": 5000
+   }
+  },
+  {
+   "id": "abstract-words",
+   "rule": "Abstract at most 150 words (recommended)",
+   "quote": "A maximum of 150 words is recommended.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 150
+   }
+  },
+  {
+   "id": "abstract-structure",
+   "rule": "Structured abstract: Motivation, Results, Availability and Implementation, Contact, Supplementary Information",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "order",
+   "rule": "Title page, Structured Abstract, Introduction, System and methods, Algorithm, Implementation, Discussion, References",
+   "quote": "Title page, Structured Abstract, Introduction, System and methods, Algorithm, Implementation, Discussion, References.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "machine-learning",
+   "rule": "Machine learning papers have a methods subsection on training data, cross-validation sets and an independent test set",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-embedded",
+   "rule": "At submission, figures are embedded in the main file with their legends next to them",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "figure-final",
+   "rule": "Final figures: 1200 dpi line art, 350 dpi colour and halftone; 86 mm or 178 mm wide; alt text under each caption",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Author-date citations, per the journal's CSL style",
+   "quote": "",
+   "source": 1,
+   "check": {
+    "type": "citation_format",
+    "value": "author-date"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "A section titled \"Funding\", with agencies in full and grant numbers",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement in the paper; datasets cited with accession identifiers",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "supplementary",
+   "rule": "Supplementary text, figures and tables in one separate file, referred to in the main text",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai-use",
+   "rule": "Generative AI use is disclosed in the cover letter and in Methods or Acknowledgements",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cover-letter",
+   "rule": "A cover letter is required",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

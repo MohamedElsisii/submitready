@@ -1,0 +1,213 @@
+{
+ "journal": "International Journal of Molecular Sciences",
+ "article_type": "Article",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "IJMS instructions for authors",
+   "url": "https://www.mdpi.com/journal/ijms/instructions",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: International Journal of Molecular Sciences",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/international-journal-of-molecular-sciences.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "international-journal-of-molecular-sciences",
+  "title": "International Journal of Molecular Sciences",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/international-journal-of-molecular-sciences.csl"
+ },
+ "requirements": [
+  {
+   "id": "abstract-words",
+   "rule": "Abstract about 200 words at most, one paragraph without headings",
+   "quote": "The abstract should be a total of about 200 words maximum.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 200
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "Three to ten keywords after the abstract",
+   "quote": "Three to ten pertinent keywords need to be added after the abstract.",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 3,
+    "max": 10
+   }
+  },
+  {
+   "id": "order-main",
+   "rule": "Main text: Introduction, Results, Discussion, Materials and Methods, then optional Conclusions (Discussion may be combined with Results)",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "introduction",
+     "results",
+     "discussion",
+     "methods",
+     "conclusion"
+    ],
+    "optional": [
+     "discussion",
+     "conclusion"
+    ]
+   }
+  },
+  {
+   "id": "order-back",
+   "rule": "Back matter: Supplementary Materials, Author Contributions, Funding, Data Availability Statement, Acknowledgments, Conflicts of Interest, References",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "supplementary",
+     "contributions",
+     "funding",
+     "data",
+     "acknowledgements",
+     "competing",
+     "references"
+    ],
+    "optional": [
+     "supplementary",
+     "acknowledgements"
+    ]
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Numbered citations in square brackets, before the punctuation",
+   "quote": "reference numbers should be placed in square brackets [ ], and placed before the punctuation.",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric, square brackets"
+   }
+  },
+  {
+   "id": "figures-in-text",
+   "rule": "Figures, schemes and tables go in the main text, close to their first citation",
+   "quote": "All Figures, Schemes and Tables should be inserted into the main text close to their first citation.",
+   "source": 0,
+   "check": {
+    "type": "captions_placement",
+    "value": "in_text"
+   }
+  },
+  {
+   "id": "figures-embedded",
+   "rule": "Figures are inserted in the manuscript file",
+   "quote": "All Figures, Schemes and Tables should be inserted into the main text close to their first citation.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "supp-labels",
+   "rule": "Supplementary items are named like \"Figure S1: title\"",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "supp_label_style",
+    "value": "Table S1"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author Contributions statement is included",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "contributions"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding statement is included (or \"This research received no external funding\")",
+   "quote": "This research received no external funding",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data Availability Statement is included",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Conflicts of Interest section just before the reference list",
+   "quote": "just before the reference list",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "irb-consent",
+   "rule": "Institutional Review Board and Informed Consent statements (\"Not applicable.\" when there are no humans or animals)",
+   "quote": "Informed consent was obtained from all subjects involved in the study.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-resolution",
+   "rule": "Figures at least 1000 pixels wide or high, or 300 dpi or higher",
+   "quote": "minimum 1000 pixels width/height, or a resolution of 300 dpi or higher.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "table-font",
+   "rule": "Table text no less than 8 pt",
+   "quote": "no less than 8 pt. in size.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai-use",
+   "rule": "Generative AI use is stated in Acknowledgments: tool, version, purpose, and that the authors reviewed the output",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "acronyms",
+   "rule": "Acronyms defined at first use in the abstract, the main text and the first figure or table",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

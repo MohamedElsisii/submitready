@@ -91,3 +91,17 @@ def test_duplicate_caption_message_says_which_copy_to_keep():
     assert "Table 1, Table 2 appear twice: keep the copy in the text, delete the one at the end" in tab["found"]
     end = prepare.check(facts, req({"type": "captions_placement", "value": "end", "kind": "table"}))[0]
     assert "keep the copy at the end, delete the one in the text" in end["found"]
+
+
+def test_title_word_limit(tmp_path):
+    facts = prepare.analyze(make_sample(tmp_path / "s.docx"))
+    assert facts["title_words"] > 0
+    res = prepare.check(facts, req({"type": "max_words", "target": "title", "value": 2},
+                                    {"type": "max_words", "target": "title", "value": 200}))
+    assert [r["status"] for r in res] == ["FIX", "PASS"]
+
+
+def test_section_heading_variants():
+    for h in ["Author contributions", "Authors' contributions", "Authors’ contributions", "Author's contributions",
+              "Author Contribution Statement", "CRediT authorship contribution statement"]:
+        assert prepare._section_of(h) == "contributions", h

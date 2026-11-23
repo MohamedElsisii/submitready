@@ -1,0 +1,19 @@
+name: "Bioinformatics"
+slug: bioinformatics
+publisher: "Oxford University Press"
+
+guidelines:
+  url: "https://academic.oup.com/bioinformatics/pages/author-guidelines"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "bioinformatics"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/bioinformatics.csl"
+  checked: "2026-11-23"
+
+requirements_snapshot: "journals/requirements/bioinformatics.2026-11-23.json"
+
+known_quirks:
+  - text: "Abstract is structured (Motivation, Results, Availability and Implementation, Contact)"
+    source: "https://academic.oup.com/bioinformatics/pages/author-guidelines"
+    checked: "2026-11-23"

@@ -1,0 +1,19 @@
+name: "International Journal of Molecular Sciences"
+slug: ijms
+publisher: "MDPI"
+
+guidelines:
+  url: "https://www.mdpi.com/journal/ijms/instructions"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "international-journal-of-molecular-sciences"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/international-journal-of-molecular-sciences.csl"
+  checked: "2026-11-23"
+
+requirements_snapshot: "journals/requirements/ijms.2026-11-23.json"
+
+known_quirks:
+  - text: "Back matter statements (Author Contributions, Funding, Data Availability, Conflicts of Interest) go inside the manuscript"
+    source: "https://www.mdpi.com/journal/ijms/instructions"
+    checked: "2026-11-23"

@@ -51,7 +51,7 @@ SECTIONS = [
     ("competing", r"(competing|conflicts?( of)?) interests?|disclosure statement|declaration of (competing )?interests?|disclosures?"),
     ("data", r"data (and code )?availability( statement)?|availability of data.*"),
     ("ethics", r"ethic(s|al)( approval| conduct of research| statement| approval and consent.*)?"),
-    ("contributions", r"author('?s)? contributions?|credit authorship.*"),
+    ("contributions", r"authors?'?s?'? contributions?( statement)?|credit authorship.*"),
     ("ai", r"(generative )?ai (use |usage )?(statement|disclosure)|use of (generative )?ai.*|writing assistance disclosure"),
     ("declarations", r"declarations"),
     ("references", r"references|bibliography|literature cited"),
@@ -107,7 +107,7 @@ def _style_name_map(z) -> tuple[dict, set]:
 
 
 def _section_of(text: str) -> str | None:
-    t = re.sub(r"\s+", " ", text).strip()
+    t = re.sub(r"\s+", " ", text).strip().replace("\u2019", "'").replace("\u2018", "'")
     for k, rx in SECTION_RE:
         if rx.match(t):
             return k
@@ -231,6 +231,7 @@ def analyze_tex(path: Path) -> dict:
         "file": path.name,
         "title": title,
         "title_chars": len(title),
+        "title_words": words(title),
         "abstract_words": words(abstract),
         "keywords": keywords,
         "main_text_words": main_words,
@@ -394,6 +395,7 @@ def analyze(path: Path) -> dict:
         "file": path.name,
         "title": title,
         "title_chars": len(title),
+        "title_words": words(title),
         "abstract_words": words(" ".join(abstract_parts)),
         "keywords": keywords,
         "main_text_words": main_words,
@@ -448,7 +450,7 @@ def check(facts: dict, req: dict) -> list[dict]:
                 v = facts[f"{c['target']}_chars"]
                 status, found = ("PASS" if v <= c["value"] else "FIX"), f"{v} characters"
             elif t == "max_words":
-                key = {"abstract": "abstract_words", "main": "main_text_words"}[c["target"]]
+                key = {"abstract": "abstract_words", "main": "main_text_words", "title": "title_words"}[c["target"]]
                 v = facts[key]
                 status, found = ("PASS" if v <= c["value"] else "FIX"), f"{v:,} words"
                 if v > c["value"]:
@@ -548,7 +550,7 @@ def checklist_markdown(facts: dict, req: dict, results: list[dict]) -> str:
         said = f"\"{esc(r['quote'])[:160]}\"" if r["quote"] else "(paraphrased; see source)"
         lines.append(f"| {i} | {esc(r['rule'])} | {STATUS_TEXT[r['status']]} | {esc(r['found'])} | {said} |")
     lines += ["", "## Manuscript facts", "",
-              f"- Title: {facts['title_chars']} characters",
+              f"- Title: {facts['title_chars']} characters, {facts.get('title_words', 0)} words",
               f"- Abstract: {facts['abstract_words']} words; keywords: {len(facts['keywords'])}",
               f"- Main text (Introduction to end of Discussion/Conclusion, without headings, captions and tables): {facts['main_text_words']:,} words",
               f"- Sections in order: {' > '.join(facts['sections_found'])}",

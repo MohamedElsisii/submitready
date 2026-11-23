@@ -1,0 +1,181 @@
+{
+ "journal": "PeerJ",
+ "article_type": "Research Article",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "PeerJ author instructions",
+   "url": "https://peerj.com/about/author-instructions/",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: PeerJ",
+   "url": "https://github.com/citation-style-language/styles/blob/master/peerj.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "peerj",
+  "title": "PeerJ",
+  "source": "https://github.com/citation-style-language/styles/blob/master/peerj.csl"
+ },
+ "requirements": [
+  {
+   "id": "line-numbers",
+   "rule": "Line numbers on, 2.5 cm margins, US Letter pages",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "line_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "font",
+   "rule": "12-point Times, \"Normal\" style for text and \"Heading\" styles for headings, left-justified",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "order",
+   "rule": "Sections in order: Abstract, Introduction, Materials & Methods, Results, Discussion, Conclusions, Acknowledgments, References; do not combine sections",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "abstract",
+     "introduction",
+     "methods",
+     "results",
+     "discussion",
+     "conclusion",
+     "acknowledgements",
+     "references"
+    ],
+    "optional": [
+     "conclusion",
+     "acknowledgements"
+    ]
+   }
+  },
+  {
+   "id": "cover-page",
+   "rule": "First page is an Author Cover Page: title, authors, affiliations and submission admin",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract-words",
+   "rule": "Abstract at most 500 words (3,000 characters), with bold run-in subheadings",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 500
+   }
+  },
+  {
+   "id": "abstract-refs",
+   "rule": "No footnotes or references in the abstract",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-chars",
+   "rule": "Title at most 250 characters",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "max_chars",
+    "target": "title",
+    "value": 250
+   }
+  },
+  {
+   "id": "figures-separate",
+   "rule": "Figures uploaded as separate files, not embedded in the manuscript",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": false
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figures: PNG (JPEG only for photos) or vector PDF/EPS; ideally 3000 px, at least 900 px; named like \"Figure 1.png\"",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables-separate",
+   "rule": "Tables uploaded as separate DOCX files, each fitting on one page",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Author-date citations (Name. Year), alphabetical reference list",
+   "quote": "",
+   "source": 1,
+   "check": {
+    "type": "citation_format",
+    "value": "author-date"
+   }
+  },
+  {
+   "id": "supp-labels",
+   "rule": "Supplemental items cited like \"Table S1\", files named like \"Supplemental Data S1\"",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "supp_label_style",
+    "value": "Table S1"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funders go in a separate Funding Statement, not in Acknowledgments",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "raw-data",
+   "rule": "Raw data and code are machine-readable, in a repository or as supplemental files under 30 MB; archived code has a persistent identifier",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "species",
+   "rule": "Full species name in italics at first mention",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}
