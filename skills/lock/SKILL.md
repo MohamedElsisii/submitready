@@ -1,6 +1,8 @@
 ---
+name: lock
 description: Fingerprint a manuscript, or prove a formatted copy changed no locked text
 argument-hint: <manuscript.docx> [formatted.docx]
+disable-model-invocation: true
 ---
 
 Run the SubmitReady text lock on: $ARGUMENTS

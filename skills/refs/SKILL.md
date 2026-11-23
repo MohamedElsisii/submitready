@@ -1,6 +1,8 @@
 ---
+name: refs
 description: Check a manuscript's references offline, then against Crossref and PubMed
 argument-hint: <manuscript.docx | refs.ris | refs.bib> [--library export.ris]
+disable-model-invocation: true
 ---
 
 Check the references of: $ARGUMENTS

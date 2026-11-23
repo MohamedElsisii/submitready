@@ -492,6 +492,10 @@ def format_docx(src: Path, req: dict, out: Path) -> list[str]:
 
 
 def main(argv=None) -> int:
+    # Windows terminals and pipes default to a legacy code page; manuscripts contain Unicode.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="SubmitReady prepare")
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("analyze")

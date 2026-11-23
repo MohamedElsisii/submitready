@@ -441,6 +441,10 @@ def report_markdown(r: dict) -> str:
 
 
 def main(argv=None) -> int:
+    # Windows terminals and pipes default to a legacy code page; manuscripts contain Unicode.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="SubmitReady text lock")
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("create", help="fingerprint a manuscript")

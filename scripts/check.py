@@ -355,6 +355,10 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
 
 
 def main(argv=None) -> int:
+    # Windows terminals and pipes default to a legacy code page; manuscripts contain Unicode.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="SubmitReady final check and submission package")
     ap.add_argument("manuscript", type=Path, help="the formatted manuscript to submit")
     ap.add_argument("--lock", type=Path, required=True, help="lock of the ORIGINAL manuscript")

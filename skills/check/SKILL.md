@@ -1,6 +1,8 @@
 ---
+name: check
 description: Final pre-submission audit; builds the submission package with a READY / NOT READY verdict
 argument-hint: <formatted.docx> <journal> [figures folder] [supplementary folder]
+disable-model-invocation: true
 ---
 
 Run the final check for: $ARGUMENTS
