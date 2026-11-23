@@ -65,7 +65,7 @@ def test_content_changes_are_caught(proj, file, old, new):
     ("Luminal tumors account", "Luminal\n   tumors   account"),           # line wrapping
     ("\\textbf{60\\%}", "60\\%"),                                       # bold removed
     ("\\section{Results}", "\\clearpage\n\\section{Results}\\label{sec:r}"),
-    ("\\citep{robinson2010}", "\\cite{robinson2010}"),                  # citation command restyled
+    ("\\citep{clark2010}", "\\cite{clark2010}"),                  # citation command restyled
     ("\\bibliographystyle{unsrtnat}", "\\bibliographystyle{plainnat}"),
     ("These results agree", "% a comment line\nThese results agree"),
 ])
@@ -112,11 +112,11 @@ def test_random_word_edit_is_caught(proj, seed):
 def test_refs_from_tex(proj):
     d, _ = proj
     ms = refs.load(d / "main.tex")
-    assert [r.key for r in ms.refs] == ["curtis2012", "johnson2021", "robinson2010"]
+    assert [r.key for r in ms.refs] == ["adams2012", "baker2021", "clark2010"]
     f = refs.audit(ms, ms.library)
     codes = {x.code for x in f}
     assert "uncited" in codes and "doi-as-url" in codes
-    edit(d / "main.tex", "\\citep{robinson2010}", "\\citep{robinson2010,ghost2099}")
+    edit(d / "main.tex", "\\citep{clark2010}", "\\citep{clark2010,ghost2099}")
     ms = refs.load(d / "main.tex")
     assert "ghost2099" in ms.missing_keys
     assert "missing-key" in {x.code for x in refs.audit(ms, ms.library)}

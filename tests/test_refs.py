@@ -157,24 +157,24 @@ def test_report_says_nothing_was_changed(tmp_path):
 
 def test_online_print_year_and_consortium_are_not_false_alarms():
     ms = refs.ManuscriptRefs(refs=[
-        refs.Ref("s", {"type": "article-journal", "title": "STAR: ultrafast universal RNA-seq aligner",
-                       "DOI": "10.1093/bioinformatics/bts635", "issued": {"date-parts": [[2013]]},
-                       "author": [{"family": "Dobin"}]}, "x"),
-        refs.Ref("c", {"type": "article-journal", "title": "The genomic architecture of 2,000 breast tumours",
-                       "DOI": "10.1038/nature10983", "issued": {"date-parts": [[2012]]},
-                       "author": [{"family": "Curtis"}]}, "x"),
+        refs.Ref("s", {"type": "article-journal", "title": "QUICK: a fast made-up sequence aligner",
+                       "DOI": "10.5555/syn.quick.635", "issued": {"date-parts": [[2013]]},
+                       "author": [{"family": "Quill"}]}, "x"),
+        refs.Ref("c", {"type": "article-journal", "title": "A made-up architecture of 2,000 synthetic samples",
+                       "DOI": "10.5555/syn.group.983", "issued": {"date-parts": [[2012]]},
+                       "author": [{"family": "Moss"}]}, "x"),
         refs.Ref("f", {"type": "article-journal",
                        "title": "FreeSASA: an open source C library [version 1; peer review: 2 approved]",
                        "DOI": "10.12688/f1000research.7931.1", "issued": {"date-parts": [[2016]]},
                        "author": [{"family": "Mitternacht"}]}, "x"),
     ])
     fetch = fake_crossref({
-        "bts635": {"message": {"title": ["STAR: ultrafast universal RNA-seq aligner"],
+        "syn.quick.635": {"message": {"title": ["QUICK: a fast made-up sequence aligner"],
                                "issued": {"date-parts": [[2012, 10, 25]]},
-                               "published-print": {"date-parts": [[2013, 1]]}, "author": [{"family": "Dobin"}]}},
-        "nature10983": {"message": {"title": ["The genomic architecture of 2,000 breast tumours"],
+                               "published-print": {"date-parts": [[2013, 1]]}, "author": [{"family": "Quill"}]}},
+        "syn.group.983": {"message": {"title": ["A made-up architecture of 2,000 synthetic samples"],
                                     "issued": {"date-parts": [[2012]]},
-                                    "author": [{"name": "METABRIC Group"}, {"family": "Curtis"}]}},
+                                    "author": [{"name": "SYNTH Consortium"}, {"family": "Moss"}]}},
         "7931.1": {"message": {"title": ["FreeSASA: an open source C library"], "issued": {"date-parts": [[2016]]},
                                "author": [{"family": "Mitternacht"}]}},
     })
@@ -261,9 +261,9 @@ def test_plain_docx_numbered(tmp_path):
 
 def test_dedupe_one_problem_one_line():
     F = refs.Finding
-    f = [F("Staaf 2022", "odd-issue", "warning", "Issue has extra text", "9 September", "9"),
-         F("Staaf 2022", "mismatch-issue", "warning", "Issue differs from Crossref", "9 September", "9"),
-         F("Chicco 2021", "mismatch-first-page", "warning", "First page differs from Crossref", "1", "e623")]
+    f = [F("Poe 2022", "odd-issue", "warning", "Issue has extra text", "9 September", "9"),
+         F("Poe 2022", "mismatch-issue", "warning", "Issue differs from Crossref", "9 September", "9"),
+         F("Lee 2021", "mismatch-first-page", "warning", "First page differs from Crossref", "1", "e623")]
     out = refs.dedupe(f)
     assert [x.code for x in out] == ["odd-issue", "mismatch-first-page"]
 
