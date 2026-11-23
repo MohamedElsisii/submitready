@@ -1,0 +1,24 @@
+# Real manuscripts and private test material: never commit
+tests/private/
+private/
+*.enl
+*.Data/
+
+# Output packages
+submission_package*/
+.submitready/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+~$*
+.vscode/
+.idea/

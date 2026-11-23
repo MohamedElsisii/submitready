@@ -1,0 +1,24 @@
+# Journal profile template
+# Copy to journals/<journal-slug>.yaml. Every value needs a source and the date checked.
+# Leave a field empty if you cannot verify it. Never guess.
+
+name: ""                 # Full journal name
+slug: ""                 # e.g. journal-of-biomolecular-structure-and-dynamics
+publisher: ""
+issn_print: ""
+issn_online: ""
+
+guidelines:
+  url: ""                # Author guidelines page, read live on every run
+  checked: ""            # YYYY-MM-DD
+
+reference_style:
+  csl_style_id: ""       # ID from the CSL styles repository
+  source: ""
+  checked: ""
+
+submission_system:
+  url: ""
+  checked: ""
+
+known_quirks: []         # Short notes, each with a source, e.g. "Highlights section required"
