@@ -495,7 +495,11 @@ def check(facts: dict, req: dict) -> list[dict]:
                                   for k, v in sorted(pl.items())) or "no captions found"
                 dups = [d for d in facts.get("caption_duplicates", []) if not kind or d.lower().startswith(kind)]
                 if dups:
-                    found += f"; caption appears twice: {', '.join(dups)}"
+                    where = {"end": "at the end", "in_text": "in the text"}
+                    other = "in_text" if want == "end" else "end"
+                    verb = "appears" if len(dups) == 1 else "appear"
+                    found += (f"; {', '.join(dups)} {verb} twice: keep the copy {where[want]}, "
+                              f"delete the one {where[other]}")
                 status = "PASS" if ok else "FIX"
             elif t == "citation_format":
                 ok = facts["citation_format"].startswith(c["value"])

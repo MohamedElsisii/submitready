@@ -766,9 +766,18 @@ JUNK_SUFFIX = re.compile(r"/(?:figures?|tables?|metrics|bibtex|full|abstract|pdf
 def dedupe(findings: list[Finding]) -> list[Finding]:
     """One problem, one line: "Issue has extra text" already covers "Issue differs from Crossref"."""
     odd = {(f.ref, f.code[4:], f.found) for f in findings if f.code.startswith("odd-")}
+    # "Missing issue" (offline) and "Missing issue; Crossref has it" (online) are the same gap
+    fill_of = {"missing-page": "fill-first-page", "missing-issue": "fill-issue", "missing-volume": "fill-volume"}
+    fills = {(f.ref, f.code): f for f in findings if f.code.startswith("fill-")}
+    rank = {"error": 0, "warning": 1, "info": 2}
     seen, out = set(), []
     for f in findings:
         if f.code.startswith("mismatch-") and (f.ref, f.code[9:], f.found) in odd:
+            continue
+        fill = fills.get((f.ref, fill_of.get(f.code, "")))
+        if fill:
+            if rank.get(f.severity, 2) < rank.get(fill.severity, 2):
+                fill.severity = f.severity
             continue
         k = (f.ref, f.code, f.found, f.suggested)
         if k not in seen:
