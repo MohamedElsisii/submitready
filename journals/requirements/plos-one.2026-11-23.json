@@ -12,6 +12,11 @@
    "name": "CSL styles repository: PLOS ONE",
    "url": "https://github.com/citation-style-language/styles/blob/master/dependent/plos-one.csl",
    "checked": "2026-11-23"
+  },
+  {
+   "name": "PLOS ONE figure guidelines",
+   "url": "https://journals.plos.org/plosone/s/figures",
+   "checked": "2026-11-23"
   }
  ],
  "csl_style": {
@@ -190,15 +195,6 @@
    }
   },
   {
-   "id": "figure-file-names",
-   "rule": "Figure files are named to match their labels, e.g. Fig1.tif",
-   "quote": "Fig1.tif",
-   "source": 0,
-   "check": {
-    "type": "manual"
-   }
-  },
-  {
    "id": "supp-labels",
    "rule": "Supporting information is labeled like \"S1 Table\"",
    "quote": "S1 Table",
@@ -243,6 +239,32 @@
    "source": 0,
    "check": {
     "type": "manual"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files: TIFF or EPS, 300-600 dpi, 789-2250 px wide and at most 2625 px high at 300 dpi, RGB or grayscale, under 10 MB, LZW-compressed TIFF, named Fig1.tif, Fig2.tif ...",
+   "quote": "LZW compression is required.",
+   "source": 2,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "tif",
+     "tiff",
+     "eps"
+    ],
+    "dpi_min": 300,
+    "dpi_max": 600,
+    "min_width_px": 789,
+    "max_width_px": 2250,
+    "max_height_px": 2625,
+    "color_modes": [
+     "RGB",
+     "L"
+    ],
+    "max_mb": 10,
+    "tiff_compression": "tiff_lzw",
+    "name_pattern": "Fig{n}"
    }
   }
  ]

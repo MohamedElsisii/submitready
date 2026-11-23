@@ -156,7 +156,23 @@
    "quote": "",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "figure_files",
+    "formats": [
+     "tif",
+     "tiff",
+     "jpg",
+     "jpeg",
+     "eps"
+    ],
+    "dpi_min": 300,
+    "dpi_at_final_size": true,
+    "column_widths_mm": [
+     85,
+     180
+    ],
+    "color_modes": [
+     "RGB"
+    ]
    }
   },
   {

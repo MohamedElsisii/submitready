@@ -4,7 +4,7 @@
 
 SubmitReady is a free, open-source Claude skill that prepares a research manuscript for a specific journal: it reads the journal's live author guidelines, checks and formats your references, prepares supplementary files, and hands you a submission package with a report proving that your text was not changed.
 
-> Status: in development. Version 1 (text lock, references, prepare, check) is planned for early 2027.
+> Status: in development. All four version 1 commands (`/lock`, `/refs`, `/prepare`, `/check`) work and are being tested on real manuscripts. Public release planned for early 2027.
 
 ## Why
 
