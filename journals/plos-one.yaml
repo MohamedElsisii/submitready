@@ -1,0 +1,17 @@
+name: "PLOS ONE"
+slug: plos-one
+publisher: "Public Library of Science"
+
+guidelines:
+  url: "https://journals.plos.org/plosone/s/submission-guidelines"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "plos-one"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/plos-one.csl"
+  checked: "2026-11-23"
+
+known_quirks:
+  - text: "Funding, competing interests and author contributions go in the submission form, not the manuscript file"
+    source: "https://journals.plos.org/plosone/s/submission-guidelines"
+    checked: "2026-11-23"

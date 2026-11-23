@@ -1,0 +1,217 @@
+{
+ "journal": "Frontiers in Genetics",
+ "article_type": "Original Research",
+ "snapshot_note": "Snapshot for tests. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "Frontiers author guidelines",
+   "url": "https://www.frontiersin.org/guidelines/author-guidelines",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "Frontiers in Genetics article types",
+   "url": "https://www.frontiersin.org/journals/genetics/for-authors/article-types",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: Frontiers in Genetics",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/frontiers-in-genetics.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "frontiers-in-genetics",
+  "title": "Frontiers in Genetics",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/frontiers-in-genetics.csl"
+ },
+ "requirements": [
+  {
+   "id": "word-limit",
+   "rule": "Main text at most 12,000 words (body, footnotes and in-text citations; not abstract, headings, captions, tables, acknowledgments, funding or references)",
+   "quote": "maximum word count of 12,000.",
+   "source": 1,
+   "check": {
+    "type": "max_words",
+    "target": "main",
+    "value": 12000
+   }
+  },
+  {
+   "id": "format",
+   "rule": "Sections: Abstract, Introduction, Materials and Methods, Results, Discussion",
+   "quote": "should have the following format",
+   "source": 1,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "abstract",
+     "introduction",
+     "methods",
+     "results",
+     "discussion"
+    ]
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "Five to eight keywords",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 5,
+    "max": 8
+   }
+  },
+  {
+   "id": "first-page-counts",
+   "rule": "Word count and number of figures and tables are stated on the first page",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Abstract is one paragraph with no citations of references, figures or tables",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "intro-no-subheadings",
+   "rule": "Introduction has no subheadings",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "reference-style",
+   "rule": "Author-date (Harvard) citations, per the journal's CSL style",
+   "quote": "",
+   "source": 2,
+   "check": {
+    "type": "citation_format",
+    "value": "author-date"
+   }
+  },
+  {
+   "id": "single-spacing",
+   "rule": "Whole document single-spaced",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "line_spacing",
+    "value": 1.0
+   }
+  },
+  {
+   "id": "line-numbers",
+   "rule": "Line numbers",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "line_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "page-numbers",
+   "rule": "Page numbers",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "figures-separate",
+   "rule": "Each figure is a separate file, in the order cited",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": false
+   }
+  },
+  {
+   "id": "captions-end",
+   "rule": "Figure captions at the end of the manuscript; tables at the end with the caption just above",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "captions_placement",
+    "value": "end"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figures: TIF/TIFF, JPEG or EPS, RGB, 300 dpi at final size, 85 mm or 180 mm wide, text at least 8 pt",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai-statement",
+   "rule": "Generative AI use is acknowledged in Acknowledgements (and Methods where relevant), with name, version, model and source",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "gene-symbols",
+   "rule": "Gene symbols in italics, with approved (HGNC) nomenclature",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "equations",
+   "rule": "Equations in an editable equation-editor format",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supp-clean",
+   "rule": "Supplementary files have no tracked changes, highlights or line numbers, and include their caption",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "scope-statement",
+   "rule": "A 200-word scope statement is entered at submission",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "statements-headings",
+   "rule": "Headings for data availability, author contributions, conflict of interest and funding are not stated on the guidelines page; check the Frontiers Word template",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

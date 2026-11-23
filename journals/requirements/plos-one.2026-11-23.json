@@ -1,0 +1,249 @@
+{
+ "journal": "PLOS ONE",
+ "article_type": "Research Article",
+ "snapshot_note": "Snapshot for tests. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "PLOS ONE submission guidelines",
+   "url": "https://journals.plos.org/plosone/s/submission-guidelines",
+   "checked": "2026-11-23"
+  },
+  {
+   "name": "CSL styles repository: PLOS ONE",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/plos-one.csl",
+   "checked": "2026-11-23"
+  }
+ ],
+ "csl_style": {
+  "id": "plos-one",
+  "title": "PLOS ONE",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/plos-one.csl"
+ },
+ "requirements": [
+  {
+   "id": "file-format",
+   "rule": "Manuscript file is DOC, DOCX or RTF (LaTeX is submitted as PDF)",
+   "quote": "Manuscript files can be in the following formats: DOC, DOCX, or RTF.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-length",
+   "rule": "Full title is at most 250 characters",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "max_chars",
+    "target": "title",
+    "value": 250
+   }
+  },
+  {
+   "id": "abstract-length",
+   "rule": "Abstract is at most 300 words",
+   "quote": "Not exceed 300 words.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 300
+   }
+  },
+  {
+   "id": "double-spacing",
+   "rule": "Text is double-spaced",
+   "quote": "Manuscript text should be double-spaced.",
+   "source": 0,
+   "check": {
+    "type": "line_spacing",
+    "value": 2.0
+   }
+  },
+  {
+   "id": "line-numbers",
+   "rule": "Continuous line numbers",
+   "quote": "Include page numbers and line numbers in the manuscript file.",
+   "source": 0,
+   "check": {
+    "type": "line_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "page-numbers",
+   "rule": "Page numbers",
+   "quote": "Include page numbers and line numbers in the manuscript file.",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "no-footnotes",
+   "rule": "No footnotes",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "footnotes",
+    "allowed": false
+   }
+  },
+  {
+   "id": "order-start",
+   "rule": "Starts with Abstract, then Introduction",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "abstract",
+     "introduction"
+    ]
+   }
+  },
+  {
+   "id": "order-end",
+   "rule": "Ends with Acknowledgments, References, then Supporting information captions",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "acknowledgements",
+     "references",
+     "supplementary"
+    ],
+    "optional": [
+     "acknowledgements",
+     "supplementary"
+    ]
+   }
+  },
+  {
+   "id": "funding-not-in-file",
+   "rule": "Funding goes in the submission form, not the manuscript file",
+   "quote": "Do not include it in your manuscript file.",
+   "source": 0,
+   "check": {
+    "type": "section_absent",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "competing-interests",
+   "rule": "Competing interests are entered in the submission system",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author contributions (CRediT) are entered in the submission system",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data Availability Statement entered at submission; accession numbers or DOIs also given where the data are mentioned",
+   "quote": "Accession numbers or a citation to the DOI should also be provided when the data set is mentioned within the manuscript.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "reference-style",
+   "rule": "Vancouver references, numbered in square brackets",
+   "quote": "PLOS uses \"Vancouver\" style.",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric, square brackets"
+   }
+  },
+  {
+   "id": "figures-separate",
+   "rule": "Figures are separate files, not inside the manuscript",
+   "quote": "Do not include figures in the main manuscript file.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": false
+   }
+  },
+  {
+   "id": "figure-captions",
+   "rule": "Figure captions go right after the paragraph where the figure is first cited",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "captions_placement",
+    "value": "in_text"
+   }
+  },
+  {
+   "id": "figure-file-names",
+   "rule": "Figure files are named to match their labels, e.g. Fig1.tif",
+   "quote": "Fig1.tif",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supp-labels",
+   "rule": "Supporting information is labeled like \"S1 Table\"",
+   "quote": "S1 Table",
+   "source": 0,
+   "check": {
+    "type": "supp_label_style",
+    "value": "S1 Table"
+   }
+  },
+  {
+   "id": "supp-captions",
+   "rule": "Supporting information captions are listed at the end of the manuscript",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "supplementary"
+   }
+  },
+  {
+   "id": "supp-size",
+   "rule": "Each supporting information file is under 20 MB",
+   "quote": "smaller than 20 MB in size.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "heading-levels",
+   "rule": "At most 3 heading levels",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "orcid",
+   "rule": "Corresponding author provides an ORCID iD at submission",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

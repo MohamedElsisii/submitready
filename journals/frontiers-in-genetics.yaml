@@ -1,0 +1,18 @@
+name: "Frontiers in Genetics"
+slug: frontiers-in-genetics
+publisher: "Frontiers Media"
+
+guidelines:
+  url: "https://www.frontiersin.org/guidelines/author-guidelines"
+  article_types_url: "https://www.frontiersin.org/journals/genetics/for-authors/article-types"
+  checked: "2026-11-23"
+
+reference_style:
+  csl_style_id: "frontiers-in-genetics"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/frontiers-in-genetics.csl"
+  checked: "2026-11-23"
+
+known_quirks:
+  - text: "Word limits are on the journal's Article types page, not the general guidelines page"
+    source: "https://www.frontiersin.org/guidelines/author-guidelines"
+    checked: "2026-11-23"
