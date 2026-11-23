@@ -139,11 +139,12 @@
   },
   {
    "id": "competing-interests",
-   "rule": "Competing interests are entered in the submission system",
-   "quote": "",
+   "rule": "Competing interests go in the submission system, not the manuscript file",
+   "quote": "This information should not be in your manuscript file; you will provide it via our submission system.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "section_absent",
+    "section": "competing"
    }
   },
   {
