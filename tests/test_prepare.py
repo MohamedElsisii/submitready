@@ -105,3 +105,10 @@ def test_section_heading_variants():
     for h in ["Author contributions", "Authors' contributions", "Authors’ contributions", "Author's contributions",
               "Author Contribution Statement", "CRediT authorship contribution statement"]:
         assert prepare._section_of(h) == "contributions", h
+
+
+def test_inline_statements_count_as_sections():
+    assert prepare.inline_statement("Author contributions: AB wrote it.") == ("contributions", "AB wrote it.")
+    assert prepare.inline_statement("Funding. None.") == ("funding", "None.")
+    assert prepare.inline_statement("Conflicts of interest: none declared") == ("competing", "none declared")
+    assert prepare.inline_statement("Funding agencies often require reports.") is None

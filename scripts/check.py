@@ -31,7 +31,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lock as lockmod  # noqa: E402
 import prepare  # noqa: E402
 import refs as refsmod  # noqa: E402
+import form as formmod  # noqa: E402
 
+FORM_FIELDS = {"funding": "funding", "competing": "competing interests", "data": "data availability",
+               "contributions": "author contributions", "ethics": "ethics"}
+TODO_GROUPS = [("word", "In Word (your manuscript)"), ("refs", "In your references"),
+               ("figures", "Figure files"), ("supp", "Supplementary files"),
+               ("website", "On the submission website")]
 IMG_EXT = {".tif", ".tiff", ".jpg", ".jpeg", ".png", ".eps", ".pdf", ".bmp", ".gif"}
 REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
@@ -340,15 +346,21 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     if not is_tex:
         with zipfile.ZipFile(manuscript) as z:
             refusals = lockmod.check_refusals(z)
+    todo: list[dict] = []
+
+    def fix(where: str, text: str, location: str = "", quote: str = "") -> None:
+        blocking.append(text)
+        todo.append({"where": where, "text": text, "location": location, "quote": quote})
+
     for r in refusals:
-        blocking.append(f"The manuscript still has {r}")
+        fix("word", f"The manuscript still has {r}")
 
     # 1. text lock
     lv = lockmod.verify(lock_path, manuscript)
     (rep / "change_report.md").write_text(lockmod.report_markdown(lv), encoding="utf-8")
     if lv["status"] == 2:
-        blocking.append(f"Text changed: {len(lv['changed'])} changed and {len(lv['missing'])} missing paragraphs "
-                        "(see reports/change_report.md)")
+        fix("word", f"Text changed: {len(lv['changed'])} changed and {len(lv['missing'])} missing paragraphs "
+                    "(see reports/change_report.md)")
     elif lv["status"] == 1:
         checks.append(f"{len(lv['added'])} paragraphs were added; confirm each one (reports/change_report.md)")
 
@@ -359,14 +371,18 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     for r in res:
         if r["status"] in ("FIX", "AUTO"):
             if r["id"] != "figure-files":
-                blocking.append(f"{r['rule']} (found: {r['found']})")
+                fix("word", f"{r['rule']} (found: {r['found']})", r.get("location", ""), r.get("quote", ""))
+                c = next((x.get("check", {}) for x in req["requirements"] if x["id"] == r["id"]), {})
+                if c.get("type") == "section_absent" and c.get("section") in FORM_FIELDS:
+                    todo.append({"where": "website", "text": f"Paste the {FORM_FIELDS[c['section']]} text into the "
+                                 "submission form (it is in submission_form.md, word for word)", "location": "", "quote": ""})
         elif r["status"] == "STYLE":
             if is_tex:
-                blocking.append(f"Reference style: {r['rule']}. Change \\bibliographystyle (or the natbib/biblatex options) "
-                                "to the journal's style, ideally from its LaTeX template, then rerun /lock")
+                fix("refs", f"Reference style: {r['rule']}. Change \\bibliographystyle (or the natbib/biblatex options) "
+                            "to the journal's style, ideally from its LaTeX template, then rerun /lock")
             else:
-                blocking.append(f"Reference style: {r['rule']}. Pick '{req.get('csl_style', {}).get('title', 'the journal style')}' "
-                                "in your reference manager, then rerun /lock")
+                fix("refs", f"Reference style: {r['rule']}. Pick '{req.get('csl_style', {}).get('title', 'the journal style')}' "
+                            "in your reference manager, then rerun /lock")
         elif r["status"] == "CHECK" and r["id"] != "figure-files":
             checks.append(r["rule"])
 
@@ -388,6 +404,11 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     sev = Counter(f.severity for f in findings)
     if sev.get("error"):
         blocking.append(f"{sev['error']} reference errors (see reports/references.md)")
+        for f in [f for f in findings if f.severity == "error"][:15]:
+            todo.append({"where": "refs", "text": f"{f.ref}: {f.message}" + (f" (now: {f.found})" if f.found else "")
+                         + (f"; suggested: {f.suggested}" if f.suggested else ""), "location": "", "quote": ""})
+        if sev["error"] > 15:
+            todo.append({"where": "refs", "text": f"{sev['error'] - 15} more errors in reports/references.md", "location": "", "quote": ""})
     if sev.get("warning"):
         checks.append(f"{sev['warning']} reference warnings to review (reports/references.md)")
 
@@ -423,11 +444,11 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     (rep / "figures.md").write_text("\n".join(fig_md) + "\n", encoding="utf-8")
     for r in rows:
         for pr in r["problems"]:
-            blocking.append(f"{r['file']}: {pr}")
+            fix("figures", f"{r['file']}: {pr}")
         for nt in r.get("notes", []):
             checks.append(f"{r['file']}: {nt}")
     if facts["figures"] and len(rows) < len(facts["figures"]):
-        blocking.append(f"{len(facts['figures'])} figures have captions but only {len(rows)} figure files were given")
+        fix("figures", f"{len(facts['figures'])} figures have captions but only {len(rows)} figure files were given")
 
     # 5. cross-references and supplementary files
     supp_files = sorted(p for p in supp.iterdir() if p.is_file()) if supp else None
@@ -435,7 +456,10 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     (rep / "crossrefs.md").write_text("# Cross-references\n\n" + ("\n".join(
         f"- {i['severity']}: {i['item']}: {i['problem']}" for i in xr) or "All figures, tables and supplementary items are numbered, cited and present.") + "\n", encoding="utf-8")
     for i in xr:
-        (blocking if i["severity"] == "FIX" else checks).append(f"{i['item']}: {i['problem']}")
+        if i["severity"] == "FIX":
+            fix("supp" if "supplementary file" in i["problem"] else "word", f"{i['item']}: {i['problem']}")
+        else:
+            checks.append(f"{i['item']}: {i['problem']}")
     if supp_files:
         (out / "supplementary").mkdir(exist_ok=True)
         for f in supp_files:
@@ -456,6 +480,14 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     else:
         _copy(manuscript, out / manuscript.name)
 
+    # 7. submission form sheet: fields copied word for word for the journal's website
+    try:
+        (out / "submission_form.md").write_text(formmod.markdown(formmod.build(manuscript)), encoding="utf-8")
+        has_form = True
+    except Exception as e:  # never block the package on the form sheet
+        checks.append(f"The submission form sheet could not be made ({e})")
+        has_form = False
+
     verdict = "READY" if not blocking else "NOT READY"
     summary = [
         f"# SubmitReady: {verdict}",
@@ -468,8 +500,23 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         f"- Figures: {len(rows)} files checked",
         "",
     ]
-    if blocking:
-        summary += [f"## Must fix before submitting ({len(blocking)})", ""] + [f"- [ ] {b}" for b in blocking] + [""]
+    if todo:
+        summary += [f"## Must fix before submitting ({len(blocking)})", ""]
+        for key, title in TODO_GROUPS:
+            items = [t for t in todo if t["where"] == key]
+            if not items:
+                continue
+            if key == "refs" and not is_tex:
+                title = "In your reference manager (Mendeley, Zotero or EndNote), then refresh the citations in Word"
+            summary += [f"### {title}", ""]
+            for t in items:
+                line = f"- [ ] {t['text']}"
+                if t["location"]:
+                    line += f"  \n  Where: {t['location']}"
+                if t["quote"]:
+                    line += f"  \n  Guideline: \"{t['quote']}\""
+                summary.append(line)
+            summary.append("")
     if done:
         summary += ["## Done automatically", ""] + [f"- {d}" for d in done] + [""]
     if checks:
@@ -477,6 +524,8 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     summary += ["## In this folder", "",
                 (f"- `manuscript/`: the LaTeX source to upload (main file `{manuscript.name}`)" if is_tex
                  else f"- `{manuscript.name}`: the manuscript to upload"),
+                "- `submission_form.md`: title, abstract, keywords, statements and counts, copied word for word "
+                "to paste into the journal's website" if has_form else "",
                 "- `figures/`: figure files" if rows else "",
                 "- `supplementary/`: supplementary files" if supp_files else "",
                 "- `reports/`: change report, journal checklist, references, figures, cross-references", ""]

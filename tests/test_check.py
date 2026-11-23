@@ -41,6 +41,7 @@ def test_ready_when_everything_passes(tmp_path):
     assert r["verdict"] == "READY", r["blocking"]
     assert (tmp_path / "pkg" / "SUMMARY.md").exists()
     assert (tmp_path / "pkg" / "m.docx").exists()
+    assert (tmp_path / "pkg" / "submission_form.md").exists()
     for name in ("change_report.md", "checklist.md", "references.md", "figures.md", "crossrefs.md"):
         assert (tmp_path / "pkg" / "reports" / name).exists()
 

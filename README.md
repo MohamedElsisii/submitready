@@ -39,6 +39,15 @@ Nothing was changed in the references. Every finding is a suggestion for the aut
 4. **Flag, don't fix, references.** If a reference disagrees with Crossref or PubMed, you see both versions and decide. Nothing is invented or silently corrected.
 5. **New text is a separate draft.** Cover letters, statements and reviewer responses are separate files, marked as drafts, never mixed into your manuscript.
 
+## What you get
+
+One folder per paper and journal, with:
+
+- the formatted manuscript, with proof that every sentence is unchanged
+- figure files converted to what the journal wants
+- a to-do list grouped by where the work happens (Word, reference manager, figure files, submission website), each item with where to find it and the guideline's own words
+- `submission_form.md`: your title, abstract, keywords, funding, competing interests, data availability and author contributions, copied word for word, ready to paste into the journal's website
+
 ## Install
 
 In Claude Code (version 2.1.275 or later):
@@ -55,6 +64,7 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 
 | Command | What it does | Version |
 | --- | --- | --- |
+| `/submitready:submit <paper> <journal>` | **Start here.** Does everything below in one go and gives you one to-do list and a copy-paste sheet for the journal website | v1 |
 | `/submitready:lock` | Fingerprints your manuscript and proves later that nothing changed | v1 |
 | `/submitready:prepare <journal>` | Reads the journal's live guidelines, builds a checklist, formats your files | v1 |
 | `/submitready:refs` | Verifies every reference against Crossref and PubMed, flags problems, tells you which style to pick | v1 |

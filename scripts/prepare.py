@@ -106,6 +106,21 @@ def _style_name_map(z) -> tuple[dict, set]:
     return names, bold
 
 
+INLINE_STATEMENT = re.compile(
+    r"^(funding( statement| information)?|financial disclosure|(competing|conflicts?( of)?) interests?|"
+    r"data (and code )?availability( statement)?|authors?['\u2019]?s?['\u2019]? contributions?|acknowledge?ments?)\s*[:.]\s*(.+)$",
+    re.I)
+
+
+def inline_statement(text: str) -> tuple[str, str] | None:
+    """'Funding: This work was ...' in one paragraph -> ("funding", "This work was ...")."""
+    m = INLINE_STATEMENT.match(text.strip())
+    if not m:
+        return None
+    sec = _section_of(m.group(1))
+    return (sec, m.group(m.lastindex).strip()) if sec else None
+
+
 def _section_of(text: str) -> str | None:
     t = re.sub(r"\s+", " ", text).strip().replace("\u2019", "'").replace("\u2018", "'")
     for k, rx in SECTION_RE:
@@ -254,17 +269,17 @@ def analyze_tex(path: Path) -> dict:
     }
 
 
-def analyze(path: Path) -> dict:
-    if path.suffix.lower() == ".tex":
-        return analyze_tex(path)
+def read_paragraphs(path: Path):
+    """Paragraphs of a .docx in reading order, with heading/section/table/bibliography flags.
+
+    Each item: i, text (spaces tidied), raw (exact text), heading, section, table, bib, style, el.
+    Returns (zipfile, xml root, paragraphs)."""
     z = zipfile.ZipFile(path)
     xml_bytes = z.read("word/document.xml")
-    xml = xml_bytes.decode("utf-8")
     root = etree.fromstring(xml_bytes)
     names, styles_bold = _style_name_map(z)
     body = root.find(q("body"))
-
-    paras = []  # (index, text, is_heading, section, in_table, style)
+    paras = []
     for el in body.iter(q("p")):
         in_table = any(a.tag == q("tbl") for a in el.iterancestors())
         in_bib = any(a.tag == q("sdt") and "BIBLIOGRAPHY" in (a.findtext(f"{q('sdtPr')}/{q('tag')}") or "" or "")
@@ -287,7 +302,17 @@ def analyze(path: Path) -> dict:
             elif _is_bold(el, styles_bold) and not text.endswith((".", ";", ",")) and words(text) <= 15:
                 is_heading = True
         paras.append({"i": len(paras), "text": text, "heading": is_heading, "section": sec if is_heading else None,
-                      "table": in_table, "bib": in_bib, "style": style})
+                      "table": in_table, "bib": in_bib, "style": style, "raw": _text(el).strip(), "el": el})
+
+    return z, root, paras
+
+
+def analyze(path: Path) -> dict:
+    if path.suffix.lower() == ".tex":
+        return analyze_tex(path)
+    z, root, paras = read_paragraphs(path)
+    xml = z.read("word/document.xml").decode("utf-8")
+    body = root.find(q("body"))
 
     # title = first non-empty paragraph
     title = paras[0]["text"] if paras else ""
@@ -298,11 +323,13 @@ def analyze(path: Path) -> dict:
     abstract_parts, kw_text = [], ""
     main_words, main_started, main_ended = 0, False, False
     captions = []
+    where: dict[str, list[str]] = {}
     for p in paras:
         t = p["text"]
         inline = re.match(r"^(abstract|key\s*-?\s*words?)\s*[:.]\s*(.+)$", t, re.I)
         if p["heading"] and p["section"]:
             current = p["section"]
+            where.setdefault(current, []).append(t)
             if current not in seen:
                 seen.add(current)
                 order.append(current)
@@ -320,6 +347,16 @@ def analyze(path: Path) -> dict:
                 abstract_parts.append(inline.group(2))
             else:
                 kw_text = inline.group(2)
+            continue
+        st = inline_statement(t) if not p["heading"] and not p["table"] and not p["bib"] else None
+        if st:
+            where.setdefault(st[0], []).append(" ".join(t.split()[:6]))
+            if st[0] not in seen:
+                seen.add(st[0])
+                order.append(st[0])
+            current = st[0]
+            if current in END_OF_MAIN and main_started:
+                main_ended = True
             continue
         m = CAPTION_RE.match(t)
         if m and not p["table"]:
@@ -346,15 +383,15 @@ def analyze(path: Path) -> dict:
             key = ("table" if kind.lower().startswith("t") else "figure", int(n))
             first_mention.setdefault(key, p["i"])
     placement = Counter()
+    caption_labels: dict[str, list[str]] = {}
     seen_caps = Counter()
     for c in captions:
         if c["supp"]:
             continue
         seen_caps[(c["kind"], c["n"])] += 1
-        if c["section"] in ("figure_legends", "references", "supplementary") or c["i"] > len(paras) * 0.85:
-            placement[f"{c['kind']}_end"] += 1
-        else:
-            placement[f"{c['kind']}_in_text"] += 1
+        pos = "end" if c["section"] in ("figure_legends", "references", "supplementary") or c["i"] > len(paras) * 0.85 else "in_text"
+        placement[f"{c['kind']}_{pos}"] += 1
+        caption_labels.setdefault(f"{c['kind']}_{pos}", []).append(f"{c['kind'].title()} {c['n']}")
     caption_duplicates = [f"{k.title()} {n}" for (k, n), v in sorted(seen_caps.items()) if v > 1]
     supp = sorted({(m[0] or m[3] or "").title() + " S" + (m[1] or m[2]) for m in SUPP_RE.findall(" ".join(p["text"] for p in paras))})
     supp_style = Counter("S1 Table" if m[2] else "Table S1" for m in SUPP_RE.findall(" ".join(p["text"] for p in paras)))
@@ -405,6 +442,9 @@ def analyze(path: Path) -> dict:
         "tables": tabs,
         "captions_placement": dict(placement),
         "caption_duplicates": caption_duplicates,
+        "caption_labels": caption_labels,
+        "section_where": where,
+        "supp_mentions": sum(supp_style.values()),
         "figures_embedded": images,
         "supplementary_items": supp,
         "supplementary_label_style": supp_style.most_common(1)[0][0] if supp_style else None,
@@ -519,8 +559,38 @@ def check(facts: dict, req: dict) -> list[dict]:
         except KeyError as e:
             status, found = "CHECK", f"could not measure ({e})"
         out.append({"id": r["id"], "rule": r["rule"], "status": status, "found": found,
-                    "quote": r.get("quote", ""), "source": req["sources"][r.get("source", 0)]})
+                    "quote": r.get("quote", ""), "source": req["sources"][r.get("source", 0)],
+                    "location": _location(c, facts) if status in ("FIX", "AUTO") else ""})
     return out
+
+
+def _location(c: dict, facts: dict) -> str:
+    """Where in the file the author should look: text they can find with Ctrl+F."""
+    t = c.get("type")
+    heads = facts.get("section_where", {})
+    if t == "section_absent":
+        hs = heads.get(c["section"], [])
+        return ("Find " + " and ".join(f'"{h}"' for h in hs)) if hs else ""
+    if t == "section_present":
+        return "No such section was found; add one"
+    if t == "captions_placement":
+        kind, want = c.get("kind"), c["value"]
+        wrong = [lab for k, labs in facts.get("caption_labels", {}).items()
+                 if (not kind or k.startswith(kind + "_")) and not k.endswith("_" + want) for lab in labs]
+        place = {"end": "at the end", "in_text": "in the text"}
+        return f"Now {place['in_text' if want == 'end' else 'end']}: {', '.join(wrong)}" if wrong else ""
+    if t == "supp_label_style":
+        n = facts.get("supp_mentions", 0)
+        return f"{n} mentions in the text and captions" if n else ""
+    if t in ("max_words", "max_chars"):
+        return {"abstract": 'Section "Abstract"', "title": "The title", "main": "Introduction to end of Discussion"}.get(c.get("target"), "")
+    if t == "keywords":
+        return 'The "Keywords" line'
+    if t == "footnotes":
+        return "Footnotes (References > Next Footnote in Word)"
+    if t == "figures_embedded":
+        return f"{facts.get('figures_embedded', 0)} images inside the Word file"
+    return ""
 
 
 STATUS_TEXT = {

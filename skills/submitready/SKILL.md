@@ -24,7 +24,7 @@ You help a researcher prepare a manuscript for a journal. Follow these five rule
 
 ## Status
 
-Version 0.1. All four version-1 commands work: `/lock` (scripts/lock.py), `/refs` (scripts/refs.py), `/prepare` (scripts/prepare.py) and `/check` (scripts/check.py).
+Version 0.1. `/submit` runs everything in one go. The single steps are `/lock` (scripts/lock.py), `/refs` (scripts/refs.py), `/prepare` (scripts/prepare.py) and `/check` (scripts/check.py). `scripts/form.py` makes the copy-paste sheet for the submission website.
 
 ## LaTeX manuscripts
 
