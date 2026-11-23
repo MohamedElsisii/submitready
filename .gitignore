@@ -22,3 +22,8 @@ Thumbs.db
 ~$*
 .vscode/
 .idea/
+*_package/
+*_change_report.md
+*_checklist.md
+*_refs_report.md
+*.requirements.json
