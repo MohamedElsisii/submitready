@@ -1,7 +1,7 @@
 ---
 name: refs
 description: Check a manuscript's references offline, then against Crossref and PubMed
-argument-hint: <manuscript.docx | refs.ris | refs.bib> [--library export.ris]
+argument-hint: <manuscript.docx | main.tex | refs.ris | refs.bib> [--library export.ris]
 disable-model-invocation: true
 ---
 

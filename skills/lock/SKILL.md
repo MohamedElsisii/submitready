@@ -1,7 +1,7 @@
 ---
 name: lock
 description: Fingerprint a manuscript, or prove a formatted copy changed no locked text
-argument-hint: <manuscript.docx> [formatted.docx]
+argument-hint: <manuscript.docx|main.tex> [formatted copy]
 disable-model-invocation: true
 ---
 

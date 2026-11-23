@@ -1,7 +1,7 @@
 ---
 name: check
 description: Final pre-submission audit; builds the submission package with a READY / NOT READY verdict
-argument-hint: <formatted.docx> <journal> [figures folder] [supplementary folder]
+argument-hint: <formatted.docx|main.tex> <journal> [figures folder] [supplementary folder]
 disable-model-invocation: true
 ---
 

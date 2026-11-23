@@ -220,9 +220,33 @@ def _norm_supp(s: str) -> str:
 
 
 def prepare_text(docx: Path) -> list[str]:
+    if docx.suffix.lower() == ".tex":
+        import latex
+
+        _, body = latex.split_document(latex.read_project(docx))
+        return [latex.detex(b) for b in re.split(r"\n\s*\n", body)]
     import docx as pydocx
 
     return [p.text for p in pydocx.Document(docx).paragraphs]
+
+
+def tex_figures(tex: Path) -> list[Path]:
+    """Figure files referenced by \\includegraphics, in order, resolved like TeX does (common extensions)."""
+    import latex
+
+    _, body = latex.split_document(latex.read_project(tex))
+    out = []
+    for n, m in enumerate(re.finditer(r"\\includegraphics\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}", body), 1):
+        base = tex.parent / m.group(1).strip()
+        cands = [base] if base.suffix else [base.with_suffix(e) for e in (".pdf", ".png", ".jpg", ".jpeg", ".eps", ".tif")]
+        for c in cands:
+            if c.exists():
+                out.append(c)
+                break
+    return out
+
+
+TEX_BUILD = {".aux", ".log", ".out", ".toc", ".bbl", ".blg", ".synctex.gz", ".fls", ".fdb_latexmk", ".lof", ".lot"}
 
 
 # ---------------------------------------------------------------- main audit
@@ -234,9 +258,12 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     req = json.loads(req_path.read_text(encoding="utf-8"))
     blocking, checks, done = [], [], []
 
-    # 0. tracked changes / comments in the final file
-    with zipfile.ZipFile(manuscript) as z:
-        refusals = lockmod.check_refusals(z)
+    is_tex = manuscript.suffix.lower() == ".tex"
+    # 0. tracked changes / comments in the final file (Word only)
+    refusals = []
+    if not is_tex:
+        with zipfile.ZipFile(manuscript) as z:
+            refusals = lockmod.check_refusals(z)
     for r in refusals:
         blocking.append(f"The manuscript still has {r}")
 
@@ -288,6 +315,17 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     fig_files: list[Path] = []
     if figures:
         fig_files = sorted(p for p in figures.iterdir() if p.suffix.lower() in IMG_EXT)
+    elif is_tex:
+        found = tex_figures(manuscript)
+        fig_files = []
+        tmp = out / "_extracted"
+        tmp.mkdir(parents=True, exist_ok=True)
+        for n, f in enumerate(found, 1):
+            dst = tmp / f"Figure_{n}{f.suffix.lower()}"
+            shutil.copy(f, dst)
+            fig_files.append(dst)
+        if found:
+            done.append(f"Collected {len(found)} figure files referenced by \\includegraphics")
     elif facts["figures_embedded"]:
         fig_files = extract_embedded_figures(manuscript, out / "_extracted")
         done.append(f"Copied {len(fig_files)} figures out of the manuscript into separate files (the manuscript is unchanged)")
@@ -324,8 +362,18 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     elif facts["supplementary_items"]:
         checks.append("Supplementary items are cited but no supplementary folder was given (--supp)")
 
-    # 6. package the manuscript
-    shutil.copy(manuscript, out / manuscript.name)
+    # 6. package the manuscript (LaTeX: the whole source folder, without build files)
+    if is_tex:
+        src_dir = manuscript.parent
+        dst_dir = out / "manuscript"
+        for f in src_dir.rglob("*"):
+            if f.is_file() and not any(str(f).endswith(e) for e in TEX_BUILD) and out.resolve() not in f.resolve().parents \
+                    and not f.name.endswith(".lock.json"):
+                target = dst_dir / f.relative_to(src_dir)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(f, target)
+    else:
+        shutil.copy(manuscript, out / manuscript.name)
 
     verdict = "READY" if not blocking else "NOT READY"
     summary = [
@@ -346,7 +394,8 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     if checks:
         summary += [f"## Check yourself ({len(checks)})", ""] + [f"- [ ] {c}" for c in checks] + [""]
     summary += ["## In this folder", "",
-                f"- `{manuscript.name}`: the manuscript to upload",
+                (f"- `manuscript/`: the LaTeX source to upload (main file `{manuscript.name}`)" if is_tex
+                 else f"- `{manuscript.name}`: the manuscript to upload"),
                 "- `figures/`: figure files" if rows else "",
                 "- `supplementary/`: supplementary files" if supp_files else "",
                 "- `reports/`: change report, journal checklist, references, figures, cross-references", ""]

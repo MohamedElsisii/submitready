@@ -1,7 +1,7 @@
 ---
 name: prepare
 description: Check a manuscript against a journal's live author guidelines and apply safe layout fixes
-argument-hint: <manuscript.docx> <journal name> [article type]
+argument-hint: <manuscript.docx|main.tex> <journal name> [article type]
 disable-model-invocation: true
 ---
 

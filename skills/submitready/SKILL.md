@@ -25,3 +25,7 @@ You help a researcher prepare a manuscript for a journal. Follow these five rule
 ## Status
 
 Version 0.1. All four version-1 commands work: `/lock` (scripts/lock.py), `/refs` (scripts/refs.py), `/prepare` (scripts/prepare.py) and `/check` (scripts/check.py).
+
+## LaTeX manuscripts
+
+Pass the main `.tex` file. SubmitReady follows `\input`/`\include`, reads the `.bib` files named by `\bibliography` or `\addbibresource`, and treats the preamble, comments, spacing, labels, float placement, heading levels and citation commands as layout. Formatting fixes are written to a new main file next to the original (so figures and `\input` files still resolve). If LaTeX is installed, compile the new file once to confirm it still builds.

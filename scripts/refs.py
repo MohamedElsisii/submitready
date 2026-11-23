@@ -64,6 +64,8 @@ class ManuscriptRefs:
     refs: list[Ref] = field(default_factory=list)
     citations: int = 0
     manual_overrides: list[str] = field(default_factory=list)
+    library: list[Ref] | None = None          # full library when the source carries one (.tex + .bib)
+    missing_keys: list[str] = field(default_factory=list)  # cited keys with no library entry
 
 
 # ---------------------------------------------------------------- readers
@@ -162,30 +164,111 @@ def read_ris(path: Path) -> list[Ref]:
     return refs
 
 
+def _bib_entries(text: str):
+    """Yield (type, key, {field: value}) from BibTeX text; nested braces and quotes respected."""
+    i = 0
+    while True:
+        m = re.compile(r"@(\w+)\s*[{(]").search(text, i)
+        if not m:
+            return
+        typ = m.group(1).lower()
+        j = m.end()
+        if typ in ("comment", "preamble", "string"):
+            i = j
+            continue
+        k = text.find(",", j)
+        if k < 0:
+            return
+        key = text[j:k].strip()
+        pos, fields = k + 1, {}
+        while pos < len(text):
+            fm = re.compile(r"\s*(\w[\w-]*)\s*=\s*").match(text, pos)
+            if not fm:
+                close = re.compile(r"\s*[})]").match(text, pos)
+                pos = close.end() if close else pos + 1
+                break
+            name, pos = fm.group(1).lower(), fm.end()
+            if pos < len(text) and text[pos] == "{":
+                depth, start = 0, pos
+                while pos < len(text):
+                    if text[pos] == "{":
+                        depth += 1
+                    elif text[pos] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    pos += 1
+                value = text[start + 1:pos]
+                pos += 1
+            elif pos < len(text) and text[pos] == '"':
+                end = pos + 1
+                while end < len(text) and not (text[end] == '"' and text[end - 1] != "\\"):
+                    end += 1
+                value = text[pos + 1:end]
+                pos = end + 1
+            else:
+                vm = re.compile(r"[^,}\n]+").match(text, pos)
+                value = vm.group(0).strip() if vm else ""
+                pos = vm.end() if vm else pos
+            fields[name] = " ".join(value.replace("{", "").replace("}", "").split())
+            cm = re.compile(r"\s*,").match(text, pos)
+            if cm:
+                pos = cm.end()
+        yield typ, key, fields
+        i = pos
+
+
+def _bib_to_csl(typ: str, f: dict) -> dict:
+    d = {"type": {"article": "article-journal", "inproceedings": "paper-conference", "incollection": "chapter",
+                  "inbook": "chapter", "book": "book", "phdthesis": "thesis", "mastersthesis": "thesis",
+                  "techreport": "report", "online": "webpage", "software": "software", "misc": "generic"}.get(typ, "generic")}
+    if "title" in f:
+        d["title"] = f["title"]
+    if f.get("journal") or f.get("journaltitle") or f.get("booktitle"):
+        d["container-title"] = f.get("journal") or f.get("journaltitle") or f.get("booktitle")
+    for src, dst in (("volume", "volume"), ("number", "issue"), ("doi", "DOI"), ("url", "URL"), ("publisher", "publisher")):
+        if f.get(src):
+            d[dst] = f[src]
+    if f.get("pages"):
+        d["page"] = re.sub(r"\s*-{1,3}\s*", "-", f["pages"])
+    y = re.match(r"(\d{4})", f.get("year") or f.get("date") or "")
+    if y:
+        d["issued"] = {"date-parts": [[int(y.group(1))]]}
+    if f.get("author"):
+        d["author"] = [_ris_name(a) for a in re.split(r"\s+and\s+", f["author"])]
+    return d
+
+
 def read_bib(path: Path) -> list[Ref]:
     text = path.read_text(encoding="utf-8", errors="replace")
-    refs = []
-    for i, m in enumerate(re.finditer(r"@(\w+)\s*\{\s*([^,]+),(.*?)\n\}", text, re.S), 1):
-        typ, key, body = m.group(1).lower(), m.group(2).strip(), m.group(3)
-        f = {k.lower(): re.sub(r"[{}]", "", v).strip()
-             for k, v in re.findall(r"(\w+)\s*=\s*[{\"](.*?)[}\"]\s*,?\s*(?=\n\s*\w+\s*=|\Z)", body, re.S)}
-        d = {"type": {"article": "article-journal", "inproceedings": "paper-conference",
-                      "incollection": "chapter", "book": "book", "misc": "generic"}.get(typ, "generic")}
-        if "title" in f:
-            d["title"] = " ".join(f["title"].split())
-        if "journal" in f or "booktitle" in f:
-            d["container-title"] = f.get("journal") or f.get("booktitle")
-        for src, dst in (("volume", "volume"), ("number", "issue"), ("doi", "DOI"), ("url", "URL")):
-            if src in f:
-                d[dst] = f[src]
-        if "pages" in f:
-            d["page"] = f["pages"].replace("--", "-")
-        if "year" in f and f["year"][:4].isdigit():
-            d["issued"] = {"date-parts": [[int(f["year"][:4])]]}
-        if "author" in f:
-            d["author"] = [_ris_name(a) for a in re.split(r"\s+and\s+", f["author"])]
-        refs.append(Ref(key, d, f"{path.name}, entry {i}"))
-    return refs
+    return [Ref(key, _bib_to_csl(typ, f), f"{path.name}, entry {i}")
+            for i, (typ, key, f) in enumerate(_bib_entries(text), 1)]
+
+
+def read_tex(path: Path) -> "ManuscriptRefs":
+    """LaTeX: the cited keys, resolved in the .bib files the manuscript names."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import latex
+
+    lib = [r for b in latex.bib_files(path) for r in read_bib(b)]
+    by_key = {r.key: r for r in lib}
+    ms = ManuscriptRefs(library=lib)
+    _, body = latex.split_document(latex.read_project(path))
+    for m in latex.CITE_RE.finditer(body):
+        ms.citations += 1
+        for k in m.group(1).split(","):
+            k = k.strip()
+            if not k:
+                continue
+            if k not in by_key:
+                if k not in ms.missing_keys:
+                    ms.missing_keys.append(k)
+                continue
+            r = by_key[k]
+            if r.cited == 0:
+                ms.refs.append(r)
+            r.cited += 1
+    return ms
 
 
 def read_csl_json(path: Path) -> list[Ref]:
@@ -197,6 +280,8 @@ def load(path: Path) -> ManuscriptRefs:
     suf = path.suffix.lower()
     if suf == ".docx":
         return read_docx(path)
+    if suf == ".tex":
+        return read_tex(path)
     reader = {".ris": read_ris, ".bib": read_bib, ".json": read_csl_json}.get(suf)
     if not reader:
         raise SystemExit(f"Unsupported file type: {path.name}")
@@ -344,6 +429,9 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             seen_doi.setdefault(doi, L)
         if t:
             seen_title.setdefault(t, L)
+    for k in ms.missing_keys:
+        add(Finding(f"\\cite{{{k}}}", "missing-key", "error",
+                    "Cited in the manuscript but not found in any .bib file; it will print as '?'", k))
     for mo in ms.manual_overrides:
         add(Finding("(citation)", "manual-override", "warning",
                     "A citation was typed over by hand; it will not update with the style", mo))
@@ -574,7 +662,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     ms = load(args.source)
-    library = load(args.library).refs if args.library else None
+    library = load(args.library).refs if args.library else ms.library
     findings = audit(ms, library)
     stats = None
     if args.cmd == "verify":

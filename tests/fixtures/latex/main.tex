@@ -1,0 +1,59 @@
+\documentclass[11pt]{article}
+\usepackage[numbers]{natbib}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+% \usepackage{lineno}  % line numbers are off in this draft
+\title{A Synthetic Study of Methylation Signatures in Luminal Breast Cancer}
+\author{A. Author and B. Author}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Luminal breast cancers differ in outcome. We trained 33 models on 4,329 samples
+and found 14 genes shared between observed and predicted sets \cite{curtis2012}.
+\end{abstract}
+
+\noindent\textbf{Keywords:} breast cancer; DNA methylation; machine learning; luminal subtypes; epigenetics
+
+\section{Introduction}
+Breast cancer has distinct molecular subtypes \citep{johnson2021,curtis2012}. % reviewer asked for this
+Luminal tumors account for \textbf{60\%} of cases.
+
+\section{Methods}
+\input{methods}
+
+\section{Results}
+Fourteen genes overlapped (Figure~\ref{fig:venn}, Table~\ref{tab:genes}).
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/fig1.png}
+\caption{Overlap between observed and predicted genes.}
+\label{fig:venn}
+\end{figure}
+
+\begin{table}[h]
+\caption{Top genes.}
+\label{tab:genes}
+\begin{tabular}{lr}
+\toprule
+Gene & log2FC \\
+\midrule
+SEPTIN2 & 1.84 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Raw values are in Table S1.
+
+\section{Discussion}
+These results agree with earlier work \citep{robinson2010}.
+
+\section*{Acknowledgements}
+We thank the reviewers.
+
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+\end{document}

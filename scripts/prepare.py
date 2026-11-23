@@ -27,6 +27,8 @@ from pathlib import Path
 
 from lxml import etree
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 NS = {"w": W}
 
@@ -148,7 +150,101 @@ def _citation_format(root) -> tuple[str, list[str]]:
     return "unknown", samples[:5]
 
 
+def analyze_tex(path: Path) -> dict:
+    import latex
+
+    full = latex.read_project(path)
+    pre, body = latex.split_document(full)
+    title = latex.detex(latex.command_arg(pre, "title") or latex.command_arg(body, "title") or "")
+    ab = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", body, re.S)
+    abstract = latex.detex(ab.group(1)) if ab else ""
+    kw = latex.command_arg(body, "keywords") or latex.command_arg(pre, "keywords")
+    if kw is None:
+        m = re.search(r"\\begin\{keywords?\}(.*?)\\end\{keywords?\}", body, re.S) or \
+            re.search(r"Keywords?\W*:\W*(.*)", body)
+        kw = m.group(1) if m else ""
+    keywords = [k.strip(" .") for k in re.split(r"[;,\u2022|]|\\sep", latex.detex(kw)) if k.strip(" .")]
+    # sections and main text
+    order, main_words = [], 0
+    floats = list(re.finditer(r"\\begin\{(figure|table)\*?\}(.*?)\\end\{\1\*?\}", body, re.S))
+    nofloat = re.sub(r"\\begin\{(figure|table)\*?\}.*?\\end\{\1\*?\}", " ", body, flags=re.S)
+    nofloat = re.sub(r"\\begin\{abstract\}.*?\\end\{abstract\}", " ", nofloat, flags=re.S)
+    parts = re.split(r"(\\(?:section|chapter)\*?\s*(?:\[[^\]]*\])?\s*\{[^}]*\})", nofloat)
+    current, started, ended = "front", False, False
+    if ab:
+        order.append("abstract")
+    if keywords:
+        order.append("keywords")
+    for chunk in parts:
+        m = re.match(r"\\(?:section|chapter)\*?\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}", chunk)
+        if m:
+            sec = _section_of(latex.detex(m.group(1)))
+            current = sec or "other"
+            if sec and sec not in order:
+                order.append(sec)
+            if sec in ("introduction", "methods", "results", "discussion") and not ended:
+                started = True
+            if sec in END_OF_MAIN and started:
+                ended = True
+            continue
+        if re.search(r"\\bibliography\s*\{|\\printbibliography|\\begin\{thebibliography\}", chunk):
+            if "references" not in order:
+                order.append("references")
+            if started:
+                ended = True
+            chunk = re.split(r"\\bibliography\s*\{|\\printbibliography|\\begin\{thebibliography\}", chunk)[0]
+        if started and not ended:
+            main_words += words(latex.detex(chunk))
+    figs = [f for f in floats if f.group(1) == "figure" and "\\caption" in f.group(2)]
+    tabs = [f for f in floats if f.group(1) == "table" and "\\caption" in f.group(2)]
+    end_marker = len(body) * 0.85
+    leg = re.search(r"\\section\*?\s*\{\s*(figure|table)s?\s*(and tables?\s*)?(legends|captions)?", body, re.I)
+    placement = Counter()
+    for f in figs + tabs:
+        placement["end" if f.start() > end_marker or (leg and f.start() > leg.start()) else "in_text"] += 1
+    text = latex.detex(body)
+    supp = sorted({(m[0] or m[3] or "").title() + " S" + (m[1] or m[2]) for m in SUPP_RE.findall(text)})
+    supp_style = Counter("S1 Table" if m[2] else "Table S1" for m in SUPP_RE.findall(text))
+    allx = pre + body
+    line_numbers = bool(re.search(r"\\usepackage\s*(\[[^\]]*\])?\s*\{lineno\}", pre)) and \
+        bool(re.search(r"\\linenumbers\b|\\usepackage\s*\[[^\]]*running[^\]]*\]\s*\{lineno\}", allx))
+    spacing = 1.0
+    if re.search(r"\\doublespacing\b", allx):
+        spacing = 2.0
+    elif re.search(r"\\onehalfspacing\b", allx):
+        spacing = 1.5
+    m = re.search(r"\\(?:setstretch|linespread)\s*\{([\d.]+)\}", allx)
+    if m:
+        spacing = round(float(m.group(1)), 2)
+    return {
+        "file": path.name,
+        "title": title,
+        "title_chars": len(title),
+        "abstract_words": words(abstract),
+        "keywords": keywords,
+        "main_text_words": main_words,
+        "sections_found": order,
+        "headings": [latex.detex(h) for h in re.findall(r"\\(?:sub)*section\*?\s*\{([^}]*)\}", body)],
+        "figures": list(range(1, len(figs) + 1)),
+        "tables": list(range(1, len(tabs) + 1)),
+        "captions_placement": dict(placement),
+        "figures_embedded": len(re.findall(r"\\includegraphics", body)),
+        "supplementary_items": supp,
+        "supplementary_label_style": supp_style.most_common(1)[0][0] if supp_style else None,
+        "line_numbers": line_numbers,
+        "page_numbers": not re.search(r"\\pagestyle\s*\{empty\}", allx),
+        "line_spacing": spacing,
+        "footnotes": len(re.findall(r"\\footnote\s*\{", body)),
+        "citation_format": latex.citation_style(path),
+        "citation_samples": [m.group(0) for m in latex.CITE_RE.finditer(body)][:5],
+        "references": len(latex.cited_keys(path)),
+        "format": "latex",
+    }
+
+
 def analyze(path: Path) -> dict:
+    if path.suffix.lower() == ".tex":
+        return analyze_tex(path)
     z = zipfile.ZipFile(path)
     xml_bytes = z.read("word/document.xml")
     xml = xml_bytes.decode("utf-8")
@@ -438,8 +534,40 @@ def checklist_markdown(facts: dict, req: dict, results: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------- safe formatting
+def format_tex(src: Path, req: dict, out: Path) -> list[str]:
+    """Layout-only fixes for LaTeX: edits the preamble and layout switches, never body text.
+    Writes the new main file next to the original so \\input files and figures still resolve."""
+    wanted = {r["check"]["type"]: r["check"] for r in req["requirements"] if "check" in r}
+    text = src.read_text(encoding="utf-8")
+    done = []
+    m = re.search(r"\\begin\{document\}", text)
+    if not m:
+        return ["No \\begin{document} found; nothing changed"]
+    pre, rest = text[:m.start()], text[m.start():]
+    if "line_numbers" in wanted and wanted["line_numbers"].get("value", True):
+        if not re.search(r"^[^%\n]*\\usepackage\s*(\[[^\]]*\])?\s*\{lineno\}", pre, re.M):
+            pre += "\\usepackage{lineno} % added by SubmitReady\n"
+        if not re.search(r"^[^%\n]*\\linenumbers\b", rest, re.M):
+            rest = rest.replace("\\begin{document}", "\\begin{document}\n\\linenumbers % added by SubmitReady", 1)
+        done.append("Turned on line numbers (lineno package)")
+    if "line_spacing" in wanted:
+        v = wanted["line_spacing"]["value"]
+        cmd = {1.0: "\\singlespacing", 1.5: "\\onehalfspacing", 2.0: "\\doublespacing"}.get(v)
+        if cmd:
+            rest = re.sub(r"\\(singlespacing|onehalfspacing|doublespacing)\b", "", rest)
+            pre = re.sub(r"\\(singlespacing|onehalfspacing|doublespacing)\b", "", pre)
+            if not re.search(r"\\usepackage\s*(\[[^\]]*\])?\s*\{setspace\}", pre):
+                pre += "\\usepackage{setspace} % added by SubmitReady\n"
+            pre += cmd + " % added by SubmitReady\n"
+            done.append(f"Set line spacing to {v}")
+    out.write_text(pre + rest, encoding="utf-8")
+    return done
+
+
 def format_docx(src: Path, req: dict, out: Path) -> list[str]:
     """Apply layout-only fixes requested by the requirements. Never touches text runs."""
+    if src.suffix.lower() == ".tex":
+        return format_tex(src, req, out)
     wanted = {r["check"]["type"]: r["check"] for r in req["requirements"] if "check" in r}
     done = []
     shutil.copy(src, out)

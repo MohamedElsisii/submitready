@@ -13,6 +13,9 @@ Allowed without failing the lock:
 
 Everything else (a changed, missing or added character) is reported.
 
+Works on Word (.docx) and LaTeX (.tex, with its \\input files; see latex.py for
+what counts as layout in LaTeX).
+
 Usage:
   python scripts/lock.py create manuscript.docx --out manuscript.lock.json
   python scripts/lock.py verify manuscript.lock.json formatted.docx [--report report.md]
@@ -36,6 +39,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from lxml import etree
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 VERSION = "0.1.0"
 
@@ -228,7 +233,25 @@ def check_refusals(z: zipfile.ZipFile) -> list[str]:
     return problems
 
 
+def extract_tex(tex_path: Path) -> dict:
+    import latex
+
+    texts, cites = latex.lock_units(tex_path)
+    units: list[Unit] = []
+    ci = 0
+    for i, t in enumerate(texts):
+        t = normalize(t.replace(latex.CITE_TOKEN, CITE_TOKEN))
+        n = t.count(CITE_TOKEN)
+        units.append(Unit("body", i, t, sha(t), count_sentences(t), cites[ci:ci + n]))
+        ci += n
+    bib = sum(len(re.findall(r"^\s*@\w+\s*\{", p.read_text(encoding="utf-8", errors="replace"), re.M))
+              for p in latex.bib_files(tex_path))
+    return {"units": units, "bibliography_paragraphs": bib, "refusals": []}
+
+
 def extract(docx_path: Path) -> dict:
+    if docx_path.suffix.lower() == ".tex":
+        return extract_tex(docx_path)
     units: list[Unit] = []
     bibliography_paragraphs = 0
     with zipfile.ZipFile(docx_path) as z:
