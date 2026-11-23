@@ -34,7 +34,7 @@ Nothing was changed in the references. Every finding is a suggestion for the aut
 ## The five rules
 
 1. **The text lock.** Every sentence of your manuscript (body, tables, figure legends, abstract, title, keywords) is fingerprinted before any step. Formatting is applied by plain scripts, never by AI rewriting. If a single word changes, the run stops and shows you the line.
-2. **Suggest, never apply.** Typos, word-limit overruns and guideline conflicts are listed for you to fix or approve one by one.
+2. **Suggest, never apply.** Typos, word-limit overruns and guideline conflicts are listed for you to fix. Only two kinds of change can be made for you, and only after you say yes to each: moving a whole section (like Funding) out of the submission copy word for word, and swapping supplementary labels exactly (like "Table S1" to "S1 Table"). The lock then proves those were the only changes.
 3. **No number without a source.** Every metric, date or guideline comes with its source link and the date it was checked. If something can't be verified, SubmitReady says "not found". It never guesses.
 4. **Flag, don't fix, references.** If a reference disagrees with Crossref or PubMed, you see both versions and decide. Nothing is invented or silently corrected.
 5. **New text is a separate draft.** Cover letters, statements and reviewer responses are separate files, marked as drafts, never mixed into your manuscript.
@@ -46,6 +46,7 @@ One folder per paper and journal, with:
 - the formatted manuscript, with proof that every sentence is unchanged
 - figure files converted to what the journal wants
 - a to-do list grouped by where the work happens (Word, reference manager, figure files, submission website), each item with where to find it and the guideline's own words
+- with your yes, the small fixes done for you: sections the journal wants in its web form moved out of the copy, and supplementary labels and file names switched to the journal's style
 - `submission_form.md`: your title, abstract, keywords, funding, competing interests, data availability and author contributions, copied word for word, ready to paste into the journal's website
 
 ## Install

@@ -333,7 +333,8 @@ TEX_BUILD = {".aux", ".log", ".out", ".toc", ".bbl", ".blg", ".synctex.gz", ".fl
 
 # ---------------------------------------------------------------- main audit
 def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: Path | None = None,
-        supp: Path | None = None, library: Path | None = None, online: bool = False, email: str = "") -> dict:
+        supp: Path | None = None, library: Path | None = None, online: bool = False, email: str = "",
+        approved: Path | None = None, original: Path | None = None) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     rep = out / "reports"
     rep.mkdir(exist_ok=True)
@@ -356,7 +357,16 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         fix("word", f"The manuscript still has {r}")
 
     # 1. text lock
-    lv = lockmod.verify(lock_path, manuscript)
+    approval = lockmod.load_approved(approved)
+    lv = lockmod.verify(lock_path, manuscript, approval)
+    if approved:
+        for c in json.loads(Path(approved).read_text(encoding="utf-8")).get("changes", []):
+            if c.get("approved") is True and c["kind"] == "move_out" and c.get("section") in FORM_FIELDS:
+                todo.append({"where": "website", "text": f"Paste the {FORM_FIELDS[c['section']]} text into the submission form "
+                             "(it is in submission_form.md, word for word)", "location": "", "quote": ""})
+    if lv.get("relabeled") or lv.get("moved_out"):
+        done.append(f"Made the changes you approved: {len(lv['relabeled'])} paragraphs with swapped labels, "
+                    f"{len(lv['moved_out'])} paragraphs moved to the submission form (each checked against the original)")
     (rep / "change_report.md").write_text(lockmod.report_markdown(lv), encoding="utf-8")
     if lv["status"] == 2:
         fix("word", f"Text changed: {len(lv['changed'])} changed and {len(lv['missing'])} missing paragraphs "
@@ -452,6 +462,22 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
 
     # 5. cross-references and supplementary files
     supp_files = sorted(p for p in supp.iterdir() if p.is_file()) if supp else None
+    if supp_files:
+        # copies go into the package, renamed only as approved; the author's files keep their names
+        renames = {}
+        if approved:
+            for c in json.loads(Path(approved).read_text(encoding="utf-8")).get("changes", []):
+                if c.get("approved") is True and c["kind"] == "relabel":
+                    renames.update({a: b for a, b in c.get("file_renames", [])})
+        (out / "supplementary").mkdir(exist_ok=True)
+        copied = []
+        for f in supp_files:
+            dst = out / "supplementary" / renames.get(f.name, f.name)
+            _copy(f, dst)
+            copied.append(dst)
+        if renames:
+            done.append(f"Renamed {len(renames)} supplementary file copies to the new labels (your originals keep their names)")
+        supp_files = sorted(copied)
     xr = crossrefs(facts, manuscript, supp_files)
     (rep / "crossrefs.md").write_text("# Cross-references\n\n" + ("\n".join(
         f"- {i['severity']}: {i['item']}: {i['problem']}" for i in xr) or "All figures, tables and supplementary items are numbered, cited and present.") + "\n", encoding="utf-8")
@@ -460,11 +486,7 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
             fix("supp" if "supplementary file" in i["problem"] else "word", f"{i['item']}: {i['problem']}")
         else:
             checks.append(f"{i['item']}: {i['problem']}")
-    if supp_files:
-        (out / "supplementary").mkdir(exist_ok=True)
-        for f in supp_files:
-            _copy(f, out / "supplementary" / f.name)
-    elif facts["supplementary_items"]:
+    if not supp_files and facts["supplementary_items"]:
         checks.append("Supplementary items are cited but no supplementary folder was given (--supp)")
 
     # 6. package the manuscript (LaTeX: the whole source folder, without build files)
@@ -482,7 +504,12 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
 
     # 7. submission form sheet: fields copied word for word for the journal's website
     try:
-        (out / "submission_form.md").write_text(formmod.markdown(formmod.build(manuscript)), encoding="utf-8")
+        # built from the original, so sections moved out of the copy are still there, word for word
+        src = original
+        if src is None:
+            cand = lock_path.parent / json.loads(lock_path.read_text(encoding="utf-8")).get("source_file", "")
+            src = cand if cand.is_file() and cand.suffix.lower() == manuscript.suffix.lower() else manuscript
+        (out / "submission_form.md").write_text(formmod.markdown(formmod.build(src)), encoding="utf-8")
         has_form = True
     except Exception as e:  # never block the package on the form sheet
         checks.append(f"The submission form sheet could not be made ({e})")
@@ -494,14 +521,15 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         "",
         f"**{manuscript.name}** for **{req['journal']}** ({req.get('article_type', '')})",
         "",
-        f"- Text lock: **{lv['sentences_unchanged']:,} of {lv['sentences_locked']:,} sentences unchanged**",
+        f"- Text lock: **{lv['sentences_unchanged']:,} of {lv['sentences_locked']:,} sentences unchanged**"
+        + (f"; the other {lv['sentences_approved']:,} changed only as you approved" if lv.get("sentences_approved") else ""),
         f"- Journal rules: {Counter(r['status'] for r in res).get('PASS', 0)} of {len(res)} pass",
         f"- References: {len(ms.refs)} checked, {sev.get('error', 0)} errors, {sev.get('warning', 0)} warnings",
         f"- Figures: {len(rows)} files checked",
         "",
     ]
     if todo:
-        summary += [f"## Must fix before submitting ({len(blocking)})", ""]
+        summary += [f"## Your to-do ({len(blocking)} must fix before submitting)" if blocking else "## Your to-do", ""]
         for key, title in TODO_GROUPS:
             items = [t for t in todo if t["where"] == key]
             if not items:
@@ -548,8 +576,11 @@ def main(argv=None) -> int:
     ap.add_argument("--online", action="store_true", help="also verify references with Crossref and PubMed")
     ap.add_argument("--email", default="")
     ap.add_argument("--out", type=Path, default=Path("submission_package"))
+    ap.add_argument("--approved", type=Path, help="change plan with the changes you approved (changes.py)")
+    ap.add_argument("--original", type=Path, help="the original manuscript (for the form sheet); default: next to the lock")
     a = ap.parse_args(argv)
-    r = run(a.manuscript, a.lock, a.requirements, a.out, a.figures, a.supp, a.library, a.online, a.email)
+    r = run(a.manuscript, a.lock, a.requirements, a.out, a.figures, a.supp, a.library, a.online, a.email,
+            a.approved, a.original)
     print((a.out / "SUMMARY.md").read_text(encoding="utf-8"))
     return 0 if r["verdict"] == "READY" else 1
 

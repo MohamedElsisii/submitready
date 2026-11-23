@@ -42,7 +42,7 @@ from lxml import etree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 M = "http://schemas.openxmlformats.org/officeDocument/2006/math"
@@ -88,6 +88,43 @@ def count_sentences(text: str) -> int:
         return 0
     parts = re.split(r"(?<=[.!?])\s+(?=[A-Z0-9(\[\"'\u201c])", t)
     return len([p for p in parts if p.strip()])
+
+
+# ---------------------------------------------------------------- approved changes
+# The author can approve two kinds of change, and nothing else:
+#   relabel:  exact label swaps such as "Table S1" -> "S1 Table" (pairs listed one by one)
+#   move_out: whole paragraphs taken out of the copy word for word (e.g. Funding, for the submission form)
+# A swap is skipped where it would split a range or list ("Table S1-S3", "Table S1, S2"); those stay for the author.
+_NOT_A_RANGE = r"(?![\w\u2011\-\u2013\u2014])(?!\s*(?:[-\u2013\u2014]|,\s*S?\d|and\s+S?\d|&\s*S?\d))"
+
+
+def relabel_regex(pairs: list[list[str]]):
+    olds = sorted({a for a, _ in pairs}, key=len, reverse=True)
+    return re.compile(r"(?<![\w\u2011\-])(" + "|".join(re.escape(a) for a in olds) + ")" + _NOT_A_RANGE) if olds else None
+
+
+def relabel_text(text: str, pairs: list[list[str]]) -> str:
+    """Apply approved label swaps; the same function is used to change the copy and to verify it."""
+    rx = relabel_regex(pairs)
+    if rx is None:
+        return text
+    m = {a: b for a, b in pairs}
+    return rx.sub(lambda x: m[x.group(1)], text)
+
+
+def load_approved(plan_path: Path | None) -> dict:
+    """Approved changes from a SubmitReady change plan (only entries with "approved": true)."""
+    if not plan_path:
+        return {"relabel": [], "move_out": []}
+    plan = json.loads(Path(plan_path).read_text(encoding="utf-8"))
+    out = {"relabel": [], "move_out": []}
+    for c in plan.get("changes", []):
+        if c.get("approved") is True:
+            if c["kind"] == "relabel":
+                out["relabel"] += [list(p) for p in c["pairs"]]
+            elif c["kind"] == "move_out":
+                out["move_out"] += list(c["paragraphs"])
+    return out
 
 
 def sha(text: str) -> str:
@@ -322,32 +359,61 @@ def _visible(s: str) -> str:
     return s.replace(CITE_TOKEN, "[cite]").replace("\t", "\\t").replace("\n", "\\n")
 
 
-def verify(lock_path: Path, docx: Path) -> dict:
+def verify(lock_path: Path, docx: Path, approved: dict | None = None) -> dict:
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     old = lock["units"]
+    approved = approved or {"relabel": [], "move_out": []}
     new_data = extract(docx)
     new = [asdict(u) for u in new_data["units"]]
 
-    old_counts = Counter(u["sha256"] for u in old)
-    new_counts = Counter(u["sha256"] for u in new)
 
-    # Exact matches (by content, regardless of position)
-    matched_old: set[int] = set()
-    matched_new: set[int] = set()
-    remaining = dict(old_counts)
-    pos_old = defaultdict(list)
-    for i, u in enumerate(old):
-        pos_old[u["sha256"]].append(i)
-    for j, u in enumerate(new):
-        h = u["sha256"]
-        if remaining.get(h, 0) > 0:
-            i = pos_old[h].pop(0)
-            remaining[h] -= 1
-            matched_old.add(i)
-            matched_new.add(j)
+    # Exact matches. First in document order (so that two identical paragraphs, such as two
+    # "Not applicable." lines under different headings, are told apart by where they are),
+    # then by content anywhere (paragraphs that moved).
+    old_h = [u["sha256"] for u in old]
+    new_h = [u["sha256"] for u in new]
+    pair: dict[int, int] = {}
+    for blk in difflib.SequenceMatcher(None, old_h, new_h, autojunk=False).get_matching_blocks():
+        for k in range(blk.size):
+            pair[blk.a + k] = blk.b + k
+    used = set(pair.values())
+    free_new = defaultdict(list)
+    for jj, h in enumerate(new_h):
+        if jj not in used:
+            free_new[h].append(jj)
+    for ii, h in enumerate(old_h):
+        if ii not in pair and free_new.get(h):
+            pair[ii] = free_new[h].pop(0)
+    matched_old: set[int] = set(pair)
+    matched_new: set[int] = set(pair.values())
 
     unmatched_old = [i for i in range(len(old)) if i not in matched_old]
     unmatched_new = [j for j in range(len(new)) if j not in matched_new]
+
+    # Approved label swaps: the original text with exactly the approved swaps must equal the new text
+    relabeled = []
+    if approved["relabel"]:
+        free_new = defaultdict(list)
+        for j in unmatched_new:
+            free_new[new[j]["sha256"]].append(j)
+        for i in list(unmatched_old):
+            t2 = relabel_text(old[i]["text"], approved["relabel"])
+            if t2 != old[i]["text"] and free_new.get(sha(t2)):
+                j = free_new[sha(t2)].pop(0)
+                relabeled.append({"old_index": i, "new_index": j, "diff": _word_diff(old[i]["text"], t2)})
+                unmatched_old.remove(i)
+                unmatched_new.remove(j)
+    # Approved moves: a paragraph may be absent only if its exact original text was approved
+    # (each approval names the paragraph by its position in the lock, so "Not applicable." under
+    # Ethics cannot stand in for "Not applicable." under Data availability)
+    moved_out = []
+    for a in approved["move_out"]:
+        i = a.get("index") if isinstance(a, dict) else None
+        text = normalize(a["text"] if isinstance(a, dict) else a)
+        if i is None or not (0 <= i < len(old)) or i not in unmatched_old or old[i]["text"] != text:
+            continue
+        moved_out.append({"old_index": i, "text": _visible(old[i]["text"])})
+        unmatched_old.remove(i)
 
     # Pair leftovers by similarity: changed paragraphs
     changed = []
@@ -370,13 +436,7 @@ def verify(lock_path: Path, docx: Path) -> dict:
     added = [{"new_index": j, "text": _visible(new[j]["text"])} for j in unmatched_new if j not in used_new]
 
     # Moved: matched paragraphs whose relative order changed
-    seq_old_for_new = []
-    tmp_pos = defaultdict(list)
-    for i, u in enumerate(old):
-        if i in matched_old:
-            tmp_pos[u["sha256"]].append(i)
-    for j in sorted(matched_new):
-        seq_old_for_new.append(tmp_pos[new[j]["sha256"]].pop(0))
+    seq_old_for_new = [i for i, _ in sorted(pair.items(), key=lambda x: x[1])]
     lis = _longest_increasing_subsequence(seq_old_for_new)
     moved = len(seq_old_for_new) - len(lis)
 
@@ -386,6 +446,7 @@ def verify(lock_path: Path, docx: Path) -> dict:
     cite_changes = sum(1 for a, b in zip(old_cites, new_cites) if a != b)
 
     unchanged_sentences = sum(old[i]["sentences"] for i in matched_old)
+    approved_sentences = sum(old[c["old_index"]]["sentences"] for c in relabeled + moved_out)
     version_note = ""
     if lock.get("version") != VERSION:
         version_note = (f"This lock was made with SubmitReady lock {lock.get('version')}, and this is {VERSION}. "
@@ -405,6 +466,9 @@ def verify(lock_path: Path, docx: Path) -> dict:
         "sentences_locked": lock["sentences"],
         "sentences_unchanged": unchanged_sentences,
         "moved_paragraphs": moved,
+        "relabeled": relabeled,
+        "moved_out": moved_out,
+        "sentences_approved": approved_sentences,
         "changed": changed,
         "missing": missing,
         "added": added,
@@ -447,13 +511,23 @@ def report_markdown(r: dict) -> str:
     if r.get("version_note"):
         lines += [f"Note: {r['version_note']}", ""]
     lines += [
-        f"- Sentences unchanged: **{r['sentences_unchanged']:,} of {r['sentences_locked']:,}**",
+        f"- Sentences unchanged: **{r['sentences_unchanged']:,} of {r['sentences_locked']:,}**"
+        + (f" (the other {r.get('sentences_approved', 0):,} changed only as you approved, listed below)"
+           if r.get("sentences_approved") else ""),
         f"- Paragraphs unchanged: {r['paragraphs_unchanged']:,} of {r['paragraphs_locked']:,}",
         f"- Paragraphs moved (text identical): {r['moved_paragraphs']}",
         f"- Citation markers: {r['citations_found']} found, {r['citations_locked']} locked, "
         f"{r['citation_markers_changed']} restyled (allowed)",
         "",
     ]
+    if r.get("relabeled") or r.get("moved_out"):
+        lines += ["## Changes you approved", "",
+                  "Only these changes were allowed. Each was checked against the original text.", ""]
+        for c in r.get("relabeled", []):
+            lines.append(f"- Paragraph {c['old_index'] + 1}, labels swapped: {c['diff']}")
+        for m in r.get("moved_out", []):
+            lines.append(f"- Paragraph {m['old_index'] + 1}, moved to the submission form word for word: {m['text'][:200]}")
+        lines.append("")
     if r["changed"]:
         lines += ["## Changed text", "", "Removed text is shown as `[-...-]`, added text as `{+...+}`.", ""]
         for c in r["changed"]:
@@ -488,6 +562,7 @@ def main(argv=None) -> int:
     v.add_argument("docx", type=Path)
     v.add_argument("--report", type=Path, help="write a Markdown report here")
     v.add_argument("--json", action="store_true", help="print the full result as JSON")
+    v.add_argument("--approved", type=Path, help="change plan with the changes you approved")
     args = ap.parse_args(argv)
 
     try:
@@ -504,7 +579,7 @@ def main(argv=None) -> int:
             return 0
         if args.lock.suffix.lower() != ".json" and args.docx.suffix.lower() == ".json":
             args.lock, args.docx = args.docx, args.lock  # arguments given in the other order
-        r = verify(args.lock, args.docx)
+        r = verify(args.lock, args.docx, load_approved(args.approved))
         md = report_markdown(r)
         if args.report:
             args.report.write_text(md, encoding="utf-8")

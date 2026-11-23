@@ -34,22 +34,35 @@ Do steps 2 and 3 of `${CLAUDE_PLUGIN_ROOT}/skills/prepare/SKILL.md`: read the li
 
 ## 4. Layout fixes, then prove nothing else changed
 
-1. `python "${CLAUDE_PLUGIN_ROOT}/scripts/prepare.py" format <manuscript> <requirements.json> --out <manuscript>_<journal>.docx`
-2. `python "${CLAUDE_PLUGIN_ROOT}/scripts/lock.py" verify <manuscript>.lock.json <manuscript>_<journal>.docx --report <manuscript>_change_report.md`
+1. `python "${CLAUDE_PLUGIN_ROOT}/scripts/prepare.py" format <manuscript> <requirements.json> --out <manuscript>_<journal>_formatted.docx`
+2. `python "${CLAUDE_PLUGIN_ROOT}/scripts/lock.py" verify <manuscript>.lock.json <manuscript>_<journal>_formatted.docx --report <manuscript>_change_report.md`
 
 If the lock says STOP, stop and show every changed line.
 
-## 5. Final check and package
+## 5. Changes that need the author's yes (Word files only)
 
-`python "${CLAUDE_PLUGIN_ROOT}/scripts/check.py" <manuscript>_<journal>.docx --lock <manuscript>.lock.json --requirements <requirements.json> [--figures <dir>] [--supp <dir>] [--library <export>] --online --out <manuscript>_<journal>_package`
+Some journal rules can be met without retyping: moving a whole section (for example Funding) out of the submission copy into the form sheet, and swapping supplementary labels (for example "Table S1" to "S1 Table").
+
+1. `python "${CLAUDE_PLUGIN_ROOT}/scripts/changes.py" plan <manuscript>_<journal>_formatted.docx <manuscript>.lock.json <requirements.json> [--supp <dir>] --out <manuscript>_<journal>.changes.json`
+2. If the plan is empty, skip to step 6 with the formatted file.
+3. Otherwise show the user `<manuscript>_<journal>.changes.md` and ask once, with one multiple-choice question listing each change by its title, which ones to make. Never approve a change yourself, even in auto mode. If the user is not there, make none of them and list them in the to-do.
+4. Set `"approved": true` only on the changes the user chose, in the `.changes.json` file. Change nothing else in it.
+5. `python "${CLAUDE_PLUGIN_ROOT}/scripts/changes.py" apply <manuscript>_<journal>_formatted.docx <manuscript>_<journal>.changes.json <manuscript>.lock.json --out <manuscript>_<journal>.docx`
+   It checks its own result with the lock and refuses anything the user did not approve.
+
+The file to submit is `<manuscript>_<journal>.docx` if changes were made, otherwise `<manuscript>_<journal>_formatted.docx`.
+
+## 6. Final check and package
+
+`python "${CLAUDE_PLUGIN_ROOT}/scripts/check.py" <file to submit> --lock <manuscript>.lock.json --requirements <requirements.json> --original <manuscript> [--approved <manuscript>_<journal>.changes.json] [--figures <dir>] [--supp <dir>] [--library <export>] --online --out <manuscript>_<journal>_package`
 
 Exit code 1 means NOT READY. It is not a failure. If the online reference check could not run, say so in one line.
 
-## 6. Tell the user, in this order, on one screen
+## 7. Tell the user, in this order, on one screen
 
 1. **Verdict:** READY or NOT READY, and the lock line ("all N sentences unchanged").
-2. **Done for you:** the layout fixes and figure conversions, one line each.
-3. **Your to-do:** copy the to-do list from `SUMMARY.md` as it is, grouped by where the work happens (reference manager, Word, submission website, figure files). Keep each item's location and guideline quote. Do not add items of your own.
+2. **Done for you:** the layout fixes, the changes they approved, and the figure conversions, one line each.
+3. **Your to-do:** copy the "Your to-do" list from `SUMMARY.md` as it is, grouped by where the work happens (reference manager, Word, submission website, figure files). Keep each item's location and guideline quote. Do not add items of your own.
 4. **Ready to paste:** say that `submission_form.md` in the package holds the title, abstract, keywords, statements and counts, copied word for word for the journal's website.
 5. **Where everything is:** the package folder path.
 
