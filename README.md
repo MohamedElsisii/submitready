@@ -12,6 +12,23 @@ SubmitReady is a free, open-source Claude skill that prepares a research manuscr
 
 Preparing one manuscript for one journal takes days, and every rejection restarts the work for the next journal. Existing tools are paid, cover only one step, or rewrite your words. SubmitReady does the whole job and proves it touched nothing it shouldn't.
 
+## See it on a real paper
+
+We ran SubmitReady on a published, peer-reviewed review with 296 references: Elsisi et al. (2024), *Stress Biology* 4:31, [doi:10.1007/s44154-024-00160-2](https://doi.org/10.1007/s44154-024-00160-2). The article is open access under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Its first author is SubmitReady's maintainer.
+
+The online reference check took under two minutes and matched 289 of 296 references in Crossref. It found problems that passed peer review and copyediting:
+
+- **27 DOIs with web-page junk at the end**, such as `10.2478/s11756-020-00507-w/figures/5` or `10.3389/fpls.2017.01206/bibtex`. Each one is shown with the corrected DOI, confirmed in Crossref.
+- **Two references share one DOI** (Khokon 2010 and Khokon 2011).
+- **A cited paper has an expression of concern**, published in April 2024 (Crossref notice 10.1016/j.chemosphere.2024.141603).
+- **A citation with no reference**: "Fu et al., 2021" is cited in the text, but no Fu is in the list.
+- **One entry, two citations**: Garcion 2008a and 2008b, Horváth 2007a and 2007b, and Huang 2010a and 2010b are cited, but each has only one list entry.
+- **Figures cited out of order**: Figure 3 is cited before Figure 2.
+
+Then `/submitready:prepare` reformatted the manuscript for another journal (line numbers, line spacing), and the text lock confirmed that all 1,842 sentences stayed exactly the same.
+
+Nothing was changed in the references. Every finding is a suggestion for the authors to accept or reject.
+
 ## The five rules
 
 1. **The text lock.** Every sentence of your manuscript (body, tables, figure legends, abstract, title, keywords) is fingerprinted before any step. Formatting is applied by plain scripts, never by AI rewriting. If a single word changes, the run stops and shows you the line.

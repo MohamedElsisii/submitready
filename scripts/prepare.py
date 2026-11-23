@@ -140,6 +140,14 @@ def _citation_format(root) -> tuple[str, list[str]]:
             break
     s = " ".join(samples)
     if not samples:
+        # typed citations (no reference manager): look at the plain text
+        body = "".join(t.text or "" for t in root.iter(q("t")))
+        ay = re.findall(r"\([A-Z][^()]{0,60}?(?:et al\.?|and [A-Z]\w+)?,? (?:19|20)\d{2}[a-z]?[;)]", body)
+        nb = re.findall(r"\[\d+(?:[-\u2013,]\s*\d+)*\]", body)
+        if len(ay) >= 3 and len(ay) >= len(nb):
+            return "author-date (typed, not live citations)", [a.strip("(;)") for a in ay[:5]]
+        if len(nb) >= 3:
+            return "numeric, square brackets (typed, not live citations)", nb[:5]
         return "unknown (no live citations found)", []
     if re.search(r"\[\d", s):
         return "numeric, square brackets", samples[:5]

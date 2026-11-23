@@ -499,7 +499,11 @@ def main(argv=None) -> int:
                 f"({lock['citations']} live citations, {lock['bibliography_paragraphs_excluded']} "
                 f"bibliography entries left to /refs). Lock saved to {out}"
             )
+            if not lock["citations"] and not lock["bibliography_paragraphs_excluded"]:
+                print("No live citations found: typed citations and the typed reference list are locked as normal text.")
             return 0
+        if args.lock.suffix.lower() != ".json" and args.docx.suffix.lower() == ".json":
+            args.lock, args.docx = args.docx, args.lock  # arguments given in the other order
         r = verify(args.lock, args.docx)
         md = report_markdown(r)
         if args.report:

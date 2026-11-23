@@ -180,3 +180,80 @@ def test_online_print_year_and_consortium_are_not_false_alarms():
     })
     f, _ = refs.verify(ms, fetch, pause=0)
     assert not [x for x in f if x.code.startswith("mismatch")], [(x.code, x.ref) for x in f]
+
+
+def test_junk_doi_suffix_is_repaired():
+    ms = refs.ManuscriptRefs(refs=[refs.Ref("a", {"type": "article-journal", "title": "A study of things",
+                                                  "DOI": "10.3389/fpls.2017.01206/bibtex",
+                                                  "author": [{"family": "Doe"}]}, "x")])
+    fetch = fake_crossref({"works/10.3389/fpls.2017.01206/bibtex": None,
+                           "works/10.3389/fpls.2017.01206": {"message": {"title": ["A study of things"],
+                                                                        "author": [{"family": "Doe"}]}}})
+    f, stats = refs.verify(ms, fetch, pause=0)
+    junk = next(x for x in f if x.code == "doi-junk-suffix")
+    assert junk.suggested == "10.3389/fpls.2017.01206"
+    assert stats["matched"] == 1
+
+
+# ---- plain typed reference lists (no reference manager) ----
+
+def test_parse_plain_author_year():
+    d = refs.parse_plain("Roca Paixão JF, Gillet FX, Ribeiro TP (2019) Improved drought stress tolerance in "
+                         "Arabidopsis. Sci Rep 9:8113. https://doi.org/10.1038/s41598-019-44133-3")
+    assert d["author"][0]["family"] == "Roca Paixão"
+    assert d["_year_label"] == "2019"
+    assert d["DOI"] == "10.1038/s41598-019-44133-3"
+    assert d["title"].startswith("Improved drought stress tolerance")
+
+
+def test_parse_plain_numbered_with_particle_and_letter():
+    d = refs.parse_plain("[3] van Verk MC, Bol JF (2011a) Prospecting for genes. Plant Physiol 156:1-10")
+    assert d["author"][0]["family"] == "van Verk"
+    assert d["_year_label"] == "2011a"
+
+
+def test_author_year_citations_forms():
+    text = ("Drought hurts yield (Smith 2020; Smith and Jones 2019a, b; Lee et al., 2018, 2021). "
+            "Roca Paixão et al. (2019) showed this. See Table 1 (2020 data).")
+    got = set(refs.author_year_citations(text))
+    assert ("Smith", "2020") in got
+    assert ("Smith", "2019a") in got and ("Smith", "2019b") in got
+    assert ("Lee", "2018") in got and ("Lee", "2021") in got
+    assert ("Roca Paixão", "2019") in got
+    assert not any(f == "Table" for f, _ in got)
+
+
+def _plain_docx(tmp_path, body, references):
+    import docx as pydocx
+    d = pydocx.Document()
+    for b in body:
+        d.add_paragraph(b)
+    d.add_paragraph("References")
+    for r in references:
+        d.add_paragraph(r)
+    p = tmp_path / "plain.docx"
+    d.save(p)
+    return p
+
+
+def test_plain_docx_cited_and_listed(tmp_path):
+    p = _plain_docx(tmp_path,
+                    ["Salt stress is common (Smith et al. 2020; Fu et al. 2021).", "Jones (2019) disagreed."],
+                    ["Jones A (2019) A title. J Plant 1:1-2",
+                     "Smith B, Lee C (2020) Another title. J Plant 2:3-4",
+                     "Zhou D (2018) Never cited. J Plant 3:5-6"])
+    ms = refs.load(p)
+    assert ms.plain and len(ms.refs) == 3
+    f = refs.match_plain_citations(ms)
+    codes = {(x.code, x.ref) for x in f}
+    assert ("cited-not-listed", "Fu 2021") in codes
+    assert any(c == "listed-not-cited" and "Zhou" in w for c, w in codes)
+    assert not any("Smith" in w or "Jones" in w for _, w in codes)
+
+
+def test_plain_docx_numbered(tmp_path):
+    p = _plain_docx(tmp_path, ["As shown [1, 3-4] and [6]."],
+                    ["1. A A (2019) T. J 1", "2. B B (2019) T. J 1", "3. C C (2019) T. J 1", "4. D D (2019) T. J 1"])
+    f = refs.match_plain_citations(refs.load(p))
+    assert any(x.code == "cited-not-listed" and x.ref == "[6]" for x in f)
+    assert any(x.code == "listed-not-cited" and "2" in x.message for x in f)

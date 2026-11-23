@@ -157,3 +157,11 @@ def test_random_planted_edit_is_always_caught(sample, seed):
     out = tmp / f"planted_{seed}.docx"
     plant_edit(src, out, random.Random(seed))
     assert lock.verify(lk, out)["status"] == 2
+
+
+def test_verify_accepts_swapped_arguments(tmp_path):
+    src = tmp_path / "a.docx"
+    make_sample(src)
+    lk = tmp_path / "a.lock.json"
+    lock.create(src, lk)
+    assert lock.main(["verify", str(src), str(lk)]) == 0

@@ -66,6 +66,8 @@ class ManuscriptRefs:
     manual_overrides: list[str] = field(default_factory=list)
     library: list[Ref] | None = None          # full library when the source carries one (.tex + .bib)
     missing_keys: list[str] = field(default_factory=list)  # cited keys with no library entry
+    plain: bool = False                       # references typed as plain text (no reference manager)
+    body_text: str = ""                       # manuscript text before the reference list (plain mode)
 
 
 # ---------------------------------------------------------------- readers
@@ -94,6 +96,149 @@ def read_docx(path: Path) -> ManuscriptRefs:
                 by_key[k] = Ref(k, d, f"{path.name}, citation {out.citations}")
                 out.refs.append(by_key[k])
             by_key[k].cited += 1
+    if out.citations == 0:
+        return read_docx_plain(path)
+    return out
+
+
+PLAIN_DOI = re.compile(r"(?:https?://(?:dx\.)?doi\.org/|doi:\s*)?(10\.\d{4,9}/[^\s,;]+)", re.I)
+
+
+def parse_plain(text: str) -> dict:
+    """Best-effort fields from one typed reference (author-year or numbered styles)."""
+    t = re.sub(r"^\s*(\[\d+\]|\d+\.)\s*", "", text)
+    d: dict = {"_raw": text, "_plain": True}
+    m = PLAIN_DOI.search(t)
+    if m:
+        d["DOI"] = m.group(1).rstrip(".")
+    ym = re.search(r"\((\d{4})([a-z]?)\)", t) or re.search(r"(?<![\d/.])((?:19|20)\d{2})([a-z]?)(?![\d/])", t)
+    if ym:
+        d["issued"] = {"date-parts": [[int(ym.group(1))]]}
+        d["_year_label"] = ym.group(1) + ym.group(2)
+    # family name = everything before the initials: "Roca Paixão JF," "van Verk MC," "Smith AB,"
+    fm = re.match(r"\s*(.+?)\s+[A-Z\u00C0-\u00DE]{1,4}(?:-[A-Z\u00C0-\u00DE]{1,2})?\.?(?:,|\s*\(|\s+et al|\.\s)", t[:120])
+    if not fm:
+        fm = re.match(r"\s*([A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+)", t)
+    if fm:
+        d["author"] = [{"family": fm.group(1).strip(" ,")}]
+    if ym and re.match(r"\(\d{4}", t[ym.start():]):
+        rest = t[ym.end():].strip(" .")
+        d["title"] = re.split(r"(?<=[a-z0-9\)])\.\s", rest, maxsplit=1)[0].strip()
+    else:
+        parts = re.split(r"(?<=[a-z0-9\)])\.\s", t)
+        d["title"] = parts[1].strip() if len(parts) > 1 else t
+    return d
+
+
+def read_docx_plain(path: Path) -> ManuscriptRefs:
+    import docx as pydocx
+
+    paras = [p for p in pydocx.Document(path).paragraphs]
+    texts = [p.text.strip() for p in paras]
+    start = None
+    for i, t in enumerate(texts):
+        if re.fullmatch(r"(?:\d+\.?\s*)?(references|bibliography|literature cited)\s*:?", t, re.I):
+            start = i
+    out = ManuscriptRefs(plain=True)
+    if start is None:
+        return out
+    # body text before the reference list, table cells included (reviews often cite inside tables)
+    doc = pydocx.Document(path)
+    ref_el = paras[start]._p
+    chunks = []
+    for el in doc.element.body.iterchildren():
+        if el is ref_el:
+            break
+        chunks.append("".join(t.text or "" for t in el.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t")))
+    out.body_text = " ".join(chunks)
+    n = 0
+    for p, t in zip(paras[start + 1:], texts[start + 1:]):
+        if not t:
+            continue
+        if p.style.name.lower().startswith("heading"):
+            break
+        n += 1
+        out.refs.append(Ref(f"ref-{n}", parse_plain(t), f"{path.name}, reference {n}"))
+    return out
+
+
+PARTICLE = r"(?:[Vv]an|[Vv]on|[Dd]e|[Dd]er|[Dd]a|[Dd]i|[Dd]u|[Dd]os|[Dd]el|[Ll]e|[Ll]a)"
+NAME = (rf"(?:{PARTICLE}\s+)?(?:{PARTICLE}\s+)?(?![A-Z\u00C0-\u00DE\-]{{1,4}}\b)[A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+"
+        r"(?:\s+(?![A-Z\u00C0-\u00DE\-]{1,4}\b)[A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+(?=\s+(?:et al|and|&|\(?(?:19|20)\d{2})))?")
+
+
+def author_year_citations(text: str) -> list[tuple[str, str]]:
+    """(family, year label) pairs from in-text author-year citations.
+
+    Parenthetical: (Smith 2020; Smith and Jones 2019a, b; Smith et al., 2018, 2019)
+    Narrative:     Smith et al. (2020), Smith and Jones (2019), Smith (2018)
+    """
+    yr = r"(?:19|20)\d{2}[a-z]?"
+    item = re.compile(rf"^\s*(?:e\.g\.,?\s*|see\s+|cf\.\s*|reviewed in\s+)?({NAME})"
+                      rf"(?:\s+et al\.?|\s+(?:and|&)\s+{NAME})?,?\s+((?:{yr})(?:\s*,\s*(?:{yr}|[a-z]))*)\s*$")
+    found = []
+    for grp in re.findall(r"\(([^()]*?(?:19|20)\d{2}[a-z]?[^()]*?)\)", text):
+        for part in grp.split(";"):
+            m = item.match(part)
+            if not m:
+                continue
+            fam, years = m.group(1), m.group(2)
+            last = None
+            for y in re.split(r"\s*,\s*", years):
+                if re.fullmatch(yr, y):
+                    last = y[:4]
+                    found.append((fam, y))
+                elif re.fullmatch(r"[a-z]", y) and last:
+                    found.append((fam, last + y))
+    for m in re.finditer(rf"({NAME})(?:\s+et al\.?|\s+(?:and|&)\s+{NAME})?\s+\(({yr})\)", text):
+        found.append((m.group(1), m.group(2)))
+    not_names = {"journal", "sciences", "science", "biology", "plant", "plants", "molecular", "research", "reports",
+                 "letters", "physiology", "frontiers", "international", "nature", "cell", "table", "figure", "fig"}
+    return [(f, y) for f, y in found if not ({w.lower() for w in f.split()} & not_names)]
+
+
+def match_plain_citations(ms: ManuscriptRefs) -> list[Finding]:
+    """Every in-text citation has a list entry, and every list entry is cited (author-year or numbered)."""
+    out: list[Finding] = []
+    text = ms.body_text
+    nums = re.findall(r"\[(\d+(?:\s*[-\u2013,]\s*\d+)*)\]", text)
+    if nums and not author_year_citations(text):
+        cited = set()
+        for grp in nums:
+            for part in re.split(r"\s*,\s*", grp):
+                a = re.split(r"\s*[-\u2013]\s*", part)
+                if len(a) == 2 and a[0].isdigit() and a[1].isdigit():
+                    cited.update(range(int(a[0]), int(a[1]) + 1))
+                elif a[0].isdigit():
+                    cited.add(int(a[0]))
+        for k in sorted(c for c in cited if c > len(ms.refs)):
+            out.append(Finding(f"[{k}]", "cited-not-listed", "error", f"Cited as [{k}] but the list has only {len(ms.refs)} entries"))
+        for i, r in enumerate(ms.refs, 1):
+            if i not in cited:
+                out.append(Finding(label(r), "listed-not-cited", "warning", f"Reference {i} is never cited in the text"))
+        return out
+    def key(fam, y):
+        # match on the last word of the family name: "Roca Paixão" ~ "Paixão", "van Verk" ~ "Verk"
+        return (norm_text(fam).split(" ")[-1] if fam else "", y.lower())
+    listed = {}
+    for r in ms.refs:
+        fam = ((r.data.get("author") or [{}])[0].get("family") or "")
+        y = r.data.get("_year_label", "")
+        listed.setdefault(key(fam, y), r)
+    cited = {}
+    for fam, y in author_year_citations(text):
+        cited.setdefault(key(fam, y), f"{fam} {y}")
+    stop = {"in", "the", "and", "since", "from", "until", "by", "after", "before", "during", "between", "of", "to",
+            "for", "on", "at", "fig", "figure", "table", "et", "al"}
+    for k, shown in sorted(cited.items()):
+        if k in listed or k[0] in stop:
+            continue
+        near = [lk for lk in listed if lk[0] == k[0]]
+        hint = ("; the list has " + ", ".join(f"{listed[n].data['author'][0]['family']} {n[1]}" for n in near[:3])) if near else ""
+        out.append(Finding(shown, "cited-not-listed", "error", "Cited in the text but not in the reference list" + hint))
+    for k, r in listed.items():
+        if k not in cited:
+            out.append(Finding(label(r), "listed-not-cited", "warning", "In the reference list but never cited in the text"))
     return out
 
 
@@ -347,6 +492,11 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
     add = out.append
     for r in ms.refs:
         d, L = r.data, label(r)
+        if d.get("_plain"):
+            doi = d.get("DOI", "")
+            if doi and not DOI_RE.match(norm_doi(doi)):
+                add(Finding(L, "doi-invalid", "error", "DOI does not look valid", doi))
+            continue
         typ = d.get("type", "")
         doi = (d.get("DOI") or "").strip()
         if doi:
@@ -420,7 +570,7 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
     for r in ms.refs:
         L = label(r)
         doi = norm_doi(r.data.get("DOI", "")) if r.data.get("DOI") else ""
-        t = norm_text(r.data.get("title", ""))
+        t = norm_text(r.data.get("_raw") or r.data.get("title", ""))
         if doi and doi in seen_doi:
             add(Finding(L, "duplicate", "error", f"Same DOI as {seen_doi[doi]}", doi))
         elif t and t in seen_title:
@@ -429,6 +579,8 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             seen_doi.setdefault(doi, L)
         if t:
             seen_title.setdefault(t, L)
+    if ms.plain and ms.body_text:
+        out += match_plain_citations(ms)
     for k in ms.missing_keys:
         add(Finding(f"\\cite{{{k}}}", "missing-key", "error",
                     "Cited in the manuscript but not found in any .bib file; it will print as '?'", k))
@@ -527,16 +679,30 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
             res = fetch(f"https://api.crossref.org/works/{doi}")
             msg = (res or {}).get("message")
             if msg is None:
-                out.append(Finding(L, "doi-not-found", "error", "Crossref does not know this DOI", doi))
-                stats["not_found"] += 1
+                fixed = _repair_doi(doi, fetch)
+                if fixed:
+                    out.append(Finding(L, "doi-junk-suffix", "error",
+                                       "DOI has extra text copied from a web page; the corrected DOI exists", doi, fixed[0]))
+                    msg = fixed[1]
+                    doi = fixed[0]
+                else:
+                    out.append(Finding(L, "doi-not-found", "error", "Crossref does not know this DOI", doi))
+                    stats["not_found"] += 1
         else:
             title = d.get("title", "")
             if title:
-                res = fetch("https://api.crossref.org/works?rows=3&query.bibliographic="
-                            + _q(f"{title} {year(d)}"))
+                query = d["_raw"] if d.get("_plain") else f"{title} {year(d)}"
+                res = fetch("https://api.crossref.org/works?rows=3&query.bibliographic=" + _q(query))
                 items = ((res or {}).get("message") or {}).get("items") or []
-                best = max(items, key=lambda m: similar(title, (m.get("title") or [""])[0]), default=None)
-                if best and similar(title, (best.get("title") or [""])[0]) >= 0.92:
+
+                def score(m):
+                    ct = (m.get("title") or [""])[0]
+                    if d.get("_plain") and norm_text(ct) and norm_text(ct) in norm_text(d["_raw"]):
+                        return 1.0
+                    return similar(title, ct)
+
+                best = max(items, key=score, default=None)
+                if best and score(best) >= 0.92:
                     msg = best
                     stats["no_doi_found_by_title"] += 1
                     out.append(Finding(L, "doi-found", "info", "Found the DOI by title; add it to the reference",
@@ -550,6 +716,20 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                         out.append(Finding(L, "not-found", "warning",
                                            "Could not find this reference in Crossref or PubMed; check it by hand"))
                         stats["not_found"] += 1
+        if msg and d.get("_plain"):
+            cr = _crossref_fields(msg)
+            stats["matched"] += 1
+            raw = norm_text(d["_raw"])
+            ct = norm_text(re.sub(r"\[(version|v)\s*\d[^\]]*\]", "", cr["title"]))
+            if ct and ct not in raw and not titles_match(d.get("title", ""), cr["title"]):
+                out.append(Finding(L, "mismatch-title", "warning", "Title differs from Crossref", d.get("title", ""), cr["title"]))
+            if cr["years"] and not any(y in d["_raw"] for y in cr["years"]):
+                out.append(Finding(L, "mismatch-year", "warning", "Year differs from Crossref", year(d), "/".join(cr["years"])))
+            if cr["authors"] and cr["authors"][0] and not any(a and a in raw for a in cr["authors"][:3]):
+                out.append(Finding(L, "mismatch-first-author", "warning", "First author differs from Crossref",
+                                   ((d.get("author") or [{}])[0].get("family") or ""), cr["first_author"]))
+            _notices(msg, L, doi, out)
+            msg = None
         if msg:
             cr = _crossref_fields(msg)
             stats["matched"] += 1
@@ -575,21 +755,44 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                 elif not mine and theirs and name in ("volume", "issue", "first page"):
                     out.append(Finding(L, f"fill-{name.replace(' ', '-')}", "info",
                                        f"Missing {name}; Crossref has it", "", str(theirs)))
-            for u in msg.get("updated-by") or []:
-                if (u.get("type") or "").lower() in ("retraction", "withdrawal", "removal"):
-                    out.append(Finding(L, "retracted", "error",
-                                       f"This paper has a {u.get('type')} notice. Do not cite it as valid work",
-                                       "", u.get("DOI", "")))
-                elif (u.get("type") or "").lower() in ("expression_of_concern", "expression-of-concern"):
-                    out.append(Finding(L, "expression-of-concern", "warning",
-                                       "This paper has an expression of concern", "", u.get("DOI", "")))
-            rel = msg.get("relation") or {}
-            for p in rel.get("is-preprint-of") or []:
-                out.append(Finding(L, "preprint-published", "warning",
-                                   "You cite a preprint that is now published; cite the journal version",
-                                   doi, p.get("id", "")))
+            _notices(msg, L, doi, out)
         time.sleep(pause)
     return out, stats
+
+
+JUNK_SUFFIX = re.compile(r"/(?:figures?|tables?|metrics|bibtex|full|abstract|pdf|fulltext|references|s\d+|\d{1,6})(?:/\d+)?$", re.I)
+
+
+def _repair_doi(doi: str, fetch: Fetch):
+    """DOIs copied from article pages often end in /figures/5, /metrics, /bibtex ... Try without the suffix."""
+    cand = doi
+    for _ in range(2):
+        m = JUNK_SUFFIX.search(cand)
+        if not m:
+            return None
+        cand = cand[:m.start()]
+        if not DOI_RE.match(cand):
+            return None
+        res = fetch(f"https://api.crossref.org/works/{cand}")
+        if res and res.get("message"):
+            return cand, res["message"]
+    return None
+
+
+def _notices(msg: dict, L: str, doi: str, out: list) -> None:
+    for u in msg.get("updated-by") or []:
+        if (u.get("type") or "").lower() in ("retraction", "withdrawal", "removal"):
+            out.append(Finding(L, "retracted", "error",
+                               f"This paper has a {u.get('type')} notice. Do not cite it as valid work",
+                               "", u.get("DOI", "")))
+        elif (u.get("type") or "").lower() in ("expression_of_concern", "expression-of-concern"):
+            out.append(Finding(L, "expression-of-concern", "warning",
+                               "This paper has an expression of concern", "", u.get("DOI", "")))
+    rel = msg.get("relation") or {}
+    for p in rel.get("is-preprint-of") or []:
+        out.append(Finding(L, "preprint-published", "warning",
+                           "You cite a preprint that is now published; cite the journal version",
+                           doi, p.get("id", "")))
 
 
 def _q(s: str) -> str:
