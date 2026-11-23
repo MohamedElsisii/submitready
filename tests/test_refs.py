@@ -153,3 +153,30 @@ def test_report_says_nothing_was_changed(tmp_path):
     ms = refs.load(ris(tmp_path))
     md = refs.report_markdown("lib.ris", ms, refs.audit(ms))
     assert "Nothing was changed" in md and "| Reference |" in md
+
+
+def test_online_print_year_and_consortium_are_not_false_alarms():
+    ms = refs.ManuscriptRefs(refs=[
+        refs.Ref("s", {"type": "article-journal", "title": "STAR: ultrafast universal RNA-seq aligner",
+                       "DOI": "10.1093/bioinformatics/bts635", "issued": {"date-parts": [[2013]]},
+                       "author": [{"family": "Dobin"}]}, "x"),
+        refs.Ref("c", {"type": "article-journal", "title": "The genomic architecture of 2,000 breast tumours",
+                       "DOI": "10.1038/nature10983", "issued": {"date-parts": [[2012]]},
+                       "author": [{"family": "Curtis"}]}, "x"),
+        refs.Ref("f", {"type": "article-journal",
+                       "title": "FreeSASA: an open source C library [version 1; peer review: 2 approved]",
+                       "DOI": "10.12688/f1000research.7931.1", "issued": {"date-parts": [[2016]]},
+                       "author": [{"family": "Mitternacht"}]}, "x"),
+    ])
+    fetch = fake_crossref({
+        "bts635": {"message": {"title": ["STAR: ultrafast universal RNA-seq aligner"],
+                               "issued": {"date-parts": [[2012, 10, 25]]},
+                               "published-print": {"date-parts": [[2013, 1]]}, "author": [{"family": "Dobin"}]}},
+        "nature10983": {"message": {"title": ["The genomic architecture of 2,000 breast tumours"],
+                                    "issued": {"date-parts": [[2012]]},
+                                    "author": [{"name": "METABRIC Group"}, {"family": "Curtis"}]}},
+        "7931.1": {"message": {"title": ["FreeSASA: an open source C library"], "issued": {"date-parts": [[2016]]},
+                               "author": [{"family": "Mitternacht"}]}},
+    })
+    f, _ = refs.verify(ms, fetch, pause=0)
+    assert not [x for x in f if x.code.startswith("mismatch")], [(x.code, x.ref) for x in f]

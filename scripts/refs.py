@@ -238,6 +238,17 @@ def norm_text(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
 
 
+def titles_match(a: str, b: str) -> bool:
+    """Same work, allowing for version tags, subtitles cut off and trailing marks."""
+    def clean(t):
+        t = re.sub(r"\[(version|v)\s*\d[^\]]*\]", "", t or "", flags=re.I)
+        return norm_text(t)
+    x, y = clean(a), clean(b)
+    if not x or not y:
+        return True
+    return x == y or similar(x, y) >= 0.9 or (min(len(x), len(y)) > 25 and (x in y or y in x))
+
+
 def similar(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, norm_text(a), norm_text(b)).ratio()
 
@@ -389,10 +400,20 @@ def _crossref_fields(m: dict) -> dict:
     def first(x):
         return (x or [""])[0]
 
-    issued = (m.get("issued") or m.get("published-print") or m.get("published-online") or {}).get("date-parts", [[None]])
+    years = []
+    for k in ("issued", "published-print", "published-online", "published", "journal-issue"):
+        src = m.get(k) or {}
+        if k == "journal-issue":
+            src = src.get("published-print") or src.get("published-online") or {}
+        dp = (src.get("date-parts") or [[None]])
+        if dp and dp[0] and dp[0][0]:
+            years.append(str(dp[0][0]))
+    authors = m.get("author") or []
     return {
         "title": first(m.get("title")),
-        "year": str(issued[0][0]) if issued and issued[0] and issued[0][0] else "",
+        "year": years[0] if years else "",
+        "years": sorted(set(years)),
+        "authors": [norm_text(a.get("family") or a.get("name") or "") for a in authors[:5]],
         "volume": m.get("volume", ""),
         "issue": m.get("issue", ""),
         "page": m.get("page", "") or m.get("article-number", ""),
@@ -445,16 +466,19 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
             cr = _crossref_fields(msg)
             stats["matched"] += 1
             checks = [
-                ("title", d.get("title", ""), cr["title"], lambda a, b: similar(a, b) >= 0.9),
-                ("year", year(d), cr["year"], lambda a, b: not a or not b or a == b),
+                ("title", d.get("title", ""), cr["title"], titles_match),
+                # online-first and print years often differ by one; either is correct
+                ("year", year(d), "/".join(cr["years"]) or cr["year"],
+                 lambda a, b: not a or not b or a in b.split("/")),
                 ("volume", str(d.get("volume", "")), cr["volume"],
                  lambda a, b: not a or not b or norm_text(a) == norm_text(b)),
                 ("issue", str(d.get("issue", "")), cr["issue"],
                  lambda a, b: not a or not b or norm_text(a) == norm_text(b)),
                 ("first page", _first_page(d.get("page", "")), _first_page(cr["page"]),
                  lambda a, b: not a or not b or a == b),
+                # consortia are often listed first in Crossref; accept a match among the first authors
                 ("first author", ((d.get("author") or [{}])[0].get("family") or ""), cr["first_author"],
-                 lambda a, b: not a or not b or norm_text(a) == norm_text(b)),
+                 lambda a, b, au=cr["authors"]: not a or not b or norm_text(a) == norm_text(b) or norm_text(a) in au),
             ]
             for name, mine, theirs, ok in checks:
                 if not ok(mine, theirs):
