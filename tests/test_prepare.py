@@ -77,7 +77,17 @@ def test_caption_placement_by_kind():
     ))
     fig, tab, both = res
     assert fig["status"] == "FIX" and fig["found"] == "3 figure captions at the end"
-    assert tab["status"] == "FIX" and "appears twice: Table 1, Table 2" in tab["found"]
+    assert tab["status"] == "FIX" and "Table 1, Table 2 appear twice" in tab["found"]
     assert both["status"] == "FIX"
     facts = {"captions_placement": {"figure_in_text": 3, "table_end": 1}, "caption_duplicates": []}
     assert prepare.check(facts, req({"type": "captions_placement", "value": "in_text", "kind": "figure"}))[0]["status"] == "PASS"
+
+
+def test_duplicate_caption_message_says_which_copy_to_keep():
+    facts = {"captions_placement": {"table_in_text": 2, "table_end": 2},
+             "caption_duplicates": ["Table 1", "Table 2"]}
+    tab = prepare.check(facts, req({"type": "captions_placement", "value": "in_text", "kind": "table"}))[0]
+    assert tab["status"] == "FIX"
+    assert "Table 1, Table 2 appear twice: keep the copy in the text, delete the one at the end" in tab["found"]
+    end = prepare.check(facts, req({"type": "captions_placement", "value": "end", "kind": "table"}))[0]
+    assert "keep the copy at the end, delete the one in the text" in end["found"]
