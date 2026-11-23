@@ -115,7 +115,7 @@ def parse_plain(text: str) -> dict:
     if ym:
         d["issued"] = {"date-parts": [[int(ym.group(1))]]}
         d["_year_label"] = ym.group(1) + ym.group(2)
-    # family name = everything before the initials: "Roca Paixão JF," "van Verk MC," "Smith AB,"
+    # family name = everything before the initials: "Roca Pereira JF," "van Dijk MC," "Smith AB,"
     fm = re.match(r"\s*(.+?)\s+[A-Z\u00C0-\u00DE]{1,4}(?:-[A-Z\u00C0-\u00DE]{1,2})?\.?(?:,|\s*\(|\s+et al|\.\s)", t[:120])
     if not fm:
         fm = re.match(r"\s*([A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+)", t)
@@ -218,7 +218,7 @@ def match_plain_citations(ms: ManuscriptRefs) -> list[Finding]:
                 out.append(Finding(label(r), "listed-not-cited", "warning", f"Reference {i} is never cited in the text"))
         return out
     def key(fam, y):
-        # match on the last word of the family name: "Roca Paixão" ~ "Paixão", "van Verk" ~ "Verk"
+        # match on the last word of the family name: "Roca Pereira" ~ "Pereira", "van Dijk" ~ "Dijk"
         return (norm_text(fam).split(" ")[-1] if fam else "", y.lower())
     listed = {}
     for r in ms.refs:

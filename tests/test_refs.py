@@ -33,7 +33,7 @@ VL  - 374
 IS  - 4
 SP  - 311
 EP  - 322
-DO  - 10.1056/NEJMoa0000001
+DO  - 10.5555/syn.nejm.0001
 ER  -
 TY  - JOUR
 AU  - Doe, Jane
@@ -138,15 +138,15 @@ def test_verify_flags_mismatch_retraction_and_preprint(tmp_path):
 
 def test_verify_finds_missing_doi_by_title():
     ms = refs.ManuscriptRefs(refs=[refs.Ref("q", {"type": "article-journal",
-                                                  "title": "The role of BCL-2 family proteins in regulating apoptosis",
+                                                  "title": "The role of XYZ-9 test proteins in a made-up pathway",
                                                   "issued": {"date-parts": [[2022]]},
-                                                  "author": [{"family": "Qian"}]}, "x")])
+                                                  "author": [{"family": "Quinn"}]}, "x")])
     fetch = fake_crossref({"query.bibliographic": {"message": {"items": [
-        {"title": ["The role of BCL-2 family proteins in regulating apoptosis"], "DOI": "10.3389/fonc.2022.985363",
-         "issued": {"date-parts": [[2022]]}, "author": [{"family": "Qian"}]}]}}})
+        {"title": ["The role of XYZ-9 test proteins in a made-up pathway"], "DOI": "10.5555/syn.2022.985",
+         "issued": {"date-parts": [[2022]]}, "author": [{"family": "Quinn"}]}]}}})
     f, _ = refs.verify(ms, fetch, pause=0)
     found = next(x for x in f if x.code == "doi-found")
-    assert found.suggested == "10.3389/fonc.2022.985363"
+    assert found.suggested == "10.5555/syn.2022.985"
 
 
 def test_report_says_nothing_was_changed(tmp_path):
@@ -164,9 +164,9 @@ def test_online_print_year_and_consortium_are_not_false_alarms():
                        "DOI": "10.5555/syn.group.983", "issued": {"date-parts": [[2012]]},
                        "author": [{"family": "Moss"}]}, "x"),
         refs.Ref("f", {"type": "article-journal",
-                       "title": "FreeSASA: an open source C library [version 1; peer review: 2 approved]",
-                       "DOI": "10.12688/f1000research.7931.1", "issued": {"date-parts": [[2016]]},
-                       "author": [{"family": "Mitternacht"}]}, "x"),
+                       "title": "MadeUpTool: an open source test library [version 1; peer review: 2 approved]",
+                       "DOI": "10.5555/syn.tool.7931.1", "issued": {"date-parts": [[2016]]},
+                       "author": [{"family": "Mills"}]}, "x"),
     ])
     fetch = fake_crossref({
         "syn.quick.635": {"message": {"title": ["QUICK: a fast made-up sequence aligner"],
@@ -175,8 +175,8 @@ def test_online_print_year_and_consortium_are_not_false_alarms():
         "syn.group.983": {"message": {"title": ["A made-up architecture of 2,000 synthetic samples"],
                                     "issued": {"date-parts": [[2012]]},
                                     "author": [{"name": "SYNTH Consortium"}, {"family": "Moss"}]}},
-        "7931.1": {"message": {"title": ["FreeSASA: an open source C library"], "issued": {"date-parts": [[2016]]},
-                               "author": [{"family": "Mitternacht"}]}},
+        "7931.1": {"message": {"title": ["MadeUpTool: an open source test library"], "issued": {"date-parts": [[2016]]},
+                               "author": [{"family": "Mills"}]}},
     })
     f, _ = refs.verify(ms, fetch, pause=0)
     assert not [x for x in f if x.code.startswith("mismatch")], [(x.code, x.ref) for x in f]
@@ -184,42 +184,42 @@ def test_online_print_year_and_consortium_are_not_false_alarms():
 
 def test_junk_doi_suffix_is_repaired():
     ms = refs.ManuscriptRefs(refs=[refs.Ref("a", {"type": "article-journal", "title": "A study of things",
-                                                  "DOI": "10.3389/fpls.2017.01206/bibtex",
+                                                  "DOI": "10.5555/syn.2017.01206/bibtex",
                                                   "author": [{"family": "Doe"}]}, "x")])
-    fetch = fake_crossref({"works/10.3389/fpls.2017.01206/bibtex": None,
-                           "works/10.3389/fpls.2017.01206": {"message": {"title": ["A study of things"],
+    fetch = fake_crossref({"works/10.5555/syn.2017.01206/bibtex": None,
+                           "works/10.5555/syn.2017.01206": {"message": {"title": ["A study of things"],
                                                                         "author": [{"family": "Doe"}]}}})
     f, stats = refs.verify(ms, fetch, pause=0)
     junk = next(x for x in f if x.code == "doi-junk-suffix")
-    assert junk.suggested == "10.3389/fpls.2017.01206"
+    assert junk.suggested == "10.5555/syn.2017.01206"
     assert stats["matched"] == 1
 
 
 # ---- plain typed reference lists (no reference manager) ----
 
 def test_parse_plain_author_year():
-    d = refs.parse_plain("Roca Paixão JF, Gillet FX, Ribeiro TP (2019) Improved drought stress tolerance in "
-                         "Arabidopsis. Sci Rep 9:8113. https://doi.org/10.1038/s41598-019-44133-3")
-    assert d["author"][0]["family"] == "Roca Paixão"
+    d = refs.parse_plain("Roca Pereira JF, Gale FX, Rios TP (2019) Improved salt tolerance in a "
+                         "test plant. Test Rep 9:8113. https://doi.org/10.5555/syn-2019-44133")
+    assert d["author"][0]["family"] == "Roca Pereira"
     assert d["_year_label"] == "2019"
-    assert d["DOI"] == "10.1038/s41598-019-44133-3"
-    assert d["title"].startswith("Improved drought stress tolerance")
+    assert d["DOI"] == "10.5555/syn-2019-44133"
+    assert d["title"].startswith("Improved salt tolerance")
 
 
 def test_parse_plain_numbered_with_particle_and_letter():
-    d = refs.parse_plain("[3] van Verk MC, Bol JF (2011a) Prospecting for genes. Plant Physiol 156:1-10")
-    assert d["author"][0]["family"] == "van Verk"
+    d = refs.parse_plain("[3] van Dijk MC, Bold JF (2011a) Searching for test genes. Test Physiol 156:1-10")
+    assert d["author"][0]["family"] == "van Dijk"
     assert d["_year_label"] == "2011a"
 
 
 def test_author_year_citations_forms():
     text = ("Drought hurts yield (Smith 2020; Smith and Jones 2019a, b; Lee et al., 2018, 2021). "
-            "Roca Paixão et al. (2019) showed this. See Table 1 (2020 data).")
+            "Roca Pereira et al. (2019) showed this. See Table 1 (2020 data).")
     got = set(refs.author_year_citations(text))
     assert ("Smith", "2020") in got
     assert ("Smith", "2019a") in got and ("Smith", "2019b") in got
     assert ("Lee", "2018") in got and ("Lee", "2021") in got
-    assert ("Roca Paixão", "2019") in got
+    assert ("Roca Pereira", "2019") in got
     assert not any(f == "Table" for f, _ in got)
 
 
