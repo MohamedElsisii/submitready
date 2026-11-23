@@ -266,3 +266,20 @@ def test_dedupe_one_problem_one_line():
          F("Chicco 2021", "mismatch-first-page", "warning", "First page differs from Crossref", "1", "e623")]
     out = refs.dedupe(f)
     assert [x.code for x in out] == ["odd-issue", "mismatch-first-page"]
+
+
+def test_dedupe_merges_missing_field_with_crossref_fill():
+    """Offline "Missing issue" and online "Missing issue; Crossref has it" are one problem."""
+    F = refs.Finding
+    f = [F("Doe 2020", "missing-page", "info", "Missing pages or article number"),
+         F("Doe 2020", "missing-issue", "info", "Missing issue"),
+         F("Doe 2020", "missing-volume", "warning", "Missing volume"),
+         F("Doe 2020", "fill-first-page", "info", "Missing first page; Crossref has it", "", "e100"),
+         F("Doe 2020", "fill-issue", "info", "Missing issue; Crossref has it", "", "3"),
+         F("Doe 2020", "fill-volume", "info", "Missing volume; Crossref has it", "", "12"),
+         F("Roe 2019", "missing-issue", "info", "Missing issue")]
+    out = refs.dedupe(f)
+    assert [(x.ref, x.code) for x in out] == [("Doe 2020", "fill-first-page"), ("Doe 2020", "fill-issue"),
+                                              ("Doe 2020", "fill-volume"), ("Roe 2019", "missing-issue")]
+    # the merged line keeps the stronger severity
+    assert next(x for x in out if x.code == "fill-volume").severity == "warning"
