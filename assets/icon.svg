@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="200" fill="#0F5E63"/>
+  <!-- manuscript page with folded corner -->
+  <path d="M292 180 H612 L752 320 V820 Q752 852 720 852 H292 Q260 852 260 820 V212 Q260 180 292 180 Z" fill="#FFFFFF"/>
+  <path d="M612 180 V292 Q612 320 640 320 H752 Z" fill="#CFE3E2"/>
+  <!-- text lines -->
+  <rect x="330" y="380" width="300" height="34" rx="17" fill="#B7CFCE"/>
+  <rect x="330" y="460" width="360" height="34" rx="17" fill="#B7CFCE"/>
+  <rect x="330" y="540" width="250" height="34" rx="17" fill="#B7CFCE"/>
+  <rect x="330" y="620" width="200" height="34" rx="17" fill="#B7CFCE"/>
+  <!-- ready badge -->
+  <circle cx="700" cy="740" r="170" fill="#F2B33D" stroke="#0F5E63" stroke-width="28"/>
+  <path d="M620 742 L683 805 L790 690" fill="none" stroke="#0F5E63" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

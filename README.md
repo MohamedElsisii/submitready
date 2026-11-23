@@ -1,3 +1,5 @@
+<img src="assets/icon.png" width="96" alt="SubmitReady icon">
+
 # SubmitReady
 
 **Your manuscript, ready to submit. Not a single word of your science changed.**
@@ -18,14 +20,26 @@ Preparing one manuscript for one journal takes days, and every rejection restart
 4. **Flag, don't fix, references.** If a reference disagrees with Crossref or PubMed, you see both versions and decide. Nothing is invented or silently corrected.
 5. **New text is a separate draft.** Cover letters, statements and reviewer responses are separate files, marked as drafts, never mixed into your manuscript.
 
+## Install
+
+In Claude Code (version 2.1.275 or later):
+
+```
+/plugin install submitready --marketplace MohamedElsisii/submitready
+```
+
+SubmitReady's scripts need Python 3.10+ and a few packages. On first use, Claude checks for them and asks before installing (`pip install -r requirements.txt`).
+
+To try it from a local copy instead, see [TESTING.md](TESTING.md).
+
 ## Commands
 
 | Command | What it does | Version |
 | --- | --- | --- |
-| `/lock` | Fingerprints your manuscript and proves later that nothing changed | v1 |
-| `/prepare <journal>` | Reads the journal's live guidelines, builds a checklist, formats your files | v1 |
-| `/refs` | Verifies every reference against Crossref and PubMed, flags problems, formats the style | v1 |
-| `/check` | Final pre-submission audit | v1 |
+| `/submitready:lock` | Fingerprints your manuscript and proves later that nothing changed | v1 |
+| `/submitready:prepare <journal>` | Reads the journal's live guidelines, builds a checklist, formats your files | v1 |
+| `/submitready:refs` | Verifies every reference against Crossref and PubMed, flags problems, tells you which style to pick | v1 |
+| `/submitready:check` | Final pre-submission audit | v1 |
 | `/supp` | Numbers, checks and packages supplementary material | v2 |
 | `/cover` | Drafts a cover letter for your approval | v2 |
 | `/match` | Cross-publisher journal shortlist with real review times | v2 |

@@ -1,0 +1,14 @@
+{
+  "name": "submitready",
+  "description": "SubmitReady: prepare research manuscripts for journal submission without changing a word",
+  "owner": {
+    "name": "Mohamed Elsisi"
+  },
+  "plugins": [
+    {
+      "name": "submitready",
+      "source": "./",
+      "description": "Live journal guidelines, verified references, submission checklist and package, with proof your text was not changed"
+    }
+  ]
+}
