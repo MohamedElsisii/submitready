@@ -763,6 +763,20 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
 JUNK_SUFFIX = re.compile(r"/(?:figures?|tables?|metrics|bibtex|full|abstract|pdf|fulltext|references|s\d+|\d{1,6})(?:/\d+)?$", re.I)
 
 
+def dedupe(findings: list[Finding]) -> list[Finding]:
+    """One problem, one line: "Issue has extra text" already covers "Issue differs from Crossref"."""
+    odd = {(f.ref, f.code[4:], f.found) for f in findings if f.code.startswith("odd-")}
+    seen, out = set(), []
+    for f in findings:
+        if f.code.startswith("mismatch-") and (f.ref, f.code[9:], f.found) in odd:
+            continue
+        k = (f.ref, f.code, f.found, f.suggested)
+        if k not in seen:
+            seen.add(k)
+            out.append(f)
+    return out
+
+
 def _repair_doi(doi: str, fetch: Fetch):
     """DOIs copied from article pages often end in /figures/5, /metrics, /bibtex ... Try without the suffix."""
     cand = doi
@@ -875,6 +889,7 @@ def main(argv=None) -> int:
             print(f"Online check failed: {e}. Showing offline audit only.", file=sys.stderr)
             more = []
         findings += more
+    findings = dedupe(findings)
     findings.sort(key=lambda f: (SEV_ORDER[f.severity], f.ref))
     md = report_markdown(args.source.name, ms, findings, stats)
     if args.report:

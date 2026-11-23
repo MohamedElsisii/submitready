@@ -257,3 +257,12 @@ def test_plain_docx_numbered(tmp_path):
     f = refs.match_plain_citations(refs.load(p))
     assert any(x.code == "cited-not-listed" and x.ref == "[6]" for x in f)
     assert any(x.code == "listed-not-cited" and "2" in x.message for x in f)
+
+
+def test_dedupe_one_problem_one_line():
+    F = refs.Finding
+    f = [F("Staaf 2022", "odd-issue", "warning", "Issue has extra text", "9 September", "9"),
+         F("Staaf 2022", "mismatch-issue", "warning", "Issue differs from Crossref", "9 September", "9"),
+         F("Chicco 2021", "mismatch-first-page", "warning", "First page differs from Crossref", "1", "e623")]
+    out = refs.dedupe(f)
+    assert [x.code for x in out] == ["odd-issue", "mismatch-first-page"]

@@ -383,6 +383,7 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
             checks.append(f"Online reference check could not run ({e}); run it again with internet access")
     else:
         checks.append("Online reference check (Crossref, PubMed, retractions) was not run; use --online")
+    findings = refsmod.dedupe(findings)
     (rep / "references.md").write_text(refsmod.report_markdown(manuscript.name, ms, findings, stats), encoding="utf-8")
     sev = Counter(f.severity for f in findings)
     if sev.get("error"):
