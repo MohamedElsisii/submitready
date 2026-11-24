@@ -27,3 +27,5 @@ Thumbs.db
 *_checklist.md
 *_refs_report.md
 *.requirements.json
+scimagojr_*.csv
+ext_list_*.xlsx

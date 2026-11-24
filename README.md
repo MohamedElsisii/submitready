@@ -43,6 +43,8 @@ Nothing was changed in the references. Every finding is a suggestion for the aut
 
 No journal yet? `/submitready:find my_paper.docx` looks for journals that published papers like yours in the last five years, screens out ones it cannot confirm as legitimate, applies your filters (open access, subscription or hybrid, a fee limit, MEDLINE) and shows 5 with the numbers that matter. Every number has its source; anything that can't be found says "not found". Pick one and it is prepared. After a rejection, `/submitready:next` moves to the next journal on your list.
 
+Add the free SCImago and Scopus lists once a year (see [BETA.md](BETA.md)) and the list also shows SJR quartiles, Scopus status, and leaves out titles Scopus discontinued. You download these files yourself; they stay on your computer.
+
 ## What you get
 
 One folder per paper and journal, with:

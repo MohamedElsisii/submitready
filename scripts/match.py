@@ -42,12 +42,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import form  # noqa: E402
+import journaldata  # noqa: E402
 import prepare  # noqa: E402
 
 OPENALEX = "https://api.openalex.org"
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 CROSSREF = "https://api.crossref.org"
-CREDIBLE_LISTS = {"medline", "cwts-core", "doaj"}
+CREDIBLE_LISTS = {"medline", "cwts-core", "doaj", "scopus"}
 STOP = set("""a an and the of in on for to with by from as at or is are was were be been this that these those
 using use based via into their its our we study analysis approach new novel role towards toward between among
 than within without under over through effect effects""".split())
@@ -215,7 +216,11 @@ def journal_facts(sid: str, net: Net) -> dict | None:
     listed = set(s.get("listed_in") or [])
     if s.get("is_in_doaj"):
         listed.add("doaj")
+    mine = journaldata.lookup(s.get("issn") or [])
+    if mine.get("scopus", {}).get("status") == "Active" and not mine["scopus"].get("discontinued"):
+        listed.add("scopus")
     return {
+        "scimago": mine.get("scimago"), "scopus": mine.get("scopus"),
         "openalex_id": sid, "name": s.get("display_name"), "issn_l": s.get("issn_l"), "issn": s.get("issn") or [],
         "publisher": s.get("host_organization_name"), "homepage": s.get("homepage_url"),
         "type": s.get("type"), "works_count": s.get("works_count", 0),
@@ -244,6 +249,10 @@ def screen(j: dict) -> str:
     """Empty string if the journal passes; otherwise the reason it was left out."""
     if j.get("type") != "journal":
         return "not a journal"
+    sc = j.get("scopus") or {}
+    if sc.get("discontinued"):
+        return (f"discontinued by Scopus{' in ' + str(sc['discontinued_year']) if sc.get('discontinued_year') else ''}, "
+                f"a quality warning (Scopus Source List {sc.get('year', '')})")
     if not (CREDIBLE_LISTS & set(j.get("listed_in", []))):
         return "not in DOAJ, MEDLINE or the CWTS core list, so it could not be confirmed as a legitimate journal"
     if (j.get("last_publication_year") or 0) < date.today().year - 1:
@@ -253,7 +262,8 @@ def screen(j: dict) -> str:
     return ""
 
 
-def apply_filters(j: dict, access: str, max_fee: float | None, medline: bool) -> str:
+def apply_filters(j: dict, access: str, max_fee: float | None, medline: bool, scopus: bool = False,
+                  min_quartile: str = "") -> str:
     a = j["access"].lower()
     if access == "open" and not a.startswith("fully open"):
         return "not fully open access"
@@ -265,6 +275,14 @@ def apply_filters(j: dict, access: str, max_fee: float | None, medline: bool) ->
         return f"publication fee {j['fee_usd']} USD is over your maximum of {max_fee:g} USD"
     if medline and not j.get("medline"):
         return "not indexed in MEDLINE"
+    if scopus and "scopus" not in j.get("listed_in", []):
+        return "not active in Scopus (or the Scopus Source List was not added)"
+    if min_quartile:
+        q = (j.get("scimago") or {}).get("quartile") or ""
+        if not q:
+            return "no SJR quartile found (or the SCImago file was not added)"
+        if int(q[1]) > int(min_quartile[1]):
+            return f"SJR best quartile {q} is below {min_quartile}"
     return ""
 
 
@@ -334,7 +352,7 @@ def _parse_date(v) -> date | None:
 
 # ---------------------------------------------------------------- find
 def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None, medline: bool = False,
-         prefer: str = "fit", review_times: bool = True) -> dict:
+         prefer: str = "fit", review_times: bool = True, scopus: bool = False, min_quartile: str = "") -> dict:
     p = profile(path)
     works = similar_works(p, net)
     score: dict[str, float] = {}
@@ -362,7 +380,7 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
             if m is not None:
                 j["medline"] = m
                 j["medline_source"] = "NLM Catalog (currently indexed)"
-        why = screen(j) or apply_filters(j, access, max_fee, medline)
+        why = screen(j) or apply_filters(j, access, max_fee, medline, scopus, min_quartile)
         if why:
             left_out.append({"name": j["name"], "reason": why})
             continue
@@ -392,7 +410,10 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
         j["sjr_link"] = (f"https://www.scimagojr.com/journalsearch.php?q={j['issn_l']}" if j.get("issn_l") else "")
     return {"tool": "SubmitReady journal finder", "manuscript": path.name, "checked": date.today().isoformat(),
             "profile": {k: p.get(k, "") for k in ("title", "keywords", "article_type", "approach")},
-            "filters": {"access": access, "max_fee_usd": max_fee, "medline": medline, "prefer": prefer},
+            "filters": {"access": access, "max_fee_usd": max_fee, "medline": medline, "prefer": prefer,
+                        "scopus": scopus, "min_quartile": min_quartile},
+            "lists": {k: {kk: (journaldata.load(k) or {}).get(kk) for kk in ("file", "year", "edition", "added")}
+                      for k in ("scimago", "scopus") if journaldata.load(k)},
             "method": "Journals that published the most similar papers in the last 5 years (OpenAlex), "
                       "screened and filtered as listed below.",
             "journals": kept, "left_out": left_out}
@@ -456,22 +477,31 @@ def _fact(j: dict, field: str) -> str:
 def table(data: dict, show_all: bool = False) -> str:
     p = data["profile"]
     L = [f"# Journals for {data['manuscript']}", "",
-         f"Article type: **{p['article_type']}**" + (f" ({p['approach']})" if p.get("approach") else "") + ". Checked {data['checked']}. {data['method']}", ""]
+         f"Article type: **{p['article_type']}**" + (f" ({p['approach']})" if p.get("approach") else "") + f". Checked {data['checked']}. {data['method']}", ""]
     f = data["filters"]
     L.append(f"Your filters: access {f['access']}, maximum fee {f['max_fee_usd'] or 'none'}"
-             f"{', MEDLINE only' if f['medline'] else ''}, sorted by {f['prefer']}.")
+             f"{', MEDLINE only' if f['medline'] else ''}{', Scopus only' if f.get('scopus') else ''}"
+             f"{', quartile ' + f['min_quartile'] + ' or better' if f.get('min_quartile') else ''}, sorted by {f['prefer']}.")
     L.append("")
     rows = [j for j in data["journals"] if show_all or j["status"] in ("suggested", "chosen")]
     L += ["| # | Journal | Fit | Impact factor (as the journal states it) | Mean citations per paper, 2 years (OpenAlex) "
-          "| Median days, submission to acceptance | Access | Fee | Indexed in MEDLINE | Quartile | Status |",
+          "| Median days, submission to acceptance | Access | Fee | Indexed in | SJR quartile | Status |",
           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for j in rows:
         rv = j.get("review", {})
         days = f"{rv['days']} ({rv['papers']} papers)" if rv.get("days") is not None else "not found"
-        q = _fact(j, "quartile") if j.get("facts", {}).get("quartile") else (f"[check SCImago]({j['sjr_link']})" if j.get("sjr_link") else "not found")
+        sj = j.get("scimago") or {}
+        if sj.get("quartile"):
+            q = f"{sj['quartile']} (SJR {sj.get('year', '')})"
+        elif j.get("facts", {}).get("quartile"):
+            q = _fact(j, "quartile")
+        else:
+            q = f"[check SCImago]({j['sjr_link']})" if j.get("sjr_link") else "not found"
+        idx = ", ".join(x for x, ok in (("MEDLINE", j.get("medline")), ("Scopus", "scopus" in j.get("listed_in", [])),
+                                         ("DOAJ", "doaj" in j.get("listed_in", []))) if ok) or "none found"
         L.append(f"| {j['rank']} | {j['name']} | {j['similar_papers']} similar papers | {_fact(j, 'impact_factor')} | "
                  f"{j.get('citations_2y_mean') if j.get('citations_2y_mean') is not None else 'not found'} | {days} | "
-                 f"{j['access']} | {_fee(j)} | {'yes' if j['medline'] else 'no'} | {q} | {j['status']} |")
+                 f"{j['access']} | {_fee(j)} | {idx} | {q} | {j['status']} |")
     L += ["", "## Why each journal fits", ""]
     for j in rows:
         L.append(f"**{j['rank']}. {j['name']}** ({j.get('publisher') or 'publisher not found'})")
@@ -480,6 +510,8 @@ def table(data: dict, show_all: bool = False) -> str:
         at = j.get("facts", {}).get("accepts_type")
         if at:
             L.append(f"- Takes this article type: {at['value']} [source]({at['source']})")
+        if (j.get("scimago") or {}).get("categories"):
+            L.append(f"- SJR {j['scimago'].get('year', '')} subject categories: {j['scimago']['categories']}")
         if j.get("similar_examples"):
             L.append("- Similar papers it published: " + "; ".join(f"\"{t}\"" for t in j["similar_examples"][:2]))
         L.append("")
@@ -494,6 +526,12 @@ def table(data: dict, show_all: bool = False) -> str:
           "is a free measure, not the Impact Factor.",
           "- Median days from submission to acceptance include the authors' revision time.",
           "- MEDLINE is the indexed core of PubMed. A journal can be in PubMed (through PMC) without being in MEDLINE.",
+          *([f"- Quartiles: SCImago, (n.d.). SJR, SCImago Journal & Country Rank [Portal], from the file you downloaded "
+             f"({(data.get('lists') or {}).get('scimago', {}).get('file')}). A journal can be Q1 in one category and Q3 in another; "
+             "the categories are listed above."] if (data.get("lists") or {}).get("scimago") else
+            ["- No SCImago file was added, so quartiles are links. Add one with `journaldata.py add` (see BETA.md)."]),
+          *([f"- Scopus status: Scopus Source List ({(data.get('lists') or {}).get('scopus', {}).get('edition')}), "
+             "the file you downloaded from Elsevier."] if (data.get("lists") or {}).get("scopus") else []),
           "- Fees change; confirm on the journal's website before you submit.", ""]
     return "\n".join(L)
 
@@ -513,6 +551,8 @@ def main(argv=None) -> int:
     a.add_argument("--max-fee", type=float)
     a.add_argument("--medline", action="store_true")
     a.add_argument("--prefer", choices=["fit", "speed", "impact"], default="fit")
+    a.add_argument("--scopus", action="store_true", help="only journals active in Scopus (needs the Scopus Source List)")
+    a.add_argument("--min-quartile", choices=["Q1", "Q2", "Q3", "Q4"], default="", help="needs the SCImago file")
     a.add_argument("--email", default="")
     b = sub.add_parser("add")
     b.add_argument("list", type=Path)
@@ -532,7 +572,8 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.cmd == "find":
-        data = find(args.manuscript, Net(args.email), args.access, args.max_fee, args.medline, args.prefer)
+        data = find(args.manuscript, Net(args.email), args.access, args.max_fee, args.medline, args.prefer,
+                    scopus=args.scopus, min_quartile=args.min_quartile)
         args.out.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         print(table(data))
         return 0

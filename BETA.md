@@ -30,6 +30,14 @@ To get new versions during the beta, type `/plugin marketplace update submitread
 
 It asks how you want to publish (open access, subscription or hybrid, a fee limit, MEDLINE) and shows 5 journals that publish papers like yours: fit, the impact factor as the journal states it, a free citation measure, median days from submission to acceptance, access model and fee. Pick one and it is prepared. If that journal rejects the paper, `/submitready:next my_paper.docx` prepares the next one on your list.
 
+### Optional: real quartiles and Scopus status (5 minutes, once a year)
+
+1. On scimagojr.com, open **Journal Rankings** and click **Download data**. You get a file like `scimagojr_2025.csv`.
+2. Download the **Scopus Source List** (an Excel file) from Elsevier's Scopus content page.
+3. In Claude Code, ask: *add my SCImago and Scopus files to SubmitReady*, with the two file paths.
+
+The journal list then shows each journal's SJR quartile and Scopus status, leaves out titles Scopus discontinued, and can filter by "Scopus only" or "Q2 or better". The files stay on your computer; SubmitReady never shares them.
+
 ## Run it
 
 1. Put your manuscript in a folder. If you have them, put the figure files in a folder whose name contains "fig" and the supplementary files in a folder whose name contains "supp", next to the manuscript.

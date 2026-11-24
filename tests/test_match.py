@@ -141,3 +141,58 @@ def test_one_failing_source_does_not_sink_the_list(paper):
             raise RuntimeError("Could not reach eutils.ncbi.nlm.nih.gov")
     d = match.find(paper, Flaky())
     assert d["journals"] and all("not found" in j["review"]["source"] for j in d["journals"])
+
+
+# ---- lists the researcher downloads (SCImago, Scopus): made-up miniature files ----
+
+def _lists(tmp_path, monkeypatch):
+    import openpyxl
+    import journaldata
+    monkeypatch.setenv("SUBMITREADY_DATA", str(tmp_path / "data"))
+    journaldata._cache.clear()
+    csvp = tmp_path / "scimagojr_2025.csv"
+    csvp.write_text(
+        "Rank;Sourceid;Title;Type;Issn;Publisher;Open Access;Open Access Diamond;SJR;SJR Best Quartile;H index;"
+        "Total Docs. (2025);Total Docs. (3years);Total Refs.;Total Citations (3years);Citable Docs. (3years);"
+        "Citations / Doc. (2years);Ref. / Doc.;%Female;Overton;Country;Region;Publisher;Coverage;Categories;Areas\n"
+        '1;11;"Open Journal";journal;"11111111";"Pub A";Yes;No;2,500;Q1;100;1;1;1;1;1;1,0;1;1;0;X;Y;"Pub A";"2000-2026";"Genetics (Q1)";"Bio"\n'
+        '2;22;"Hybrid Journal";journal;"22222222";"Pub B";No;No;0,400;Q3;50;1;1;1;1;1;1,0;1;1;0;X;Y;"Pub B";"2000-2026";"Genetics (Q3)";"Bio"\n',
+        encoding="utf-8")
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Scopus Sources Oct. 2026"
+    ws.append(["Sourcerecord ID", "Source Title", "ISSN", "EISSN", "Active or Inactive", "Coverage",
+               "Titles Discontinued by Scopus", "Article Language in Source", "Medline-sourced Title?",
+               "Open Access Status", "Articles in Press Included?", "Added to List October 2026", "Source Type"])
+    ws.append([1, "Open Journal", "11111111", "", "Active", "2000-2026", "", "ENG", "Medline", "", "", "", "Journal"])
+    ws.append([2, "Hybrid Journal", "22222222", "", "Active", "2000-2026", "", "ENG", "", "", "", "", "Journal"])
+    ws.append([4, "Pricey Open Journal", "44444444", "", "Inactive", "2000-2024", "Discontinued by Scopus", "ENG", "", "", "", "", "Journal"])
+    xl = tmp_path / "ext_list_Oct_2026.xlsx"
+    wb.save(xl)
+    said = journaldata.add([csvp, xl])
+    assert any("SCImago 2025" in x for x in said) and any("1 discontinued" in x for x in said)
+    return journaldata
+
+
+def test_downloaded_lists_add_quartiles_and_screen(paper, tmp_path, monkeypatch):
+    jd = _lists(tmp_path, monkeypatch)
+    d = match.find(paper, FakeNet())
+    names = [j["name"] for j in d["journals"]]
+    assert "Pricey Open Journal" not in names                      # discontinued by Scopus
+    left = {x["name"]: x["reason"] for x in d["left_out"]}
+    assert "discontinued by Scopus" in left["Pricey Open Journal"]
+    md = match.table(d)
+    assert "Q1 (SJR 2025)" in md and "SCImago Journal & Country Rank" in md
+    assert [j["name"] for j in match.find(paper, FakeNet(), min_quartile="Q2")["journals"]] == ["Open Journal"]
+    assert [j["name"] for j in match.find(paper, FakeNet(), scopus=True)["journals"]] == ["Open Journal", "Hybrid Journal"]
+    jd._cache.clear()
+
+
+def test_without_lists_quartiles_are_links_and_filters_explain(paper, tmp_path, monkeypatch):
+    import journaldata
+    monkeypatch.setenv("SUBMITREADY_DATA", str(tmp_path / "empty"))
+    journaldata._cache.clear()
+    d = match.find(paper, FakeNet(), min_quartile="Q1")
+    assert not d["journals"] and all("SCImago file was not added" in x["reason"] or "legitimate" in x["reason"]
+                                     for x in d["left_out"])
+    assert "check SCImago" in match.table(match.find(paper, FakeNet()))
