@@ -495,11 +495,19 @@ def _ris_name(a: str) -> dict:
 
 def read_ris(path: Path) -> list[Ref]:
     refs, cur, n = [], None, 0
+    last = None   # (field, key in cur) of the last text tag, for lines that wrap
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         m = re.match(r"^([A-Z][A-Z0-9])  - ?(.*)$", line)
         if not m:
+            # Mendeley and Zotero wrap long titles and abstracts onto untagged lines
+            if cur is not None and last and line.strip() and last in cur:
+                cur[last] = f"{cur[last]} {line.strip()}"
             continue
         k, v = m.group(1), m.group(2).strip()
+        last = {"TI": "title", "T1": "title", "T2": "container-title", "JO": "container-title",
+                "JF": "container-title", "BT": "container-title"}.get(k)
+        if k in ("T2", "JO", "JF", "BT") and cur is not None and "container-title" in cur:
+            last = None   # only the first container tag is kept, so do not extend it
         if k == "TY":
             n += 1
             cur = {"type": RIS_TYPES.get(v, "generic"), "_ris_type": v}
@@ -735,6 +743,91 @@ def similar(a: str, b: str) -> float:
 JOURNAL_TYPES = {"article-journal"}
 
 
+PREPRINT_SERVERS = re.compile(r"\b(bioRxiv|medRxiv|arXiv|ChemRxiv|Research Square|SSRN|Preprints|Authorea|"
+                              r"OSF Preprints|PsyArXiv|SocArXiv|EarthArXiv|Qeios|TechRxiv)\b", re.I)
+# DOI prefixes used only for preprints: bioRxiv/medRxiv, Research Square, Authorea, arXiv, SSRN, Preprints.org
+PREPRINT_DOI = re.compile(r"^10\.(1101/\d{4}\.\d{2}\.\d{2}|21203/rs\.|22541/au\.|48550/arxiv|2139/ssrn|20944/preprints)", re.I)
+
+
+def is_preprint(d: dict) -> bool:
+    return bool(d.get("type") == "posted-content" or d.get("subtype") == "preprint"
+                or PREPRINT_SERVERS.search(d.get("container-title") or "")
+                or PREPRINT_DOI.match(norm_doi(d.get("DOI") or "")))
+
+
+def _page_key(p: str) -> str:
+    """'e36905-e36905' and 'e36905' are the same page; so are '1–22' and '1-22'."""
+    p = str(p or "").replace("\u2013", "-").replace(" ", "")
+    m = re.fullmatch(r"(\S+?)-(\S+)", p)
+    return m.group(1) if m and m.group(1) == m.group(2) else p
+
+
+UNCITED_LIST_MAX = 10
+
+
+def compare_library(ms: ManuscriptRefs, library: list[Ref]) -> list[Finding]:
+    """The manuscript against a reference-manager export.
+
+    * library entries never cited: listed one by one only when there are few, as in an export of this
+      paper's folder. A whole-library export has many on purpose, so they become one note.
+    * a cited reference whose library entry has data the manuscript lacks: the citation is older than the
+      library, and refreshing the citations in Word brings the fix in.
+    """
+    out: list[Finding] = []
+    by_doi = {norm_doi(r.data["DOI"]): r for r in library if r.data.get("DOI")}
+    by_title = {norm_text(r.data.get("title", "")): r for r in library if r.data.get("title")}
+    used: set[int] = set()
+    fields = (("title", "title"), ("volume", "volume"), ("issue", "issue"), ("page", "pages"), ("DOI", "DOI"))
+    for r in ms.refs:
+        d = r.data
+        if d.get("_plain"):
+            continue
+        lib = (by_doi.get(norm_doi(d["DOI"])) if d.get("DOI") else None) or by_title.get(norm_text(d.get("title", "")))
+        if lib is None:
+            continue
+        used.add(id(lib))
+        newer, differ = [], []
+        for k, name in fields:
+            a, b = str(d.get(k) or "").strip(), str(lib.data.get(k) or "").strip()
+            if k == "DOI":
+                a, b = norm_doi(a), norm_doi(b)
+            elif k == "page":
+                a, b = _page_key(a), _page_key(b)
+            if not b or norm_text(a) == norm_text(b):
+                continue
+            (newer if not a else differ).append(f"{name}: {b}" if not a else f"{name} '{a}' here, '{b}' in the library")
+        if year(lib.data) and year(d) and year(lib.data) != year(d):
+            differ.append(f"year {year(d)} here, {year(lib.data)} in the library")
+        if newer:
+            out.append(Finding(label(r), "library-newer", "info",
+                               "Your library has data this citation lacks; refresh the citations in Word to bring it in",
+                               "; ".join(newer)))
+        if differ:
+            out.append(Finding(label(r), "library-differs", "info",
+                               "The citation and your library differ; check which is right, then refresh",
+                               "; ".join(differ)))
+    for r in library:
+        if id(r) in used:
+            continue
+        doi = norm_doi(r.data["DOI"]) if r.data.get("DOI") else ""
+        if doi and any(norm_doi(x.data.get("DOI", "")) == doi for x in ms.refs if x.data.get("DOI")):
+            used.add(id(r))
+        elif norm_text(r.data.get("title", "")) in {norm_text(x.data.get("title", "")) for x in ms.refs}:
+            used.add(id(r))
+    uncited = [r for r in library if id(r) not in used]
+    if uncited and len(uncited) <= UNCITED_LIST_MAX and len(uncited) <= len(library) // 4 + 1:
+        for r in uncited:
+            out.append(Finding(label(r), "uncited", "warning",
+                               "In your reference library export but never cited in the manuscript", r.source))
+    elif uncited:
+        out.append(Finding("(library)", "uncited-many", "info",
+                           f"{len(uncited)} of {len(library)} library entries are not cited in this manuscript. "
+                           "That is normal for a whole-library export, so they are not listed. To check for a "
+                           "forgotten citation, export only this paper's folder or collection",
+                           f"{len(library) - len(uncited)} of {len(library)} entries are cited"))
+    return out
+
+
 def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]:
     out: list[Finding] = []
     add = out.append
@@ -747,6 +840,13 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             continue
         typ = d.get("type", "")
         doi = (d.get("DOI") or "").strip()
+        if not d.get("author") and not d.get("issued") and not doi and not d.get("container-title"):
+            # e.g. a PDF dropped into the library: title "nihms-731362 ( ref 10)", nothing else
+            add(Finding(L, "placeholder-entry", "error",
+                        "This entry is only a name, with no authors, year, journal or DOI. "
+                        "Replace it with the real reference", d.get("title", "")))
+            continue
+        preprint = is_preprint(d)
         if doi:
             if DOI_URL_RE.match(doi):
                 add(Finding(L, "doi-as-url", "warning", "DOI is stored as a web link", doi, strip_doi(doi)))
@@ -759,7 +859,11 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
                         "Reference type is 'generic'; styles may format it wrongly. Set the real type "
                         "(e.g. journal article) in your reference manager",
                         d.get("_ris_type", "generic")))
-        if typ in JOURNAL_TYPES:
+        if preprint:
+            add(Finding(L, "preprint", "info",
+                        "Preprint: check whether it is published now and cite the journal version if so "
+                        "(verify checks this online)", d.get("container-title") or doi))
+        if typ in JOURNAL_TYPES and not preprint:
             for f, name in (("container-title", "journal name"), ("volume", "volume"),
                             ("issued", "year"), ("author", "authors")):
                 if not d.get(f):
@@ -787,6 +891,12 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
         if re.search(r"\w\?\w|\?\w+\?|\ufffd", title):
             add(Finding(L, "title-encoding", "warning",
                         "Title has a '?' where a special character was probably lost", title))
+        if re.search(r"[\r\n\t]", title.strip()) or title != title.strip() and re.search(r"[\r\n]", title):
+            # Mendeley Cite prints it as a no-break space, so it is a note, not a warning
+            add(Finding(L, "title-linebreak", "info",
+                        "Title has a hidden line break from a copy-paste. It usually prints as a space; "
+                        "clean it once in your library to be safe", repr(title),
+                        re.sub(r"\s+", " ", title).strip()))
         if re.search(r"[*\u2020\u2021]\s*$", title):
             add(Finding(L, "title-trailing-mark", "warning", "Title ends with a footnote mark",
                         title, re.sub(r"\s*[*\u2020\u2021]+\s*$", "", title)))
@@ -836,14 +946,7 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
         add(Finding("(citation)", "manual-override", "warning",
                     "A citation was typed over by hand; it will not update with the style", mo))
     if library is not None:
-        cited_dois = {norm_doi(r.data["DOI"]) for r in ms.refs if r.data.get("DOI")}
-        cited_titles = {norm_text(r.data.get("title", "")) for r in ms.refs}
-        for r in library:
-            doi = norm_doi(r.data["DOI"]) if r.data.get("DOI") else ""
-            if (doi and doi in cited_dois) or norm_text(r.data.get("title", "")) in cited_titles:
-                continue
-            add(Finding(label(r), "uncited", "warning",
-                        "In your reference library export but never cited in the manuscript", r.source))
+        out += compare_library(ms, library)
         lib_dois = {norm_doi(r.data["DOI"]) for r in library if r.data.get("DOI")}
         lib_titles = {norm_text(r.data.get("title", "")) for r in library}
         for r in ms.refs:
@@ -915,6 +1018,17 @@ def _first_page(p: str) -> str:
     return re.split(r"[-\u2013]", str(p or ""))[0].strip().lower()
 
 
+def _last_page(p: str) -> str:
+    """The end page written in full: '1343-72' gives '1372'. Empty for a single page."""
+    parts = re.split(r"\s*[-\u2013]\s*", str(p or "").strip().lower())
+    if len(parts) != 2 or not parts[1]:
+        return ""
+    a, b = parts
+    if a.isdigit() and b.isdigit() and len(b) < len(a):
+        b = a[: len(a) - len(b)] + b
+    return "" if b == a else b
+
+
 def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[Finding], dict]:
     out: list[Finding] = []
     stats = {"checked": 0, "matched": 0, "not_found": 0, "no_doi_found_by_title": 0}
@@ -970,6 +1084,9 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                 same_title = [m for m in items if score(m) >= 0.92]
                 best = max(same_title, key=lambda m: (agrees(m), score(m)), default=None)
                 known = sum(1 for x in (my_year, my_first, my_journal) if x)
+                # a short title ("PyMOL") matches many unrelated records: it needs a year, author or journal too
+                if best and agrees(best) == 0 and len(norm_text(title).split()) < 5:
+                    best = None
                 if best and known >= 2 and agrees(best) == 0:
                     out.append(Finding(L, "title-only-match", "warning",
                                        "Crossref has this title, but with a different year, first author and journal; "
@@ -1017,13 +1134,18 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                 ("year", year(d), "/".join(cr["years"]) or cr["year"],
                  lambda a, b: not a or not b or a in b.split("/")),
                 # Cochrane reviews use the year as volume and the issue number as their own "volume"
+                # some publishers deposit "Volume 17" for 17
                 ("volume", str(d.get("volume", "")), cr["volume"],
                  lambda a, b, j=cr["journal"]: not a or not b or norm_text(a) == norm_text(b)
+                 or norm_text(re.sub(r"(?i)^vol(ume)?\.?\s*", "", b)) == norm_text(a)
                  or ("cochrane" in j.lower() and re.fullmatch(r"(19|20)\d{2}", b) is not None)),
                 ("issue", str(d.get("issue", "")), cr["issue"],
                  lambda a, b: not a or not b or norm_text(a) == norm_text(b)),
+                # Hindawi and others deposit pages 1-15 for an article number that is also the DOI's end
                 ("first page", _first_page(d.get("page", "")), _first_page(cr["page"]),
-                 lambda a, b: not a or not b or a == b),
+                 lambda a, b, dd=doi: not a or not b or a == b or (b == "1" and len(a) >= 4 and dd.endswith(a.lower()))),
+                ("last page", _last_page(d.get("page", "")), _last_page(cr["page"]),
+                 lambda a, b: not a or not b or a == b or _first_page(d.get("page", "")) != _first_page(cr["page"])),
                 # consortia are often listed first in Crossref; accept a match among the first authors
                 ("first author", ((d.get("author") or [{}])[0].get("family") or ""), cr["first_author"],
                  lambda a, b, au=cr["authors"]: not a or not b or norm_text(a) == norm_text(b) or norm_text(a) in au),
@@ -1127,7 +1249,8 @@ def report_markdown(title: str, ms: ManuscriptRefs, findings: list[Finding], sta
     n: dict = {}
     for f in findings:
         n[f.severity] = n.get(f.severity, 0) + 1
-    affected = len({f.ref for f in findings if f.severity != "info"})
+    mine = {label(r) for r in ms.refs} | {"(citation)"}
+    affected = len({f.ref for f in findings if f.severity != "info" and f.ref in mine})
     lines = [
         f"# SubmitReady reference report: {title}",
         "",

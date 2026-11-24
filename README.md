@@ -98,7 +98,7 @@ Adding a journal is a good first contribution. Copy `journals/_TEMPLATE.yaml` an
 - Manuscripts: Word (.docx) and LaTeX
 - Live citations from **Mendeley Cite, Zotero and EndNote** stay live. SubmitReady reads the reference data inside them and tells you the exact buttons for your tool (for example Document Preferences in Zotero, the Style list in EndNote)
 - References typed by hand, numbered or author-year, also work
-- Library exports: RIS (all managers), BibTeX and CSL JSON (Zotero), EndNote XML
+- Library exports: RIS (all managers), BibTeX and CSL JSON (Zotero), EndNote XML. Your whole library is fine: entries this paper does not cite are counted in one line, and SubmitReady tells you when your library has newer data than the citations in Word
 - If a journal wants plain text instead of live citations, the text lock still passes after Zotero's Unlink Citations or EndNote's Convert to Plain Text, as long as the visible text is the same
 - Tested on real files saved by Zotero 10 in Word (APA, Vancouver, and after Unlink Citations). EndNote is tested on files built to its format; if you use EndNote, your feedback helps most
 - Language: English

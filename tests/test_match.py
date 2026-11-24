@@ -196,3 +196,22 @@ def test_without_lists_quartiles_are_links_and_filters_explain(paper, tmp_path, 
     assert not d["journals"] and all("SCImago file was not added" in x["reason"] or "legitimate" in x["reason"]
                                      for x in d["left_out"])
     assert "check SCImago" in match.table(match.find(paper, FakeNet()))
+
+
+def test_keyword_pairs_are_searched():
+    """Each pair of keywords is its own search, so a paper's narrower angle (e.g. DNA methylation within
+    breast cancer) reaches the specialist journals. Seen with a real paper accepted in an epigenetics journal."""
+    asked = []
+
+    class Recorder(FakeNet):
+        def json(self, url):
+            asked.append(url)
+            return super().json(url)
+
+    p = {"title": "A made-up study", "abstract": "", "keywords": ["Breast Cancer", "DNA Methylation", "Machine Learning"],
+         "article_type": "research article", "approach": ""}
+    match.similar_works(p, Recorder())
+    searches = [u.split("search=")[1].split("&")[0] for u in asked if "/works?search=" in u]
+    import urllib.parse
+    searches = [urllib.parse.unquote(s) for s in searches]
+    assert "Breast Cancer DNA Methylation" in searches and "DNA Methylation Machine Learning" in searches

@@ -435,3 +435,147 @@ def test_manager_steps_name_the_right_buttons():
     assert "Unlink Citations" in refs.manager_steps("Zotero")["plain"]
     assert "Convert to Plain Text" in refs.manager_steps("EndNote")["plain"]
     assert refs.detect_manager('<w:instrText> ADDIN ZOTERO_ITEM CSL_CITATION {}</w:instrText>') == "Zotero"
+
+
+# ---- whole-library exports (seen in a real 200-entry Mendeley RIS export) ----
+
+def _ris(tmp_path, body: str, name="lib.ris"):
+    p = tmp_path / name
+    p.write_text(body, encoding="utf-8")
+    return p
+
+
+RIS_ONE = """TY  - JOUR
+AU  - Doe, Jane
+PY  - 2021
+TI  - A made-up docking method with a long title that wraps,
+Expanded Force Field, and Python Bindings
+T2  - Journal of Tests
+VL  - 61
+SP  - 10
+EP  - 20
+DO  - 10.5555/syn.wrap
+ER  -
+"""
+
+
+def test_ris_wrapped_title_is_joined(tmp_path):
+    lib = refs.read_ris(_ris(tmp_path, RIS_ONE))
+    assert lib[0].data["title"].endswith("wraps, Expanded Force Field, and Python Bindings")
+
+
+def test_placeholder_entry_is_one_error(tmp_path):
+    ms = refs.load(_ris(tmp_path, "TY  - JOUR\nTI  - nihms-000000 ( ref 10)\nER  -\n"))
+    f = refs.audit(ms)
+    assert [x.code for x in f] == ["placeholder-entry"]
+
+
+def test_preprint_has_no_missing_volume(tmp_path):
+    body = ("TY  - JOUR\nAU  - Doe, Jane\nPY  - 2022\nTI  - A made-up preprint\nT2  - bioRxiv\n"
+            "DO  - 10.1101/2022.04.08.000000\nER  -\n")
+    codes = {x.code for x in refs.audit(refs.load(_ris(tmp_path, body)))}
+    assert "preprint" in codes and "missing-volume" not in codes and "missing-container-title" not in codes
+
+
+def _ms_with(tmp_path, items):
+    import docx
+    import sys as _s
+    _s.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+    import jats_to_docx as jd
+    d = docx.Document()
+    p = d.add_paragraph("Shown before ")
+    for n, it in enumerate(items, 1):
+        jd.field_citation(p, "zotero", [dict(it, _n=n)], f"[{n}]")
+    out = tmp_path / "ms.docx"
+    d.save(out)
+    return refs.load(out)
+
+
+def _lib_entry(i: int) -> str:
+    return (f"TY  - JOUR\nAU  - Roe{i}, Rick\nPY  - 2020\nTI  - Unrelated made-up paper number {i}\n"
+            f"T2  - Journal of Tests\nVL  - 1\nIS  - 1\nSP  - {i}\nDO  - 10.5555/syn.lib{i}\nER  -\n")
+
+
+CITED = {"id": "c1", "type": "article-journal", "title": "A made-up cited paper",
+         "author": [{"family": "Doe", "given": "Jane"}], "container-title": "Journal of Tests",
+         "volume": "3", "issue": "1", "issued": {"date-parts": [[2020]]}, "DOI": "10.5555/syn.cited"}
+CITED_RIS = ("TY  - JOUR\nAU  - Doe, Jane\nPY  - 2020\nTI  - A made-up cited paper\nT2  - Journal of Tests\n"
+             "VL  - 3\nIS  - 1\nSP  - 1\nEP  - 22\nDO  - 10.5555/syn.cited\nER  -\n")
+
+
+def test_whole_library_export_gives_one_note(tmp_path):
+    ms = _ms_with(tmp_path, [CITED])
+    lib = refs.read_ris(_ris(tmp_path, CITED_RIS + "".join(_lib_entry(i) for i in range(40))))
+    f = refs.audit(ms, lib)
+    assert sum(x.code == "uncited" for x in f) == 0
+    note = [x for x in f if x.code == "uncited-many"]
+    assert len(note) == 1 and note[0].message.startswith("40 of 41")
+    md = refs.report_markdown("ms.docx", ms, f)
+    assert "References needing attention: 0 of 1" in md
+
+
+def test_folder_export_lists_the_forgotten_ones(tmp_path):
+    # this paper's folder: 1 cited entry and 1 forgotten one, so the forgotten one is named
+    ms = _ms_with(tmp_path, [CITED])
+    f = refs.audit(ms, refs.read_ris(_ris(tmp_path, CITED_RIS + _lib_entry(1))))
+    assert [x.code for x in f if x.code.startswith("uncited")] == ["uncited"]
+
+
+def test_library_with_newer_pages_says_refresh(tmp_path):
+    ms = _ms_with(tmp_path, [CITED])
+    f = refs.audit(ms, refs.read_ris(_ris(tmp_path, CITED_RIS)))
+    newer = [x for x in f if x.code == "library-newer"]
+    assert len(newer) == 1 and "pages: 1-22" in newer[0].found
+
+
+def test_same_page_twice_is_not_a_library_difference(tmp_path):
+    item = dict(CITED, page="e123-e123")
+    ms = _ms_with(tmp_path, [item])
+    f = refs.audit(ms, refs.read_ris(_ris(tmp_path, CITED_RIS.replace("SP  - 1\nEP  - 22", "SP  - e123\nEP  - e123"))))
+    assert not [x for x in f if x.code.startswith("library-")]
+
+
+# ---- online check: cases seen in a real 200-entry library ----
+
+def _one(data):
+    return refs.ManuscriptRefs(refs=[refs.Ref("x", dict({"type": "article-journal"}, **data), "x")])
+
+
+def test_one_word_title_needs_more_than_the_title():
+    # software cited by name only: a stranger's record with the same one-word title is not a match
+    ms = _one({"title": "MadeUpTool", "author": [{"family": "Toolmaker"}]})
+    fetch = fake_crossref({"query.bibliographic": {"message": {"items": [
+        {"title": ["MadeUpTool"], "DOI": "10.5555/other", "author": [{"family": "Stranger"}],
+         "issued": {"date-parts": [[2011]]}, "issue": "2"}]}}})
+    f, _ = refs.verify(ms, fetch, pause=0)
+    assert "doi-found" not in codes(f) and "fill-issue" not in codes(f)
+
+
+def test_last_page_typo_is_caught():
+    ms = _one({"title": "A made-up enzyme study", "DOI": "10.5555/syn.pages", "page": "44561-44667",
+               "issued": {"date-parts": [[2012]]}, "author": [{"family": "Doe"}]})
+    fetch = fake_crossref({"10.5555/syn.pages": {"message": {"title": ["A made-up enzyme study"], "page": "44561-44567",
+                                                             "issued": {"date-parts": [[2012]]}, "author": [{"family": "Doe"}]}}})
+    f, _ = refs.verify(ms, fetch, pause=0)
+    lp = next(x for x in f if x.code == "mismatch-last-page")
+    assert (lp.found, lp.suggested) == ("44667", "44567")
+
+
+def test_short_last_page_and_volume_label_are_not_errors():
+    ms = _one({"title": "A made-up urology study", "DOI": "10.5555/syn.vol", "page": "1343-72", "volume": "17",
+               "issued": {"date-parts": [[2025]]}, "author": [{"family": "Doe"}]})
+    fetch = fake_crossref({"10.5555/syn.vol": {"message": {"title": ["A made-up urology study"], "page": "1343-1372",
+                                                           "volume": "Volume 17", "issued": {"date-parts": [[2025]]},
+                                                           "author": [{"family": "Doe"}]}}})
+    f, _ = refs.verify(ms, fetch, pause=0)
+    assert not {c for c in codes(f) if c.startswith("mismatch-")}
+
+
+def test_article_number_against_pages_from_one():
+    # Hindawi-style: the article number is the DOI's end, Crossref deposits pages 1-15
+    ms = _one({"title": "A made-up marker study", "DOI": "10.5555/2021/4731000", "page": "4731000",
+               "issued": {"date-parts": [[2021]]}, "author": [{"family": "Doe"}]})
+    fetch = fake_crossref({"10.5555/2021/4731000": {"message": {"title": ["A made-up marker study"], "page": "1-15",
+                                                                "issued": {"date-parts": [[2021]]}, "author": [{"family": "Doe"}]}}})
+    f, _ = refs.verify(ms, fetch, pause=0)
+    assert "mismatch-first-page" not in codes(f)

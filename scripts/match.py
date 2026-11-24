@@ -165,6 +165,10 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
     elif len(top) >= 6:
         precise += [(" ".join(g), 0.8, 50) for g in ((top[0], top[1], top[2]), (top[0], top[3], top[4]), (top[1], top[3], top[5]))]
     broad = [(k, 0.6, 50) for k in p["keywords"][:6]]
+    # each pair of keywords finds the paper's angles: "DNA Methylation" + "Breast Cancer" reaches the
+    # epigenetics journals that all five keywords together, or each one alone, miss
+    kw = p["keywords"][:5]
+    broad += [(f"{a} {b}", 0.8, 50) for i, a in enumerate(kw) for b in kw[i + 1:]]
     if p.get("approach") == "computational":
         broad += [(f'"{k}" AND {METHOD_QUERY}', 1.0, 50) for k in p["keywords"][:6]]
     wide = key_terms(p["abstract"] or " ".join([p["title"], " ".join(p["keywords"])]), 16)
