@@ -36,3 +36,11 @@ def test_expert_medicine_is_not_the_standard_tf_family():
 def test_unknown_journal_still_works_live():
     r = families.find("A Made-Up Journal of Tests", "A Made-Up Press")
     assert r["kind"] == "none" and "live guidelines" in r["note"]
+
+
+def test_springer_and_bmc_share_a_publisher_name():
+    # Crossref gives BMC journals the same publisher name as other Springer journals.
+    pub = "Springer Science and Business Media LLC"
+    assert families.find("BMC Plant Biology", pub)["file"].endswith("bmc.yaml")
+    assert families.find("Molecular Biology Reports", pub)["file"].endswith("springer.yaml")
+    assert families.find("Gene", "Elsevier BV")["file"].endswith("elsevier.yaml")

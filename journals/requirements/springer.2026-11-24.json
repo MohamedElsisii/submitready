@@ -1,0 +1,280 @@
+{
+ "journal": "Springer journals with the classic Instructions for Authors template (shared rules)",
+ "article_type": "Original article",
+ "snapshot_note": "Rules that two Springer Instructions for Authors pages state word for word (Molecular Biology Reports; 3 Biotech). Reference style (numbered in square brackets or name and year), where the declarations go (before or after the reference list), word limits, article types and the peer review model differ by journal: SubmitReady reads those from the journal's own page on every run. SpringerOpen journals use the BMC template instead.",
+ "sources": [
+  {
+   "name": "Molecular Biology Reports: Submission guidelines",
+   "url": "https://link.springer.com/journal/11033/submission-guidelines",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "3 Biotech: Submission guidelines",
+   "url": "https://link.springer.com/journal/13205/submission-guidelines",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Depends on the journal. Molecular Biology Reports uses numbers in square brackets; 3 Biotech uses name and year in parentheses."
+ },
+ "requirements": [
+  {
+   "id": "abstract-words",
+   "rule": "Abstract of 150 to 250 words, with no undefined abbreviations or unspecified references",
+   "quote": "Please provide an abstract of 150 to 250 words.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 250
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "4 to 6 keywords",
+   "quote": "Please provide 4 to 6 keywords which can be used for indexing purposes.",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 4,
+    "max": 6
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Title page with author names, affiliations, corresponding author and ORCID if available",
+   "quote": "Please make sure your title page contains the following information.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "word-format",
+   "rule": "Manuscript in Word (.docx or .doc); LaTeX accepted for mathematical content",
+   "quote": "Manuscripts should be submitted in Word.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "font",
+   "rule": "Normal, plain font such as 10-point Times Roman",
+   "quote": "Use a normal, plain font (e.g., 10-point Times Roman) for text.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "headings",
+   "rule": "No more than three levels of headings",
+   "quote": "Please use no more than three levels of displayed headings.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abbreviations",
+   "rule": "Define abbreviations at first mention and use them consistently",
+   "quote": "Abbreviations should be defined at first mention and used consistently thereafter.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "footnotes",
+   "rule": "Footnotes, not endnotes; no footnote that is only a reference",
+   "quote": "Always use footnotes instead of endnotes.",
+   "source": 0,
+   "check": {
+    "type": "footnotes",
+    "allowed": true
+   }
+  },
+  {
+   "id": "acknowledgements",
+   "rule": "Acknowledgments of people, grants and funds in a separate section on the title page",
+   "quote": "Acknowledgments of people, grants, funds, etc. should be placed in a separate section on the title page.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "declarations",
+   "rule": "A Declarations section with Funding, Competing interests, Ethics approval, Consent, Data availability and Author contributions",
+   "quote": "Other declarations include Ethics approval, Consent, Data, Material and/or Code availability and Authors’ contribution statements.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "declarations"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interests statement",
+   "quote": "The above should be summarized in a statement and placed in a ‘Declarations’ section before the reference list under a heading of ‘Funding’ and/or ‘Competing interests’.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement for original research",
+   "quote": "All original research must include a data availability statement.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "llm",
+   "rule": "Document any LLM use in the Methods section; AI copy editing does not need a statement",
+   "quote": "Use of an LLM should be properly documented in the Methods section (and if a Methods section is not available, in a suitable alternative part) of the manuscript.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references-cited",
+   "rule": "Reference list holds only works cited in the text and published or accepted",
+   "quote": "The list of references should only include works that are cited in the text and that have been published or accepted for publication.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "doi-links",
+   "rule": "DOIs as full links in the reference list",
+   "quote": "If available, please always include DOIs as full DOI links in your reference list (e.g. “https://doi.org/abc”).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-abbreviations",
+   "rule": "Journal names abbreviated by the ISSN List of Title Word Abbreviations",
+   "quote": "Always use the standard abbreviation of a journal’s name according to the ISSN List of Title Word Abbreviations, see",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Tables made with the table function, numbered with Arabic numerals, cited in order, each with a caption",
+   "quote": "Use the table function, not spreadsheets, to make tables.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-in-text",
+   "rule": "Figures inside the manuscript text (separate only if the file is too large to upload)",
+   "quote": "Figures should be submitted within the body of the text.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files: EPS for vector, TIFF for halftones (MS Office also accepted); halftones at least 300 dpi, combination art 600 dpi, line art 1200 dpi; named Fig1, Fig2",
+   "quote": "Halftones should have a minimum resolution of 300 dpi.",
+   "source": 0,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "eps",
+     "tif",
+     "tiff"
+    ],
+    "dpi_min": 300,
+    "color_modes": [
+     "RGB",
+     "L",
+     "CMYK"
+    ],
+    "name_pattern": "Fig{n}"
+   }
+  },
+  {
+   "id": "figure-captions",
+   "rule": "Captions in the text file, starting with bold 'Fig.' and the number, with no full stop after the number or at the end",
+   "quote": "No punctuation is to be included after the number, nor is any punctuation to be placed at the end of the caption.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-lettering",
+   "rule": "Lettering in Helvetica or Arial, 8 to 12 pt at final size; no titles or captions inside figures",
+   "quote": "Do not include titles or captions within your illustrations.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-size",
+   "rule": "Figures 84 or 174 mm wide (large journals) or 119 mm (small journals)",
+   "quote": "When preparing your figures, size figures to fit in the column width.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supp-naming",
+   "rule": "Supplementary files cited in the text, named consecutively (ESM_1, ESM_2), each with a caption",
+   "quote": "Name the files consecutively, e.g. “ESM_3.mpg”, “ESM_4.pdf”.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "editable-files",
+   "rule": "Upload editable source files at every submission and revision",
+   "quote": "Please ensure you provide all relevant editable source files at every submission and revision.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "interface-statements",
+   "rule": "Author contributions and competing interests also entered in the submission system",
+   "quote": "Please note that Author Contribution information and Competing Interest information must be provided at submission via the submission interface.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for reference style, declaration placement, article type limits and peer review model",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

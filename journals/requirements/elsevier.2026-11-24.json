@@ -1,0 +1,214 @@
+{
+  "journal": "Elsevier journals with the current Guide for Authors template (shared rules)",
+  "article_type": "Research article",
+  "snapshot_note": "Rules that three Elsevier Guides for Authors state word for word (Gene; Computers in Biology and Medicine; International Journal of Biological Macromolecules). Whether highlights or a graphical abstract are required, the reference style (some journals take any consistent style at submission), and article types differ by journal: SubmitReady reads those from the journal's own guide on every run.",
+  "sources": [
+    {
+      "name": "Gene: Guide for authors",
+      "url": "https://www.sciencedirect.com/journal/gene/publish/guide-for-authors",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "Computers in Biology and Medicine: Guide for authors",
+      "url": "https://www.sciencedirect.com/journal/computers-in-biology-and-medicine/publish/guide-for-authors",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "International Journal of Biological Macromolecules: Guide for authors",
+      "url": "https://www.sciencedirect.com/journal/international-journal-of-biological-macromolecules/publish/guide-for-authors",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "",
+    "title": "",
+    "source": "",
+    "note": "Depends on the journal. Several accept any consistent style at submission; others give a numbered style in square brackets."
+  },
+  "requirements": [
+    {
+      "id": "abstract-length",
+      "rule": "Abstract of at most 250 words, able to stand alone",
+      "quote": "You are required to provide a concise and factual abstract that does not exceed 250 words.",
+      "source": 0,
+      "check": {
+        "type": "max_words",
+        "target": "abstract",
+        "value": 250
+      }
+    },
+    {
+      "id": "keywords",
+      "rule": "1 to 7 keywords, in English",
+      "quote": "You are required to provide 1 to 7 keywords for indexing purposes.",
+      "source": 0,
+      "check": {
+        "type": "keywords",
+        "min": 1,
+        "max": 7
+      }
+    },
+    {
+      "id": "highlights",
+      "rule": "Highlights: 3 to 5 bullet points of at most 85 characters each, in a separate editable file with 'highlights' in the file name",
+      "quote": "Highlights should consist of 3 to 5 bullet points, each a maximum of 85 characters, including spaces.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "word-single-column",
+      "rule": "Word files in a single-column layout (.docx); LaTeX as .tex",
+      "quote": "Format Word files in a single-column layout.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "title-page",
+      "rule": "Title page with the corresponding author's email, which is published",
+      "quote": "The email address of the corresponding author must be included on the title page and will be published in the article.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "funding",
+      "rule": "Funding sources, or the sentence that the research had no specific grant",
+      "quote": "If no funding has been provided for the research, please include the following sentence:",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "funding"
+      }
+    },
+    {
+      "id": "competing",
+      "rule": "Declaration of competing interests (uploaded as a Word file from the declarations tool)",
+      "quote": "The resulting Word document containing your declaration should be uploaded at the \"attach/upload files\" step in the submission process.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "ai-declaration",
+      "rule": "A section 'Declaration of generative AI and AI-assisted technologies in the manuscript preparation process' before the references, when such tools were used (grammar and spelling checkers excluded)",
+      "quote": "The statement will appear in the published work and should be placed in a new section before the reference list.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "credit",
+      "rule": "CRediT author contributions",
+      "quote": "Corresponding authors are required to acknowledge co-author contributions using CRediT (Contributor Roles Taxonomy) roles:",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "contributions"
+      }
+    },
+    {
+      "id": "acknowledgements",
+      "rule": "Acknowledgments in their own section directly before the reference list, nowhere else",
+      "quote": "Acknowledgments should be placed in a separate section that appears directly before the reference list.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "tables",
+      "rule": "Tables are editable text, cited and numbered in order, with captions",
+      "quote": "Tables must be submitted as editable text, not as images.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "figures-separate",
+      "rule": "Figures are separate files named like Figure_1 (LaTeX may embed them)",
+      "quote": "Figures, images, diagrams, and other graphical media (artwork) must be supplied as separate files along with the manuscript",
+      "source": 0,
+      "check": {
+        "type": "figures_embedded",
+        "allowed": false
+      }
+    },
+    {
+      "id": "figure-files",
+      "rule": "Photographs TIFF, JPG or PNG at 300 dpi or more; bitmapped line drawings at 1000 dpi",
+      "quote": "Minimum resolution 300 dpi",
+      "source": 0,
+      "check": {
+        "type": "figure_files",
+        "formats": [
+          "tif",
+          "tiff",
+          "jpg",
+          "jpeg",
+          "png",
+          "xls",
+          "xlsx",
+          "ppt",
+          "pptx",
+          "eps",
+          "pdf",
+          "svg"
+        ],
+        "dpi_min": 300
+      }
+    },
+    {
+      "id": "ai-in-captions",
+      "rule": "Images made with generative AI say so in each caption",
+      "quote": "If you used generative AI tools to create images in your manuscript, disclose this in each image caption as well as in the general generative AI disclosure statement.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "web-references",
+      "rule": "Web references give the full URL and the date last accessed",
+      "quote": "When listing web references, as a minimum you should provide the full URL and the date when the reference was last accessed.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "supplementary",
+      "rule": "Every supplementary file is cited in the text and has a caption",
+      "quote": "Cite all supplementary files in the manuscript text.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "no-fields",
+      "rule": "No reference-manager field codes in the submitted file (convert the upload copy to plain text)",
+      "quote": "We advise you to remove all field codes before submitting your manuscript",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "journal-specific",
+      "rule": "Read on the journal's own guide: whether highlights and a graphical abstract are required, the reference style (or format-free references), and article types with their limits",
+      "quote": "",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

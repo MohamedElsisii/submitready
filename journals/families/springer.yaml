@@ -1,0 +1,30 @@
+# A family: Springer journals whose page uses the classic "Instructions for Authors" layout.
+# BMC journals have their own family. SpringerOpen journals (for example Egyptian Journal of
+# Medical Human Genetics) use the BMC layout: if the journal page shows "Preparing your manuscript"
+# with Declarations subheadings like BMC, use the BMC family as the starting point instead.
+# The journal's own page is always read.
+name: "Springer journals (classic Instructions for Authors template)"
+publisher: "Springer (Springer Nature)"
+match:
+  publisher: ["Springer", "Springer Nature", "Springer Science and Business Media", "Springer Science and Business Media LLC", "Springer-Verlag"]
+  journal_page: "https://link.springer.com/journal/<id>/submission-guidelines"
+journals_list:
+  url: "https://link.springer.com/journals/a/1"
+  note: "Springer Link lists every journal A to Z."
+  checked: "2026-11-24"
+guidelines:
+  url: "https://link.springer.com/journal/11033/submission-guidelines"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://link.springer.com/journal/13205/submission-guidelines"
+requirements_snapshot: "journals/requirements/springer.2026-11-24.json (Original article, shared rules only)"
+journal_specific:
+  - "Reference style: Molecular Biology Reports uses numbers in square brackets; 3 Biotech uses name and year in parentheses"
+  - "Where the declarations go: before the reference list, or under 'Statements and Declarations' after the References (Molecular Biology Reports states both, so follow the template or ask the editorial office)"
+  - "Article types and their limits (Molecular Biology Reports research article: at most 5,000 words, 8 figures and tables combined, 6 panels per figure, structured abstract)"
+  - "Peer review model: 3 Biotech uses double-anonymous review, so some statements go only in the submission system"
+  - "Open access fees and options, on the journal's own page"
+known_quirks:
+  - text: "Molecular Biology Reports asks for a Declarations section before the reference list in one place and after the References in another. SubmitReady checks that the section exists and leaves the position to you."
+    source: "https://link.springer.com/journal/11033/submission-guidelines"
+    checked: "2026-11-24"

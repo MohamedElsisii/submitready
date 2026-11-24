@@ -4,7 +4,7 @@
     python families.py find "Future Oncology"
     python families.py find "Cancers" --publisher MDPI
 
-A journal profile (journals/<slug>.yaml) wins. Then a family that lists the journal by name.
+A journal profile (journals/<slug>.yaml) wins. Then a family that lists the journal by name, then one whose name pattern fits (e.g. "BMC ...").
 Then a family that matches the publisher. Every journal still works without any of these:
 the prepare step reads the journal's live guidelines in every case.
 """
@@ -58,6 +58,12 @@ def find(journal: str, publisher: str = "") -> dict:
         if any(_norm(x) == j for x in f.get("journals", [])):
             return {"kind": "family", "how": "listed by name", "file": f["_file"], "name": f["name"],
                     "snapshot": f["requirements_snapshot"], "journal_specific": f.get("journal_specific", [])}
+    for f in fams:
+        pat = (f.get("match") or {}).get("journal_name_pattern", "")
+        if pat and re.search(pat, journal.strip(), re.I):
+            return {"kind": "family", "how": "matched by journal name", "file": f["_file"], "name": f["name"],
+                    "snapshot": f["requirements_snapshot"], "journal_specific": f.get("journal_specific", []),
+                    "journal_page": (f.get("match") or {}).get("journal_page", "")}
     pub = _norm(publisher)
     if pub:
         for f in fams:

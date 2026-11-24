@@ -227,7 +227,9 @@ def test_families_point_to_real_snapshots():
         if "journals" in fam:  # a named list, or a publisher match with a list page
             assert len(fam["journals"]) == len(set(fam["journals"])) > 1, p.name
         else:
-            assert fam["match"]["publisher"] and fam["journals_list"]["url"].startswith("https://"), p.name
+            assert fam["match"]["publisher"] and fam["match"]["journal_page"].startswith("https://"), p.name
+            if "journals_list" in fam:
+                assert fam["journals_list"]["url"].startswith("https://"), p.name
             assert fam["journal_specific"], p.name  # what must still be read from each journal's page
         for q in fam.get("known_quirks", []):
             assert q["source"].startswith("https://") and q["checked"], p.name

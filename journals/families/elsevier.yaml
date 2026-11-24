@@ -1,0 +1,23 @@
+# A family: Elsevier journals whose Guide for Authors uses the current ScienceDirect template.
+# Cell Press journals and older-style guides may differ; the journal's own guide is always read.
+name: "Elsevier journals (current Guide for Authors template)"
+publisher: "Elsevier"
+match:
+  publisher: ["Elsevier", "Elsevier BV", "Elsevier B.V.", "Elsevier Ltd"]
+  journal_page: "https://www.sciencedirect.com/journal/<journal-slug>/publish/guide-for-authors"
+guidelines:
+  url: "https://www.sciencedirect.com/journal/gene/publish/guide-for-authors"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://www.sciencedirect.com/journal/computers-in-biology-and-medicine/publish/guide-for-authors"
+    - "https://www.sciencedirect.com/journal/international-journal-of-biological-macromolecules/publish/guide-for-authors"
+requirements_snapshot: "journals/requirements/elsevier.2026-11-24.json (Research article, shared rules only)"
+journal_specific:
+  - "Highlights required or only encouraged (required in Gene and Computers in Biology and Medicine; encouraged in International Journal of Biological Macromolecules)"
+  - "Graphical abstract (encouraged in Computers in Biology and Medicine)"
+  - "Reference style: Gene takes any consistent style at submission; the other two use numbers in square brackets in order of appearance"
+  - "Article types and their limits (e.g. Gene: short communications at most 4 display items)"
+known_quirks:
+  - text: "The guide asks to remove reference-manager field codes before submission; SubmitReady converts only the upload copy and keeps your working file live."
+    source: "https://www.sciencedirect.com/journal/gene/publish/guide-for-authors"
+    checked: "2026-11-24"

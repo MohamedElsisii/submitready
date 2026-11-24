@@ -3,6 +3,7 @@ name: "BMC journals"
 publisher: "BioMed Central (Springer Nature)"
 match:
   publisher: ["BioMed Central", "BMC", "Springer Nature (BMC)"]
+  journal_name_pattern: "^BMC\\s"
   journal_page: "https://link.springer.com/journal/<id>/submission-guidelines/research-article"
 journals_list:
   url: "https://link.springer.com/brands/bmc/journals"
