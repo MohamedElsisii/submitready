@@ -252,7 +252,8 @@ def build(xml: Path, out: Path, mode: str) -> dict:
     def add_table(tw):
         tn[0] += 1
         cap = text(tw.find("caption")) or text(tw.find("label"))
-        d.add_paragraph(f"Table {tn[0]}. {re.sub(r'^Table\s*\d+\.?\s*', '', cap)}".strip())
+        rest = re.sub(r"^Table\s*\d+\.?\s*", "", cap)  # outside the f-string: Python 3.10 refuses a backslash there
+        d.add_paragraph(f"Table {tn[0]}. {rest}".strip())
         rows = tw.findall(".//tr")
         if rows:
             ncol = max(len(r.findall("td")) + len(r.findall("th")) for r in rows) or 1
