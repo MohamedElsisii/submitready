@@ -165,3 +165,47 @@ def test_verify_accepts_swapped_arguments(tmp_path):
     lk = tmp_path / "a.lock.json"
     lock.create(src, lk)
     assert lock.main(["verify", str(src), str(lk)]) == 0
+
+
+# ---- citations converted to plain text (Zotero Unlink Citations, EndNote Convert to Plain Text) ----
+
+from docx_tools import make_zotero_sample, unlink_citations  # noqa: E402
+
+
+@pytest.mark.parametrize("maker", ["mendeley", "fields"])
+def test_unlinked_citations_pass(tmp_path, maker):
+    src = make_sample(tmp_path / "m.docx") if maker == "mendeley" else make_zotero_sample(tmp_path / "z.docx")
+    lk = tmp_path / "m.lock.json"
+    lock.create(src, lk)
+    out = tmp_path / "unlinked.docx"
+    unlink_citations(src, out)
+    r = lock.verify(lk, out)
+    assert r["status"] == 0, (r["changed"], r["missing"])
+    assert r["citations_unlinked"] >= 1
+
+
+@pytest.mark.parametrize("seed", range(30))
+def test_planted_edits_after_unlinking_are_caught(tmp_path, seed):
+    src = make_zotero_sample(tmp_path / "z.docx") if seed % 2 else make_sample(tmp_path / "m.docx")
+    lk = tmp_path / "m.lock.json"
+    lock.create(src, lk)
+    out = tmp_path / "unlinked.docx"
+    unlink_citations(src, out)
+    bad = tmp_path / "bad.docx"
+    plant_edit(out, bad, random.Random(seed))
+    assert lock.verify(lk, bad)["status"] == 2
+
+
+def test_unlinked_citation_with_different_text_is_caught(tmp_path):
+    src = make_zotero_sample(tmp_path / "z.docx")
+    lk = tmp_path / "m.lock.json"
+    lock.create(src, lk)
+    out = tmp_path / "unlinked.docx"
+    unlink_citations(src, out)
+    root = read_doc(out)
+    for t in root.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"):
+        if t.text == "[1]":
+            t.text = "[3]"
+    bad = tmp_path / "bad.docx"
+    write_doc(out, bad, root)
+    assert lock.verify(lk, bad)["status"] == 2

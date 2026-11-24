@@ -256,6 +256,30 @@ def _paragraphs(root, part: str):
             yield p
 
 
+def _visible_text(p) -> str:
+    """All visible text of a paragraph, written the way paragraph_text writes it (tabs, breaks),
+    with no citation or bibliography suppression: used to fingerprint the reference list."""
+    out = []
+
+    def walk(el):
+        for ch in el:
+            if not isinstance(ch.tag, str) or _skip_subtree(ch) or ch.tag == q(W, "instrText"):
+                continue
+            if ch.tag in (q(W, "t"), q(M, "t")):
+                out.append(ch.text or "")
+            elif ch.tag == q(W, "tab"):
+                out.append("\t")
+            elif ch.tag in (q(W, "br"), q(W, "cr")):
+                out.append("\n")
+            elif ch.tag == q(W, "noBreakHyphen"):
+                out.append("\u2011")
+            else:
+                walk(ch)
+
+    walk(p)
+    return "".join(out)
+
+
 def check_refusals(z: zipfile.ZipFile) -> list[str]:
     problems = []
     xml = z.read("word/document.xml")
@@ -291,6 +315,7 @@ def extract(docx_path: Path) -> dict:
         return extract_tex(docx_path)
     units: list[Unit] = []
     bibliography_paragraphs = 0
+    bib_hashes: list[str] = []
     with zipfile.ZipFile(docx_path) as z:
         refusals = check_refusals(z)
         names = set(z.namelist())
@@ -303,16 +328,22 @@ def extract(docx_path: Path) -> dict:
             for p in _paragraphs(root, part):
                 in_bib = ex.in_bibliography(p)
                 text, cites = ex.paragraph_text(p)
-                if in_bib:
-                    if text.strip():
+                # a bibliography field that starts inside this paragraph: it is bibliography only if all of its
+                # visible text is inside the field (otherwise the text before the field stays locked)
+                starts_bib = not in_bib and ex.in_bibliography(p) and not text.strip()
+                if in_bib or starts_bib:
+                    visible = normalize(_visible_text(p))
+                    if visible.strip():
                         bibliography_paragraphs += 1
+                        bib_hashes.append(sha(visible.strip()))
                     continue
                 text = normalize(text)
                 if not text.strip():
                     continue
                 units.append(Unit(part, idx, text, sha(text), count_sentences(text), cites))
                 idx += 1
-    return {"units": units, "bibliography_paragraphs": bibliography_paragraphs, "refusals": refusals}
+    return {"units": units, "bibliography_paragraphs": bibliography_paragraphs, "refusals": refusals,
+            "bibliography_sha256": bib_hashes}
 
 
 def create(docx: Path, out: Path, allow_tracked: bool = False) -> dict:
@@ -333,6 +364,8 @@ def create(docx: Path, out: Path, allow_tracked: bool = False) -> dict:
         "sentences": sum(u.sentences for u in units),
         "citations": sum(len(u.citations) for u in units),
         "bibliography_paragraphs_excluded": data["bibliography_paragraphs"],
+        # fingerprints only, to recognise the same reference list once converted to plain text
+        "bibliography_sha256": data.get("bibliography_sha256", []),
         "units": [asdict(u) for u in units],
     }
     out.write_text(json.dumps(lock, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -390,6 +423,37 @@ def verify(lock_path: Path, docx: Path, approved: dict | None = None) -> dict:
     unmatched_old = [i for i in range(len(old)) if i not in matched_old]
     unmatched_new = [j for j in range(len(new)) if j not in matched_new]
 
+    # Citations converted to plain text (Zotero "Unlink Citations", EndNote "Convert to Plain Text"):
+    # the original paragraph, with each citation token replaced by that citation's own visible text,
+    # must equal the new paragraph exactly
+    unlinked = []
+    if any(old[i]["citations"] for i in unmatched_old):
+        free = defaultdict(list)
+        for j in unmatched_new:
+            free[new[j]["sha256"]].append(j)
+        for i in list(unmatched_old):
+            u = old[i]
+            if not u["citations"] or u["text"].count(CITE_TOKEN) != len(u["citations"]):
+                continue
+            parts = u["text"].split(CITE_TOKEN)
+            plain = parts[0] + "".join(c + rest for c, rest in zip(u["citations"], parts[1:]))
+            h = sha(normalize(plain))
+            if free.get(h):
+                j = free[h].pop(0)
+                unlinked.append({"old_index": i, "new_index": j})
+                unmatched_old.remove(i)
+                unmatched_new.remove(j)
+
+    # The reference list converted to plain text: new paragraphs that are exactly the old bibliography
+    bib_known = Counter(lock.get("bibliography_sha256", []))
+    bibliography_unlinked = 0
+    for j in list(unmatched_new):
+        h = sha(new[j]["text"].strip())
+        if bib_known.get(h, 0) > 0:
+            bib_known[h] -= 1
+            bibliography_unlinked += 1
+            unmatched_new.remove(j)
+
     # Approved label swaps: the original text with exactly the approved swaps must equal the new text
     relabeled = []
     if approved["relabel"]:
@@ -445,7 +509,7 @@ def verify(lock_path: Path, docx: Path, approved: dict | None = None) -> dict:
     new_cites = [c for u in new for c in u["citations"]]
     cite_changes = sum(1 for a, b in zip(old_cites, new_cites) if a != b)
 
-    unchanged_sentences = sum(old[i]["sentences"] for i in matched_old)
+    unchanged_sentences = sum(old[i]["sentences"] for i in matched_old) + sum(old[c["old_index"]]["sentences"] for c in unlinked)
     approved_sentences = sum(old[c["old_index"]]["sentences"] for c in relabeled + moved_out)
     version_note = ""
     if lock.get("version") != VERSION:
@@ -467,6 +531,8 @@ def verify(lock_path: Path, docx: Path, approved: dict | None = None) -> dict:
         "sentences_unchanged": unchanged_sentences,
         "moved_paragraphs": moved,
         "relabeled": relabeled,
+        "citations_unlinked": sum(len(old[c["old_index"]]["citations"]) for c in unlinked),
+        "bibliography_unlinked": bibliography_unlinked,
         "moved_out": moved_out,
         "sentences_approved": approved_sentences,
         "changed": changed,
@@ -517,7 +583,9 @@ def report_markdown(r: dict) -> str:
         f"- Paragraphs unchanged: {r['paragraphs_unchanged']:,} of {r['paragraphs_locked']:,}",
         f"- Paragraphs moved (text identical): {r['moved_paragraphs']}",
         f"- Citation markers: {r['citations_found']} found, {r['citations_locked']} locked, "
-        f"{r['citation_markers_changed']} restyled (allowed)",
+        f"{r['citation_markers_changed']} restyled (allowed)"
+        + (f", {r['citations_unlinked']} converted to plain text with the same visible text (allowed)" if r.get("citations_unlinked") else "")
+        + (f"; {r['bibliography_unlinked']} reference list entries converted to plain text (allowed)" if r.get("bibliography_unlinked") else ""),
         "",
     ]
     if r.get("relabeled") or r.get("moved_out"):

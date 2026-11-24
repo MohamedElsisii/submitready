@@ -315,3 +315,66 @@ def test_title_search_prefers_the_record_that_agrees():
     fetch = fake_crossref({"query.bibliographic": {"message": {"items": [digest, real]}}})
     f, _ = refs.verify(ms, fetch, pause=0)
     assert next(x for x in f if x.code == "doi-found").suggested == "10.5555/nejm.1"
+
+
+# ---- Zotero and EndNote ----
+
+ENDNOTE_XML = ('<EndNote><Cite><Author>Doe</Author><Year>2020</Year><RecNum>7</RecNum><DisplayText>[1]</DisplayText>'
+               '<record><rec-number>7</rec-number><contributors><authors><author>Doe, Jane</author></authors></contributors>'
+               '<titles><title>A made-up EndNote paper</title></titles><periodical><full-title>Journal of Tests</full-title>'
+               '</periodical><volume>3</volume><pages>10-20</pages><dates><year>2020</year></dates>'
+               '<electronic-resource-num>10.5555/syn.en.7</electronic-resource-num></record></Cite></EndNote>')
+
+
+def _field_doc(tmp_path, instr_runs: str, name="f.docx"):
+    """A one-paragraph docx whose paragraph holds a field with the given runs."""
+    import zipfile
+    import docx
+    d = docx.Document()
+    d.add_paragraph("PLACEHOLDER")
+    p = tmp_path / name
+    d.save(p)
+    z = zipfile.ZipFile(p)
+    files = {n: z.read(n) for n in z.namelist()}
+    z.close()
+    xml = files["word/document.xml"].decode()
+    xml = xml.replace("<w:r><w:t>PLACEHOLDER</w:t></w:r>", "<w:r><w:t xml:space=\"preserve\">As shown </w:t></w:r>" + instr_runs)
+    files["word/document.xml"] = xml.encode()
+    with zipfile.ZipFile(p, "w") as zo:
+        for n, b in files.items():
+            zo.writestr(n, b)
+    return p
+
+
+def test_endnote_cite_data_is_read(tmp_path):
+    import base64
+    from xml.sax.saxutils import escape
+    blob = base64.b64encode(ENDNOTE_XML.encode()).decode()
+    runs = ('<w:r><w:fldChar w:fldCharType="begin"><w:fldData xml:space="preserve">' + blob + '</w:fldData></w:fldChar></w:r>'
+            '<w:r><w:instrText xml:space="preserve"> ADDIN EN.CITE </w:instrText></w:r>'
+            '<w:r><w:fldChar w:fldCharType="begin"><w:fldData xml:space="preserve">' + blob + '</w:fldData></w:fldChar></w:r>'
+            '<w:r><w:instrText xml:space="preserve"> ADDIN EN.CITE.DATA </w:instrText></w:r>'
+            '<w:r><w:fldChar w:fldCharType="end"/></w:r>'
+            '<w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>[1]</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>')
+    ms = refs.load(_field_doc(tmp_path, runs))
+    assert ms.manager == "EndNote" and ms.citations >= 1
+    r = ms.refs[0].data
+    assert r["title"] == "A made-up EndNote paper" and r["DOI"] == "10.5555/syn.en.7"
+    assert r["author"][0] == {"family": "Doe", "given": "Jane"} and r["container-title"] == "Journal of Tests"
+    assert escape  # keeps the import honest
+
+
+def test_endnote_xml_export(tmp_path):
+    p = tmp_path / "library.xml"
+    p.write_text("<xml><records>" + ENDNOTE_XML.split("<record>", 1)[1].rsplit("</record>", 1)[0].join(["<record>", "</record>"])
+                 + "</records></xml>", encoding="utf-8")
+    lib = refs.load(p).refs
+    assert len(lib) == 1 and lib[0].data["DOI"] == "10.5555/syn.en.7" and lib[0].data["volume"] == "3"
+
+
+def test_manager_steps_name_the_right_buttons():
+    assert "Document Preferences" in refs.manager_steps("Zotero")["style"]
+    assert "Update Citations and Bibliography" in refs.manager_steps("EndNote")["refresh"]
+    assert "Unlink Citations" in refs.manager_steps("Zotero")["plain"]
+    assert "Convert to Plain Text" in refs.manager_steps("EndNote")["plain"]
+    assert refs.detect_manager('<w:instrText> ADDIN ZOTERO_ITEM CSL_CITATION {}</w:instrText>') == "Zotero"

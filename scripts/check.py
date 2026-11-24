@@ -375,6 +375,8 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         checks.append(f"{len(lv['added'])} paragraphs were added; confirm each one (reports/change_report.md)")
 
     # 2. journal checklist
+    ms = refsmod.load(manuscript)
+    steps = refsmod.manager_steps(ms.manager)
     facts = prepare.analyze(manuscript)
     res = prepare.check(facts, req)
     (rep / "checklist.md").write_text(prepare.checklist_markdown(facts, req, res), encoding="utf-8")
@@ -391,13 +393,14 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
                 fix("refs", f"Reference style: {r['rule']}. Change \\bibliographystyle (or the natbib/biblatex options) "
                             "to the journal's style, ideally from its LaTeX template, then rerun /lock")
             else:
-                fix("refs", f"Reference style: {r['rule']}. Pick '{req.get('csl_style', {}).get('title', 'the journal style')}' "
-                            "in your reference manager, then rerun /lock")
+                style = req.get("csl_style", {}).get("title", "the journal style")
+                fix("refs", f"Reference style: {r['rule']}. " + steps["style"].format(style=style, journal=req["journal"])
+                    + f" Then {steps['refresh']} and run the check again.")
         elif r["status"] == "CHECK" and r["id"] != "figure-files":
-            checks.append(r["rule"])
+            extra = f" {steps['plain']}" if r["id"] == "no-fields" and steps["plain"] else ""
+            checks.append(r["rule"] + extra)
 
     # 3. references
-    ms = refsmod.load(manuscript)
     lib = refsmod.load(library).refs if library else None
     findings = refsmod.audit(ms, lib)
     stats = None
@@ -535,7 +538,7 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
             if not items:
                 continue
             if key == "refs" and not is_tex:
-                title = "In your reference manager (Mendeley, Zotero or EndNote), then refresh the citations in Word"
+                title = f"In {steps['library']}, then {steps['refresh']}"
             summary += [f"### {title}", ""]
             for t in items:
                 line = f"- [ ] {t['text']}"

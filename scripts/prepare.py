@@ -321,6 +321,8 @@ def analyze(path: Path) -> dict:
         return analyze_tex(path)
     z, root, paras = read_paragraphs(path)
     xml = z.read("word/document.xml").decode("utf-8")
+    import refs as _refs
+    manager = _refs.detect_manager(xml)
     body = root.find(q("body"))
 
     # title = first non-empty paragraph
@@ -455,6 +457,7 @@ def analyze(path: Path) -> dict:
         "tables": tabs,
         "captions_placement": dict(placement),
         "caption_duplicates": caption_duplicates,
+        "reference_manager": manager,
         "caption_labels": caption_labels,
         "section_where": where,
         "supp_mentions": sum(supp_style.values()),
@@ -644,11 +647,17 @@ def checklist_markdown(facts: dict, req: dict, results: list[dict]) -> str:
               f"- Figures: {len(facts['figures'])}, tables: {len(facts['tables'])}, images inside the file: {facts['figures_embedded']}",
               f"- Supplementary items mentioned: {len(facts['supplementary_items'])} ({facts['supplementary_label_style'] or 'none'} style)",
               f"- Line numbers: {'on' if facts['line_numbers'] else 'off'}; page numbers: {'yes' if facts['page_numbers'] else 'no'}; line spacing: {facts['line_spacing']}",
-              f"- Citations: {facts['citation_format']}; references: {facts['references']}",
+              f"- Citations: {facts['citation_format']}"
+              + (f", inserted with {facts['reference_manager']}" if facts.get("reference_manager") else "")
+              + f"; references: {facts['references']}",
               ""]
     if req.get("csl_style"):
-        lines += [f"Reference style: choose **{req['csl_style']['title']}** in your reference manager "
-                  f"(CSL id `{req['csl_style']['id']}`, [source]({req['csl_style']['source']})).", ""]
+        import refs as _refs
+        mgr = facts.get("reference_manager", "")
+        steps = _refs.manager_steps(mgr)
+        how = steps["style"].format(style=req["csl_style"]["title"], journal=req["journal"])
+        lines += [f"Reference style{' (' + mgr + ')' if mgr else ''}: {how} Then {steps['refresh']}. "
+                  f"(CSL id `{req['csl_style']['id']}`, [source]({req['csl_style']['source']}))", ""]
     return "\n".join(lines)
 
 

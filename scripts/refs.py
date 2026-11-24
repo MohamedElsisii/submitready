@@ -2,7 +2,7 @@
 """SubmitReady references: read, audit and verify a manuscript's references.
 
 Reads references from:
-  * a Word manuscript with live Mendeley Cite citations (.docx)
+  * a Word manuscript with live Mendeley Cite, Zotero or EndNote citations (.docx), or a typed reference list
   * reference-manager exports: RIS (.ris), BibTeX (.bib), CSL JSON (.json)
 
 Commands:
@@ -68,6 +68,55 @@ class ManuscriptRefs:
     missing_keys: list[str] = field(default_factory=list)  # cited keys with no library entry
     plain: bool = False                       # references typed as plain text (no reference manager)
     body_text: str = ""                       # manuscript text before the reference list (plain mode)
+    manager: str = ""                         # "Mendeley", "Zotero", "EndNote" or "" (typed or a file)
+
+
+# ---------------------------------------------------------------- reference managers
+MANAGER_STEPS = {
+    "Mendeley": {
+        "library": "your Mendeley library",
+        "style": "In the Mendeley Cite panel in Word, change the citation style to \u201c{style}\u201d.",
+        "refresh": "refresh the citations in the Mendeley Cite panel",
+        "plain": "",
+    },
+    "Zotero": {
+        "library": "your Zotero library",
+        "style": "In Word's Zotero tab, click Document Preferences and choose \u201c{style}\u201d "
+                 "(if it is not listed, add it in Zotero from the Zotero Style Repository).",
+        "refresh": "click Refresh in Word's Zotero tab",
+        "plain": "On the copy you upload, click Unlink Citations in Word's Zotero tab; keep your working file linked.",
+    },
+    "EndNote": {
+        "library": "your EndNote library",
+        "style": "In Word's EndNote tab, choose the style for {journal} in the Style list. EndNote uses its own style files: "
+                 "if it is not listed, download it from EndNote's output styles page and open it in EndNote.",
+        "refresh": "click Update Citations and Bibliography in Word's EndNote tab",
+        "plain": "On the copy you upload, choose Convert Citations and Bibliography > Convert to Plain Text in Word's "
+                 "EndNote tab; keep your working file linked.",
+    },
+    "": {
+        "library": "your reference manager",
+        "style": "Choose \u201c{style}\u201d in your reference manager.",
+        "refresh": "refresh the citations in Word",
+        "plain": "",
+    },
+}
+
+
+def detect_manager(document_xml: str) -> str:
+    """Which reference manager inserted the live citations: Mendeley, Zotero, EndNote, or ''."""
+    found = []
+    if "MENDELEY_CITATION" in document_xml:
+        found.append("Mendeley")
+    if "ZOTERO_ITEM" in document_xml:
+        found.append("Zotero")
+    if "EN.CITE" in document_xml:
+        found.append("EndNote")
+    return found[0] if len(found) == 1 else (" and ".join(found) if found else "")
+
+
+def manager_steps(manager: str) -> dict:
+    return MANAGER_STEPS.get(manager, MANAGER_STEPS[""])
 
 
 # ---------------------------------------------------------------- readers
@@ -99,6 +148,7 @@ def read_docx(path: Path) -> ManuscriptRefs:
     if out.citations == 0:
         fields = read_docx_fields(path)
         return fields if fields.citations else read_docx_plain(path)
+    out.manager = "Mendeley"
     return out
 
 
@@ -117,6 +167,10 @@ def _field_instructions(xml: bytes) -> list[str]:
             kind = el.get(W + "fldCharType")
             if kind == "begin":
                 stack.append([])
+                data = el.find(W + "fldData")
+                if data is not None and (data.text or "").strip():
+                    # EndNote keeps long citation records here, base64-encoded (EN.CITE.DATA)
+                    stack[-1].append("\x00FLDDATA" + re.sub(r"\s+", "", data.text) + "\x00")
             elif kind == "separate" and stack:
                 if stack[-1] is not None:
                     out.append("".join(stack[-1]))
@@ -152,6 +206,7 @@ def read_docx_fields(path: Path) -> ManuscriptRefs:
     from lxml import etree
     out = ManuscriptRefs()
     by_key: dict[str, Ref] = {}
+    kinds: set[str] = set()
 
     def add(k, d, n):
         if k not in by_key:
@@ -167,6 +222,7 @@ def read_docx_fields(path: Path) -> ManuscriptRefs:
             except ValueError:
                 continue
             out.citations += 1
+            kinds.add("Zotero")
             props = c.get("properties") or {}
             if props.get("plainCitation") and props.get("formattedCitation") and \
                     props.get("plainCitation") != re.sub(r"<[^>]+>", "", props.get("formattedCitation", "")):
@@ -175,12 +231,29 @@ def read_docx_fields(path: Path) -> ManuscriptRefs:
                 d = item.get("itemData") or {}
                 add(str(item.get("id") or d.get("id") or d.get("DOI") or d.get("title", "")), d, out.citations)
             continue
-        e = re.match(r"\s*ADDIN EN\.CITE\s*(<EndNote>.*</EndNote>)\s*$", instr, re.S)
+        xml_text = None
+        e = re.search(r"ADDIN EN\.CITE\s*(<EndNote>.*</EndNote>)", instr, re.S)
         if e:
+            xml_text = e.group(1)
+        elif "ADDIN EN.CITE" in instr:
+            blob = re.search(r"\x00FLDDATA([A-Za-z0-9+/=]+)\x00", instr)
+            if blob:
+                raw = base64.b64decode(blob.group(1) + "=" * (-len(blob.group(1)) % 4))
+                for enc in ("utf-8", "utf-16"):
+                    try:
+                        dec = raw.decode(enc)
+                    except UnicodeDecodeError:
+                        continue
+                    m = re.search(r"<EndNote>.*</EndNote>", dec, re.S)
+                    if m:
+                        xml_text = m.group(0)
+                        break
+        if xml_text:
             try:
-                x = etree.fromstring(e.group(1).encode("utf-8"))
+                x = etree.fromstring(xml_text.encode("utf-8"))
             except etree.XMLSyntaxError:
                 continue
+            kinds.add("EndNote")
             out.citations += 1
             for cite in x.findall("Cite"):
                 rec = cite.find("record")
@@ -190,6 +263,18 @@ def read_docx_fields(path: Path) -> ManuscriptRefs:
                 if not d.get("issued") and (cite.findtext("Year") or "").strip().isdigit():
                     d["issued"] = {"date-parts": [[int(cite.findtext("Year").strip())]]}
                 add(cite.findtext("RecNum") or d.get("DOI") or d.get("title", ""), d, out.citations)
+    out.manager = " and ".join(sorted(kinds))
+    return out
+
+
+def read_endnote_xml(path: Path) -> list[Ref]:
+    """An EndNote library exported as XML (File > Export > XML)."""
+    from lxml import etree
+    root = etree.parse(str(path)).getroot()
+    out = []
+    for n, rec in enumerate(root.iter("record"), 1):
+        d = _endnote_to_csl(rec)
+        out.append(Ref(rec.findtext("rec-number") or f"rec{n}", d, f"{path.name}, record {n}"))
     return out
 
 
@@ -530,7 +615,7 @@ def load(path: Path) -> ManuscriptRefs:
         return read_docx(path)
     if suf == ".tex":
         return read_tex(path)
-    reader = {".ris": read_ris, ".bib": read_bib, ".json": read_csl_json}.get(suf)
+    reader = {".ris": read_ris, ".bib": read_bib, ".json": read_csl_json, ".xml": read_endnote_xml}.get(suf)
     if not reader:
         raise SystemExit(f"Unsupported file type: {path.name}")
     return ManuscriptRefs(refs=reader(path))
@@ -1004,7 +1089,7 @@ def report_markdown(title: str, ms: ManuscriptRefs, findings: list[Finding], sta
     ]
     if stats:
         lines.append(f"- Online check: {stats['matched']} matched in Crossref, {stats['not_found']} not found")
-    lines += ["", "Nothing was changed. Each suggestion is for you to accept or reject in your reference manager.", ""]
+    lines += ["", f"Nothing was changed. Each suggestion is for you to accept or reject in {manager_steps(ms.manager)['library']}.", ""]
     for sev in ("error", "warning", "info"):
         group = [f for f in findings if f.severity == sev]
         if not group:

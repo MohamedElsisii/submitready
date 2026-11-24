@@ -193,3 +193,42 @@ def _add_bibliography(d, entries):
 def copy(src: Path, dst: Path) -> Path:
     shutil.copy(src, dst)
     return dst
+
+
+def unlink_citations(src: Path, dst: Path) -> None:
+    """Convert live citations to plain text, as Zotero's Unlink Citations and EndNote's
+    Convert to Plain Text do: field codes go, the visible text stays; content controls are unwrapped."""
+    root = read_doc(src)
+    for r in list(root.iter(q("w:r"))):
+        if r.find(q("w:fldChar")) is not None or r.find(q("w:instrText")) is not None:
+            r.getparent().remove(r)
+    for sdt in list(root.iter(q("w:sdt"))):
+        content = sdt.find(q("w:sdtContent"))
+        parent = sdt.getparent()
+        i = parent.index(sdt)
+        for k, ch in enumerate(list(content) if content is not None else []):
+            parent.insert(i + k, ch)
+        parent.remove(sdt)
+    write_doc(src, dst, root)
+
+
+def make_zotero_sample(path: Path) -> Path:
+    """A small manuscript with live Zotero citation fields and a Zotero bibliography field."""
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+    import docx
+    import jats_to_docx as jd
+    items = [{"_n": 1, "id": "r1", "title": "A made-up paper", "author": [{"family": "Doe", "given": "Jane"}],
+              "issued": {"date-parts": [[2020]]}, "DOI": "10.5555/syn.1"},
+             {"_n": 2, "id": "r2", "title": "Another made-up paper", "author": [{"family": "Roe", "given": "Rick"}],
+              "issued": {"date-parts": [[2021]]}}]
+    d = docx.Document()
+    d.add_paragraph("A synthetic manuscript with Zotero citations")
+    p = d.add_paragraph("Earlier work showed this ")
+    jd.field_citation(p, "zotero", [items[0]], "[1]")
+    p.add_run(" and later work confirmed it ")
+    jd.field_citation(p, "endnote", [items[1]], "[2]")
+    p.add_run(".")
+    d.add_paragraph("Methods were standard and are not cited.")
+    d.save(path)
+    return path
