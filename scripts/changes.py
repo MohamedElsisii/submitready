@@ -328,6 +328,9 @@ def main(argv=None) -> int:
         return 0
     if args.copy.resolve() == args.out.resolve():
         raise SystemExit("Write the changed file to a new name; the copy you give stays as it is.")
+    kept = prepare.keep_previous(args.out)
+    if kept:
+        print(kept)
     r = apply(args.copy, args.plan, args.lock, args.out)
     print(f"Moved {r['removed_paragraphs']} paragraphs out and swapped {r['swapped_labels']} labels. "
           f"Lock: {r['lock']['sentences_unchanged']:,} of {r['lock']['sentences_locked']:,} sentences unchanged, "

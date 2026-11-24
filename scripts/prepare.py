@@ -670,6 +670,17 @@ def format_tex(src: Path, req: dict, out: Path) -> list[str]:
     return done
 
 
+def keep_previous(out: Path) -> str:
+    """Never overwrite an output silently: an existing file is renamed with the time, and kept."""
+    if not out.exists():
+        return ""
+    from datetime import datetime
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    kept = out.with_name(f"{out.stem}.previous-{stamp}{out.suffix}")
+    out.rename(kept)
+    return f"An older {out.name} was already there; it was kept as {kept.name}"
+
+
 def format_docx(src: Path, req: dict, out: Path) -> list[str]:
     """Apply layout-only fixes requested by the requirements. Never touches text runs."""
     if src.suffix.lower() == ".tex":
@@ -757,6 +768,11 @@ def main(argv=None) -> int:
             args.report.write_text(md, encoding="utf-8")
         print(json.dumps(res, ensure_ascii=False, indent=1) if args.json else md)
         return 1 if any(r["status"] in ("FIX", "STYLE", "AUTO") for r in res) else 0
+    if args.out.resolve() == args.docx.resolve():
+        raise SystemExit("Write the formatted copy to a new name; your manuscript stays as it is.")
+    kept = keep_previous(args.out)
+    if kept:
+        print(kept)
     done = format_docx(args.docx, req, args.out)
     print("\n".join(done) or "Nothing to change.")
     print(f"Saved {args.out}. Now run: python scripts/lock.py verify <lock.json> {args.out}")

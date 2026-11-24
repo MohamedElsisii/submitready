@@ -112,3 +112,15 @@ def test_inline_statements_count_as_sections():
     assert prepare.inline_statement("Funding. None.") == ("funding", "None.")
     assert prepare.inline_statement("Conflicts of interest: none declared") == ("competing", "none declared")
     assert prepare.inline_statement("Funding agencies often require reports.") is None
+
+
+def test_format_never_overwrites_silently(tmp_path):
+    src = make_sample(tmp_path / "s.docx")
+    r = tmp_path / "req.json"
+    r.write_text(json.dumps(req({"type": "line_spacing", "value": 2.0})))
+    out = tmp_path / "s_journal.docx"
+    out.write_bytes(b"my own edits")
+    prepare.main(["format", str(src), str(r), "--out", str(out)])
+    kept = list(tmp_path.glob("s_journal.previous-*.docx"))
+    assert len(kept) == 1 and kept[0].read_bytes() == b"my own edits"
+    assert out.exists() and out.read_bytes() != b"my own edits"

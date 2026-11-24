@@ -66,4 +66,6 @@ Exit code 1 means NOT READY. It is not a failure. If the online reference check 
 4. **Ready to paste:** say that `submission_form.md` in the package holds the title, abstract, keywords, statements and counts, copied word for word for the journal's website.
 5. **Where everything is:** the package folder path.
 
-Use plain words. No exit codes, script names or file internals unless something failed. Then stop. Do not offer extra work beyond one line saying they can run the same command again after fixing the to-do items.
+If a script said an older output "was kept as" another name, say so in one line.
+
+Use plain words. No exit codes, script names or file internals unless something failed. Then stop. End with one line: make the Word fixes in the original manuscript (not in the package copy), then run the same command again; the approved changes are redone and checked each time.
