@@ -97,7 +97,99 @@ def read_docx(path: Path) -> ManuscriptRefs:
                 out.refs.append(by_key[k])
             by_key[k].cited += 1
     if out.citations == 0:
-        return read_docx_plain(path)
+        fields = read_docx_fields(path)
+        return fields if fields.citations else read_docx_plain(path)
+    return out
+
+
+def _field_instructions(xml: bytes) -> list[str]:
+    """The instruction text of every Word field, in document order (fields can span many runs)."""
+    from lxml import etree
+    W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    out, stack = [], []
+    for el in etree.fromstring(xml).iter(W + "fldChar", W + "instrText", W + "fldSimple"):
+        if el.tag == W + "fldSimple":
+            out.append(el.get(W + "instr") or "")
+        elif el.tag == W + "instrText":
+            if stack and stack[-1] is not None:
+                stack[-1].append(el.text or "")
+        else:
+            kind = el.get(W + "fldCharType")
+            if kind == "begin":
+                stack.append([])
+            elif kind == "separate" and stack:
+                if stack[-1] is not None:
+                    out.append("".join(stack[-1]))
+                stack[-1] = None
+            elif kind == "end" and stack:
+                if stack[-1] is not None:
+                    out.append("".join(stack[-1]))
+                stack.pop()
+    return out
+
+
+def _endnote_to_csl(rec) -> dict:
+    """An EndNote <record> (as stored in EN.CITE fields) to CSL JSON."""
+    def t(path):
+        e = rec.find(path)
+        return "".join(e.itertext()).strip() if e is not None else ""
+    authors = []
+    for a in rec.findall(".//contributors/authors/author"):
+        name = "".join(a.itertext()).strip()
+        fam, _, giv = name.partition(",")
+        authors.append({"family": fam.strip(), "given": giv.strip()} if giv else {"literal": fam.strip()})
+    y = re.search(r"(19|20)\d{2}", t(".//dates/year"))
+    d = {"type": "article-journal", "title": t(".//titles/title"),
+         "container-title": t(".//periodical/full-title") or t(".//titles/secondary-title"),
+         "volume": t(".//volume"), "issue": t(".//number"), "page": t(".//pages"),
+         "DOI": strip_doi(t(".//electronic-resource-num")), "author": authors,
+         "issued": {"date-parts": [[int(y.group(0))]]} if y else {}}
+    return {k: v for k, v in d.items() if v not in ("", [], {})}
+
+
+def read_docx_fields(path: Path) -> ManuscriptRefs:
+    """Live Zotero (ZOTERO_ITEM CSL_CITATION, CSL JSON) and EndNote (EN.CITE, EndNote XML) citation fields."""
+    from lxml import etree
+    out = ManuscriptRefs()
+    by_key: dict[str, Ref] = {}
+
+    def add(k, d, n):
+        if k not in by_key:
+            by_key[k] = Ref(k, d, f"{path.name}, citation {n}")
+            out.refs.append(by_key[k])
+        by_key[k].cited += 1
+
+    for instr in _field_instructions(zipfile.ZipFile(path).read("word/document.xml")):
+        z = re.match(r"\s*ADDIN ZOTERO_ITEM\s+CSL_CITATION\s*(\{.*\})\s*$", instr, re.S)
+        if z:
+            try:
+                c = json.loads(z.group(1))
+            except ValueError:
+                continue
+            out.citations += 1
+            props = c.get("properties") or {}
+            if props.get("plainCitation") and props.get("formattedCitation") and \
+                    props.get("plainCitation") != re.sub(r"<[^>]+>", "", props.get("formattedCitation", "")):
+                out.manual_overrides.append(f"{props.get('formattedCitation')} edited by hand as {props.get('plainCitation')!r}")
+            for item in c.get("citationItems", []):
+                d = item.get("itemData") or {}
+                add(str(item.get("id") or d.get("id") or d.get("DOI") or d.get("title", "")), d, out.citations)
+            continue
+        e = re.match(r"\s*ADDIN EN\.CITE\s*(<EndNote>.*</EndNote>)\s*$", instr, re.S)
+        if e:
+            try:
+                x = etree.fromstring(e.group(1).encode("utf-8"))
+            except etree.XMLSyntaxError:
+                continue
+            out.citations += 1
+            for cite in x.findall("Cite"):
+                rec = cite.find("record")
+                d = _endnote_to_csl(rec) if rec is not None else {}
+                if not d.get("author") and cite.findtext("Author"):
+                    d["author"] = [{"family": cite.findtext("Author").strip()}]
+                if not d.get("issued") and (cite.findtext("Year") or "").strip().isdigit():
+                    d["issued"] = {"date-parts": [[int(cite.findtext("Year").strip())]]}
+                add(cite.findtext("RecNum") or d.get("DOI") or d.get("title", ""), d, out.citations)
     return out
 
 
@@ -119,7 +211,11 @@ def parse_plain(text: str) -> dict:
     fm = re.match(r"\s*(.+?)\s+[A-Z\u00C0-\u00DE]{1,4}(?:-[A-Z\u00C0-\u00DE]{1,2})?\.?(?:,|\s*\(|\s+et al|\.\s)", t[:120])
     if not fm:
         fm = re.match(r"\s*([A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+)", t)
-    if fm:
+    # an organisation as author: "R Core Team (2023)", "IUCN (2025)": no comma and no initials before the year
+    org = re.match(r"\s*([^,()]+?)\s*\((?:19|20)\d{2}[a-z]?\)", t)
+    if org and not re.search(r"\s[A-Z\u00C0-\u00DE]{1,3}\.?$", org.group(1).strip()):
+        d["author"] = [{"literal": org.group(1).strip(), "family": org.group(1).strip()}]
+    elif fm:
         d["author"] = [{"family": fm.group(1).strip(" ,")}]
     if ym and re.match(r"\(\d{4}", t[ym.start():]):
         rest = t[ym.end():].strip(" .")
@@ -176,10 +272,12 @@ def author_year_citations(text: str) -> list[tuple[str, str]]:
     yr = r"(?:19|20)\d{2}[a-z]?"
     item = re.compile(rf"^\s*(?:e\.g\.,?\s*|see\s+|cf\.\s*|reviewed in\s+)?({NAME})"
                       rf"(?:\s+et al\.?|\s+(?:and|&)\s+{NAME})?,?\s+((?:{yr})(?:\s*,\s*(?:{yr}|[a-z]))*)\s*$")
+    # an acronym as author, alone before the year: (IUCN 2025), (WHO, 2021)
+    acronym = re.compile(rf"^\s*(?:e\.g\.,?\s*|see\s+)?([A-Z][A-Z0-9&]{{1,9}}(?:\s+[A-Z][A-Z0-9&]{{1,9}})*),?\s+((?:{yr})(?:\s*,\s*(?:{yr}|[a-z]))*)\s*$")
     found = []
     for grp in re.findall(r"\(([^()]*?(?:19|20)\d{2}[a-z]?[^()]*?)\)", text):
         for part in grp.split(";"):
-            m = item.match(part)
+            m = item.match(part) or acronym.match(part)
             if not m:
                 continue
             fam, years = m.group(1), m.group(2)
@@ -235,7 +333,12 @@ def match_plain_citations(ms: ManuscriptRefs) -> list[Finding]:
             continue
         near = [lk for lk in listed if lk[0] == k[0]]
         hint = ("; the list has " + ", ".join(f"{listed[n].data['author'][0]['family']} {n[1]}" for n in near[:3])) if near else ""
-        out.append(Finding(shown, "cited-not-listed", "error", "Cited in the text but not in the reference list" + hint))
+        if re.fullmatch(r"[A-Z][A-Z0-9&]+(?:\s+[A-Z][A-Z0-9&]+)*\s+\S+", shown):
+            # an all-capitals name may be a dataset, tool or agency rather than a paper
+            out.append(Finding(shown, "cited-not-listed", "warning",
+                               "Written like a citation but not in the reference list; add a reference if it is one" + hint))
+        else:
+            out.append(Finding(shown, "cited-not-listed", "error", "Cited in the text but not in the reference list" + hint))
     for k, r in listed.items():
         if k not in cited:
             out.append(Finding(label(r), "listed-not-cited", "warning", "In the reference list but never cited in the text"))
@@ -479,6 +582,18 @@ def titles_match(a: str, b: str) -> bool:
     return x == y or similar(x, y) >= 0.9 or (min(len(x), len(y)) > 25 and (x in y or y in x))
 
 
+def journals_match(a: str, b: str) -> bool:
+    """'N Engl J Med' matches 'New England Journal of Medicine': each abbreviated word starts a word, in order."""
+    a, b = norm_text(a), norm_text(b)
+    if not a or not b:
+        return False
+    if a == b or a in b or b in a:
+        return True
+    short, full = (a, b) if len(a) <= len(b) else (b, a)
+    words = iter(full.split())
+    return all(any(w.startswith(t) for w in words) for t in short.split())
+
+
 def similar(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, norm_text(a), norm_text(b)).ratio()
 
@@ -692,7 +807,7 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
             title = d.get("title", "")
             if title:
                 query = d["_raw"] if d.get("_plain") else f"{title} {year(d)}"
-                res = fetch("https://api.crossref.org/works?rows=3&query.bibliographic=" + _q(query))
+                res = fetch("https://api.crossref.org/works?rows=5&query.bibliographic=" + _q(query))
                 items = ((res or {}).get("message") or {}).get("items") or []
 
                 def score(m):
@@ -701,8 +816,34 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                         return 1.0
                     return similar(title, ct)
 
-                best = max(items, key=score, default=None)
-                if best and score(best) >= 0.92:
+                my_year = year(d)
+                my_first = norm_text(((d.get("author") or [{}])[0].get("family") or ""))
+                my_journal = norm_text(d.get("container-title", ""))
+
+                def agrees(m):
+                    """How many of year, first author and journal agree (several records can share a title:
+                    a journal digest reprints NEJM abstracts under the same title)."""
+                    f = _crossref_fields(m)
+                    n = 0
+                    if my_year and any(abs(int(my_year) - int(y)) <= 1 for y in f["years"] if y.isdigit()):
+                        n += 1
+                    if my_first and (my_first in f["authors"] or (d.get("_plain") and f["authors"] and f["authors"][0] in norm_text(d["_raw"]))):
+                        n += 1
+                    if my_journal and any(journals_match(my_journal, j) for j in
+                                          [f["journal"]] + list(m.get("short-container-title") or [])):
+                        n += 1
+                    return n
+
+                same_title = [m for m in items if score(m) >= 0.92]
+                best = max(same_title, key=lambda m: (agrees(m), score(m)), default=None)
+                known = sum(1 for x in (my_year, my_first, my_journal) if x)
+                if best and known >= 2 and agrees(best) == 0:
+                    out.append(Finding(L, "title-only-match", "warning",
+                                       "Crossref has this title, but with a different year, first author and journal; "
+                                       "check the reference by hand", "", best.get("DOI", "")))
+                    best = None
+                    stats["not_found"] += 1
+                elif best and score(best) >= 0.92:
                     msg = best
                     stats["no_doi_found_by_title"] += 1
                     out.append(Finding(L, "doi-found", "info", "Found the DOI by title; add it to the reference",
@@ -724,7 +865,11 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
             if ct and ct not in raw and not titles_match(d.get("title", ""), cr["title"]):
                 out.append(Finding(L, "mismatch-title", "warning", "Title differs from Crossref", d.get("title", ""), cr["title"]))
             if cr["years"] and not any(y in d["_raw"] for y in cr["years"]):
-                out.append(Finding(L, "mismatch-year", "warning", "Year differs from Crossref", year(d), "/".join(cr["years"])))
+                if cr["type"] in ("software", "dataset", "component"):
+                    out.append(Finding(L, "version-year", "info", "Software or data: the year differs from Crossref's record, "
+                                       "which is normal for a later version; cite the version you used", year(d), "/".join(cr["years"])))
+                else:
+                    out.append(Finding(L, "mismatch-year", "warning", "Year differs from Crossref", year(d), "/".join(cr["years"])))
             if cr["authors"] and cr["authors"][0] and not any(a and a in raw for a in cr["authors"][:3]):
                 out.append(Finding(L, "mismatch-first-author", "warning", "First author differs from Crossref",
                                    ((d.get("author") or [{}])[0].get("family") or ""), cr["first_author"]))
@@ -738,8 +883,10 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                 # online-first and print years often differ by one; either is correct
                 ("year", year(d), "/".join(cr["years"]) or cr["year"],
                  lambda a, b: not a or not b or a in b.split("/")),
+                # Cochrane reviews use the year as volume and the issue number as their own "volume"
                 ("volume", str(d.get("volume", "")), cr["volume"],
-                 lambda a, b: not a or not b or norm_text(a) == norm_text(b)),
+                 lambda a, b, j=cr["journal"]: not a or not b or norm_text(a) == norm_text(b)
+                 or ("cochrane" in j.lower() and re.fullmatch(r"(19|20)\d{2}", b) is not None)),
                 ("issue", str(d.get("issue", "")), cr["issue"],
                  lambda a, b: not a or not b or norm_text(a) == norm_text(b)),
                 ("first page", _first_page(d.get("page", "")), _first_page(cr["page"]),

@@ -25,7 +25,8 @@ from docx_tools import plant_edit, read_doc, text_nodes  # noqa: E402
 
 def run(n: int) -> int:
     private = ROOT / "tests" / "private"
-    files = sorted(p for p in private.glob("*.docx") if not p.name.startswith("~$"))
+    files = sorted(p for p in list(private.glob("*.docx")) + list(private.glob("preprints/*.docx"))
+                   if not p.name.startswith("~$"))
     if not files:
         print("No manuscripts in tests/private/. Nothing to do.")
         return 0

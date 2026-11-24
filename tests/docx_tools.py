@@ -39,14 +39,38 @@ def _sdt_tag(sdt) -> str:
 
 
 def text_nodes(root, where: str = "locked"):
-    """w:t / m:t nodes. where = 'locked' (normal text), 'citation' or 'bibliography'."""
+    """w:t / m:t nodes. where = 'locked' (normal text), 'citation' or 'bibliography'.
+
+    Citations and bibliographies are recognised both as content controls (Mendeley Cite, Zotero
+    with content controls) and as Word fields (Zotero, EndNote), which can span several runs and
+    paragraphs."""
+    import lock as _lock
     out = []
-    for t in root.iter(q("w:t"), q("m:t")):
-        if not (t.text or "").strip():
+    fields: list[dict] = []
+    for el in root.iter():
+        if el.tag == q("w:fldChar"):
+            kind = el.get(q("w:fldCharType"))
+            if kind == "begin":
+                fields.append({"instr": "", "phase": "instr"})
+            elif kind == "separate" and fields:
+                fields[-1]["phase"] = "result"
+            elif kind == "end" and fields:
+                fields.pop()
+            continue
+        if el.tag == q("w:instrText"):
+            if fields and fields[-1]["phase"] == "instr":
+                fields[-1]["instr"] += el.text or ""
+            continue
+        if el.tag not in (q("w:t"), q("m:t")) or not (el.text or "").strip():
             continue
         kind = "locked"
-        node = t.getparent()
-        while node is not None:
+        for f in fields:
+            if f["phase"] == "result" and _lock.BIBLIOGRAPHY_FIELD.search(f["instr"]):
+                kind = "bibliography"
+            elif f["phase"] == "result" and _lock.CITATION_FIELD.search(f["instr"]):
+                kind = "citation"
+        node = el.getparent()
+        while kind == "locked" and node is not None:
             if node.tag == q("w:sdt"):
                 tag = _sdt_tag(node).upper()
                 if tag.startswith(("MENDELEY_CITATION", "CSL_CITATION", "ZOTERO_ITEM")):
@@ -56,7 +80,7 @@ def text_nodes(root, where: str = "locked"):
                 break
             node = node.getparent()
         if kind == where:
-            out.append(t)
+            out.append(el)
     return out
 
 

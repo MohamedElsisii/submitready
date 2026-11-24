@@ -21,7 +21,7 @@ Take what the arguments already say. Ask only for the rest, in one multiple-choi
 
 - Access model: any; fully open access (the authors pay a fee); subscription or hybrid (no fee to publish); hybrid only.
 - Maximum publication fee in USD, if open access is allowed (or no limit).
-- Indexing: MEDLINE, active in Scopus (only if the Scopus list is added), and a minimum SJR quartile such as Q2 or better (only if the SCImago file is added). Many universities require one of these; ask the user what theirs requires.
+- Indexing, as one choice: "Scopus, Q1 to Q3" (the most common university rule: `--scopus --min-quartile Q3`), "Scopus, Q1 or Q2", "MEDLINE", or "no rule". The quartile is the SJR quartile from SCImago, which is computed from Scopus data. Scopus and quartile filters need the two lists (step 0); without them, say the filter cannot be applied and offer to run without it.
 - Sort by: best fit (default), fastest review, or highest citation rate.
 
 ## 2. Search

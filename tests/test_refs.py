@@ -283,3 +283,35 @@ def test_dedupe_merges_missing_field_with_crossref_fill():
                                               ("Doe 2020", "fill-volume"), ("Roe 2019", "missing-issue")]
     # the merged line keeps the stronger severity
     assert next(x for x in out if x.code == "fill-volume").severity == "warning"
+
+
+def test_organisation_authors_in_typed_lists(tmp_path):
+    for entry, fam in [("R Core Team (2023) R: A language and environment. Vienna", "R Core Team"),
+                       ("IUCN (2025) The IUCN Red List of Threatened Species.", "IUCN"),
+                       ("Smith AB (2020) A person, not an organisation. J Test 1:2", "Smith"),
+                       ("Roca Pereira JF, Gale FX (2019) Two people. J Test 1:2", "Roca Pereira")]:
+        assert refs.parse_plain(entry)["author"][0]["family"] == fam, entry
+    p = _plain_docx(tmp_path, ["Analyses used R (R Core Team 2023) and IUCN data (IUCN 2025)."],
+                    ["IUCN (2025) The IUCN Red List of Threatened Species.",
+                     "R Core Team (2023) R: A language and environment. Vienna"])
+    assert not refs.match_plain_citations(refs.load(p))
+
+
+def test_journal_abbreviations_match():
+    assert refs.journals_match("N Engl J Med", "New England Journal of Medicine")
+    assert refs.journals_match("Nat Commun", "Nature Communications")
+    assert not refs.journals_match("N Engl J Med", "Obstetrical & Gynecological Survey")
+
+
+def test_title_search_prefers_the_record_that_agrees():
+    ms = refs.ManuscriptRefs(refs=[refs.Ref("w", {"type": "article-journal", "title": "A made-up randomized trial of things",
+                                                  "container-title": "N Engl J Med", "issued": {"date-parts": [[2016]]},
+                                                  "author": [{"family": "Walkerton"}]}, "x")])
+    digest = {"title": ["A made-up randomized trial of things"], "DOI": "10.5555/digest.1",
+              "container-title": ["Made-Up Digest Survey"], "issued": {"date-parts": [[2016]]}, "author": [{"family": "Walkerton"}]}
+    real = {"title": ["A made-up randomized trial of things"], "DOI": "10.5555/nejm.1",
+            "container-title": ["New England Journal of Medicine"], "short-container-title": ["N Engl J Med"],
+            "issued": {"date-parts": [[2016]]}, "author": [{"family": "Walkerton"}]}
+    fetch = fake_crossref({"query.bibliographic": {"message": {"items": [digest, real]}}})
+    f, _ = refs.verify(ms, fetch, pause=0)
+    assert next(x for x in f if x.code == "doi-found").suggested == "10.5555/nejm.1"

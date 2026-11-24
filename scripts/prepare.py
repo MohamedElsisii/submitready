@@ -60,6 +60,8 @@ SECTIONS = [
     ("highlights", r"(article )?highlights"),
     ("plain_summary", r"plain language summary"),
 ]
+LEADING_SECTION = re.compile(r"^(?:[\dIVX]+(?:\.\d+)*\.?\s*)?(introduction|background|methods?|materials and methods|"
+                             r"results?|discussion|conclusions?)\s*(?::|\s+and\s|\s*[-\u2013]\s)", re.I)
 SECTION_RE = [(k, re.compile(rf"^(?:[\dIVX]+(?:\.\d+)*\.?\s*)?(?:{p})\s*:?$", re.I)) for k, p in SECTIONS]
 END_OF_MAIN = {"abbreviations", "acknowledgements", "funding", "competing", "data", "ethics", "contributions",
                "ai", "declarations", "references", "figure_legends", "supplementary", "highlights"}
@@ -126,6 +128,13 @@ def _section_of(text: str) -> str | None:
     for k, rx in SECTION_RE:
         if rx.match(t):
             return k
+    # a heading that starts with a main section word: "Background and rationale", "Methods: participants"
+    m = LEADING_SECTION.match(t)
+    if m:
+        word = m.group(1).lower()
+        return "introduction" if word in ("introduction", "background") else \
+            "methods" if word.startswith(("method", "materials")) else \
+            "results" if word.startswith("result") else "discussion" if word == "discussion" else "conclusion"
     return None
 
 
@@ -327,6 +336,10 @@ def analyze(path: Path) -> dict:
     for p in paras:
         t = p["text"]
         inline = re.match(r"^(abstract|key\s*-?\s*words?)\s*[:.]\s*(.+)$", t, re.I)
+        if p["heading"] and not p["section"] and current in ("abstract", "keywords") and \
+                str(p.get("style", "")).lower().startswith("heading"):
+            current = "other"  # an unnamed Word heading ends the abstract
+            continue
         if p["heading"] and p["section"]:
             current = p["section"]
             where.setdefault(current, []).append(t)

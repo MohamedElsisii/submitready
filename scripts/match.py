@@ -105,7 +105,9 @@ def profile(path: Path) -> dict:
     t = title.lower()
     if re.search(r"\b(review|overview|perspective|survey)\b", t) or not ({"methods", "results"} & secs):
         kind = "review"
-    elif re.search(r"\b(protocol|pipeline|tool|software|method|workflow|database|server)\b", t):
+    elif re.search(r"\bstudy protocol\b|\bprotocol for\b", t):
+        kind = "study protocol"
+    elif re.search(r"\b(pipeline|tool|software|method|workflow|database|server)\b", t):
         kind = "methods or resource"
     else:
         kind = "research article"
@@ -150,35 +152,34 @@ def _terms(text: str, n: int = 12) -> list[str]:
 
 # ---------------------------------------------------------------- candidates
 def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
-    """Papers like this one, from several searches: the title, the keywords together, and each
-    keyword on its own (a paper can have several facets). Each search adds weight by rank."""
+    """Papers like this one. First the precise searches (title; keywords together; or, without keywords,
+    small groups of the abstract's top terms). They also show the paper's research fields (OpenAlex),
+    and the broader searches (each keyword alone, method-aware, abstract terms) stay inside those
+    fields, so an ecology paper cannot drift into physics."""
     since = f"{date.today().year - years}-01-01"
     kind = "review" if p["article_type"] == "review" else "article"
-    searches = [(" ".join(_terms(p["title"], 12)), 1.0, 100)]
+    top = key_terms(p["abstract"] or p["title"], 8)
+    precise = [(" ".join(_terms(p["title"], 12)), 1.0, 100)]
     if p["keywords"]:
-        searches.append((" ".join(p["keywords"][:6]), 1.0, 100))
-        searches += [(k, 0.6, 50) for k in p["keywords"][:6]]
-        if p.get("approach") == "computational":
-            # journals that take computational papers on these topics
-            searches += [(f'"{k}" AND {METHOD_QUERY}', 1.0, 50) for k in p["keywords"][:6]]
+        precise.append((" ".join(p["keywords"][:6]), 1.0, 100))
+    elif len(top) >= 6:
+        precise += [(" ".join(g), 0.8, 50) for g in ((top[0], top[1], top[2]), (top[0], top[3], top[4]), (top[1], top[3], top[5]))]
+    broad = [(k, 0.6, 50) for k in p["keywords"][:6]]
+    if p.get("approach") == "computational":
+        broad += [(f'"{k}" AND {METHOD_QUERY}', 1.0, 50) for k in p["keywords"][:6]]
     wide = key_terms(p["abstract"] or " ".join([p["title"], " ".join(p["keywords"])]), 16)
     seen: dict[str, int] = {}
     works: list[dict] = []
-    for qtext, w_query, per_page in searches + [("__WIDE__", 0.5, 100)]:
-        if qtext == "__WIDE__":
-            # the abstract's key terms, any of them, ranked by how many they share: brings in the
-            # methods side of a paper that titles and keywords miss, and rescues coined words
-            if len(wide) < 3:
-                break
-            qtext = " OR ".join(wide)
-            w_query = 0.5 if len(works) < 60 else 0.35
+    fields: dict[str, float] = {}
+
+    def run(qtext, w_query, per_page, field_filter=""):
         url = (f"{OPENALEX}/works?search={urllib.parse.quote(qtext)}"
-               f"&filter=from_publication_date:{since},type:{kind}&per-page={per_page}"
-               f"&select=id,title,primary_location,publication_year"
+               f"&filter=from_publication_date:{since},type:{kind}{field_filter}&per-page={per_page}"
+               f"&select=id,title,primary_location,publication_year,primary_topic"
                + (f"&mailto={urllib.parse.quote(net.email)}" if net.email else ""))
         data = net.json(url) or {}
         if w_query < 1.0 and qtext in p["keywords"] and (data.get("meta") or {}).get("count", 0) > GENERIC:
-            continue  # a keyword shared by tens of thousands of papers says little about this one
+            return 0  # a keyword shared by tens of thousands of papers says little about this one
         res = data.get("results", [])
         for rank, w in enumerate(res):
             # the manuscript itself (already published, or a preprint) does not count
@@ -188,12 +189,33 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
             if not (src.get("id") and src.get("type") == "journal"):
                 continue
             weight = w_query / (1 + rank / 25)
+            if not field_filter:
+                f = (((w.get("primary_topic") or {}).get("field") or {}).get("id") or "").rsplit("/", 1)[-1]
+                if f:
+                    fields[f] = fields.get(f, 0) + weight
             if w["id"] in seen:  # found again by another search: more weight, counted once
                 works[seen[w["id"]]]["weight"] += weight
                 continue
             seen[w["id"]] = len(works)
             works.append({"source": src["id"].rsplit("/", 1)[-1], "name": src.get("display_name"),
                           "weight": weight, "title": w.get("title")})
+        return len(res)
+
+    for q in precise:
+        run(*q)
+    # the fields that hold most of the precise results (at most 3)
+    keep, total, acc = [], sum(fields.values()), 0.0
+    for f, w in sorted(fields.items(), key=lambda x: -x[1]):
+        if total and acc / total >= 0.75 or len(keep) == 3:
+            break
+        keep.append(f)
+        acc += w
+    ff = f",primary_topic.field.id:{'|'.join(keep)}" if keep and total >= 5 else ""
+    p["fields"] = keep
+    for q in broad:
+        run(*q, field_filter=ff)
+    if len(wide) >= 3:
+        run(" OR ".join(wide), 0.5 if len(works) < 60 else 0.35, 100, field_filter=ff)
     return works
 
 
@@ -409,7 +431,7 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
         j["facts"] = {}
         j["sjr_link"] = (f"https://www.scimagojr.com/journalsearch.php?q={j['issn_l']}" if j.get("issn_l") else "")
     return {"tool": "SubmitReady journal finder", "manuscript": path.name, "checked": date.today().isoformat(),
-            "profile": {k: p.get(k, "") for k in ("title", "keywords", "article_type", "approach")},
+            "profile": {k: p.get(k, "") for k in ("title", "keywords", "article_type", "approach", "fields")},
             "filters": {"access": access, "max_fee_usd": max_fee, "medline": medline, "prefer": prefer,
                         "scopus": scopus, "min_quartile": min_quartile},
             "lists": {k: {kk: (journaldata.load(k) or {}).get(kk) for kk in ("file", "year", "edition", "added")}

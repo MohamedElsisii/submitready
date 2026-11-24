@@ -133,3 +133,24 @@ def test_count_limits_and_springer_declarations():
                                     {"type": "max_count", "target": "references", "value": 100},
                                     {"type": "max_count", "target": "references", "value": 250}))
     assert [(r["status"], r["found"]) for r in res] == [("FIX", "4"), ("FIX", "120"), ("PASS", "120")]
+
+
+def test_headings_that_start_with_a_section_word():
+    assert prepare._section_of("Background and rationale") == "introduction"
+    assert prepare._section_of("Methods: Participants and setting") == "methods"
+    assert prepare._section_of("Results and Discussion") == "results"
+    assert prepare._section_of("Discussion") == "discussion"
+    assert prepare._section_of("Backgrounds of the patients were diverse") is None
+
+
+def test_unnamed_heading_ends_the_abstract(tmp_path):
+    import docx
+    d = docx.Document()
+    d.add_paragraph("A made-up title")
+    d.add_heading("Abstract", 1)
+    d.add_paragraph("Short abstract here.")
+    d.add_heading("Why this study", 1)
+    d.add_paragraph("Many words of main text. " * 50)
+    p = tmp_path / "a.docx"
+    d.save(p)
+    assert prepare.analyze(p)["abstract_words"] == 3
