@@ -32,7 +32,7 @@ Map "subscription or hybrid" to `--access subscription`. If the search fails (no
 
 ## 3. Read each suggested journal live (the 5 marked "suggested")
 
-For each one, read the journal's own pages with the built-in web fetch (the `scope_url_crossref` or `homepage` in the list file is a good start; the publisher's "aims and scope", "about" and "journal metrics" pages). Record every fact with:
+For each one, read the journal's own pages with the built-in web fetch (for pages that need JavaScript, use Claude in Chrome as step 2 of the prepare skill describes) (the `scope_url_crossref` or `homepage` in the list file is a good start; the publisher's "aims and scope", "about" and "journal metrics" pages). Record every fact with:
 
 `python "${CLAUDE_PLUGIN_ROOT}/scripts/match.py" add <manuscript>.journals.json <rank> --field <field> --value "<value>" --source <URL> [--year <year>]`
 

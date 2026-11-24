@@ -38,6 +38,15 @@ It asks how you want to publish (open access, subscription or hybrid, a fee limi
 
 The journal list then shows each journal's SJR quartile and Scopus status, leaves out titles Scopus discontinued, and can filter by "Scopus only" or "Q2 or better". The files stay on your computer; SubmitReady never shares them.
 
+### Optional: let Claude read pages that need a browser (2 minutes)
+
+Some publishers (Springer, BMC and others) block simple page readers, and many journals show their impact factor only after scripts load. With Chrome, Claude can read those pages in your own browser:
+
+1. Install the free [Claude in Chrome](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) extension and sign in with the same Claude account as Claude Code.
+2. Start Claude Code with `claude --chrome` (or run `/chrome` once and choose **Enabled by default**).
+
+Claude only reads journal pages this way. It never signs in or submits anything for you.
+
 ## Run it
 
 1. Put your manuscript in a folder. If you have them, put the figure files in a folder whose name contains "fig" and the supplementary files in a folder whose name contains "supp", next to the manuscript.
