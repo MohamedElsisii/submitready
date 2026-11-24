@@ -1,0 +1,149 @@
+{
+ "journal": "Oxford University Press journals (shared preparation checklist)",
+ "article_type": "Research article",
+ "snapshot_note": "OUP's publisher-wide checklist for preparing a manuscript. OUP says its journals have different formatting requirements: word limits, structure, house style and keywords are on each journal's own page, which SubmitReady reads on every run.",
+ "sources": [
+  {
+   "name": "Oxford Academic: Preparing and submitting your manuscript",
+   "url": "https://academic.oup.com/pages/for-authors/journals/preparing-and-submitting-your-manuscript",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Depends on the journal. References do not need the journal's style at first submission."
+ },
+ "requirements": [
+  {
+   "id": "file-format",
+   "rule": "Word or LaTeX file",
+   "quote": "Submit your paper as a Word or LaTeX file.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Title, all author names and affiliations, and the corresponding author's email",
+   "quote": "Remember to include a title, all author names and affiliations, and the corresponding author’s email address.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Abstract without abbreviations or reference citations",
+   "quote": "Provide an abstract that avoids abbreviations or reference citations.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "abstract"
+   }
+  },
+  {
+   "id": "abbreviations",
+   "rule": "Define non-standard abbreviations at first use",
+   "quote": "Define all non-standard abbreviations when they first appear.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "legends",
+   "rule": "Numbered tables and figures, each with a legend",
+   "quote": "Number tables and figures, ensure they all have a legend.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "High-resolution figures in a common format such as EPS or TIFF",
+   "quote": "Figures should be high-resolution and in a common image format (e.g. .eps or .tif).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references-any-style",
+   "rule": "Accurate references; the journal style is not needed at first submission",
+   "quote": "You do not need to format references to the journal’s style when you first submit your paper.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "end-statements",
+   "rule": "Acknowledgements, conflict of interest and funding (full funder names, grant numbers) at the end",
+   "quote": "Include acknowledgements, conflict-of-interest declarations and details of funding sources and grant numbers at the end of your paper.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding statement with full funder names as in the Crossref funder registry",
+   "quote": "Cite all funding for your research, providing the grant number and the funder name.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "data-policy",
+   "rule": "Follow the journal's data availability policy",
+   "quote": "Check the journal’s Data Availability policy, and ensure your paper follows it.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Tables editable, not images, with units in the headers and every table cited",
+   "quote": "Supply any tables in an editable format (such as Microsoft Word), not as an image file.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supplementary",
+   "rule": "Supplementary files separate, cited in the text, self-explanatory names, at most 2 MB each",
+   "quote": "Supplementary material files should be no larger than 2MB each.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "symbols",
+   "rule": "Insert symbols with Word's equation and symbol tools, not images",
+   "quote": "Do not use images.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for word limits, structure, keywords and house style",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

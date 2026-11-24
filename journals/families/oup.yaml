@@ -1,0 +1,19 @@
+# A family: Oxford University Press journals. OUP publishes one preparation checklist for all
+# its journals and says the journals differ in word limits, structure and house style.
+name: "Oxford University Press journals"
+publisher: "Oxford University Press"
+match:
+  publisher: ["Oxford University Press", "Oxford University Press (OUP)", "OUP"]
+  journal_page: "https://academic.oup.com/<journal-code>/pages/author-guidelines"
+journals_list:
+  url: "https://academic.oup.com/journals/pages/journals_a_to_z"
+  checked: "2026-11-24"
+guidelines:
+  url: "https://academic.oup.com/pages/for-authors/journals/preparing-and-submitting-your-manuscript"
+  checked: "2026-11-24"
+requirements_snapshot: "journals/requirements/oup.2026-11-24.json (Research article, publisher-wide checklist)"
+journal_specific:
+  - "Word limits, structure, house style and keywords (OUP says these differ by journal)"
+  - "The data availability policy"
+  - "Reference style after acceptance"
+  - "The address of the instructions page differs by journal (Bioinformatics: /pages/author-guidelines; Genomics, Proteomics & Bioinformatics: /pages/general-instructions)"

@@ -1,0 +1,124 @@
+{
+ "journal": "Sage journals (shared manuscript preparation guidance)",
+ "article_type": "Research article",
+ "snapshot_note": "Sage's publisher-wide page on preparing a manuscript. Sage says statements, keywords, reference style and sections vary by journal: SubmitReady reads the journal's own submission guidelines on every run.",
+ "sources": [
+  {
+   "name": "Sage: Preparing your manuscript",
+   "url": "https://www.sagepub.com/journals/information-for-authors/preparing-your-manuscript",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Depends on the journal (Sage Harvard, Sage Vancouver, APA and others)."
+ },
+ "requirements": [
+  {
+   "id": "declarations",
+   "rule": "A 'Statements and Declarations' section at the end, after Acknowledgements, with every sub-heading; write 'Not applicable' where one does not apply",
+   "quote": "Please include a section with the heading ‘Statements and Declarations’ at the end of your submitted article, after the Acknowledgements section (and Author Contributions section if applicable) including the relevant sub-headings listed below.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "declarations"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Declaration of conflicting interests",
+   "quote": "All journals require a declaration of conflicting interests from all authors so that a statement can be included in your article.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding statement under its own heading, even with no funding",
+   "quote": "All articles need to include a funding statement, under a separate heading, even if you did not receive funding.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement",
+   "quote": "You will need to publish a data availability statement with your article under this heading.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Abstract with purpose, main findings and conclusions; trial registration at the end if any",
+   "quote": "Your abstract should concisely state the purpose of the research, major findings, and conclusions.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "abstract"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Separate title page, needed for double-anonymized journals",
+   "quote": "You will also need to prepare a title page, this is essential for double-anonymized journals.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references-match",
+   "rule": "Every in-text citation is in the reference list and the reverse, with identical spelling and year",
+   "quote": "Every in-text citation must have a corresponding citation in the reference list and vice versa.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-placement",
+   "rule": "Figures and tables made in Word go in the text; images made elsewhere (JPG, TIFF, EPS) go as separate files with a placeholder note in the text",
+   "quote": "Figures and other files created outside Word (i.e. Excel, PowerPoint, JPG, TIFF and EPS) should be submitted separately.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-resolution",
+   "rule": "Raster figures at least 300 dpi; line art at least 800 dpi",
+   "quote": "Line art should be supplied with a minimum resolution of 800 dpi.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables-as-tables",
+   "rule": "Tabular data as real tables, never as figures or screenshots",
+   "quote": "If your figure includes a table, it should be a real text-based table instead of a figure.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own guidelines for keywords, sections, reference style and anonymization",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

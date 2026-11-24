@@ -54,3 +54,17 @@ def test_wiley_family():
 
 def test_hindawi_is_not_the_wiley_family():
     assert families.find("BioMed Research International", "Hindawi Limited")["file"].endswith("hindawi.yaml")
+
+
+def test_dove_oup_sage_families():
+    assert families.find("Cancer Management and Research", "Dove Medical Press")["file"].endswith("dove.yaml")
+    assert families.find("Briefings in Bioinformatics", "Oxford University Press (OUP)")["file"].endswith("oup.yaml")
+    assert families.find("Journalism", "SAGE Publications")["file"].endswith("sage.yaml")
+
+
+def test_openalex_publisher_names():
+    # host_organization_name values as OpenAlex gives them (checked 2026-11-24)
+    assert families.find("Cancer Management and Research", "Dove Medical Press")["file"].endswith("dove.yaml")
+    assert families.find("Molecular Biology Reports", "Springer Nature")["file"].endswith("springer.yaml")
+    assert families.find("Current Molecular Biology Reports", "Springer Science+Business Media")["file"].endswith("springer.yaml")
+    assert families.find("BioMed Research International", "Hindawi Publishing Corporation")["file"].endswith("hindawi.yaml")

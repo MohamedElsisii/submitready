@@ -68,7 +68,7 @@ def find(journal: str, publisher: str = "") -> dict:
     if pub:
         for f in fams:
             names = [_norm(x) for x in (f.get("match") or {}).get("publisher", [])]
-            if any(n and (n == pub or n in pub or pub in n) for n in names):
+            if any(n and re.search(rf"\b{re.escape(n)}\b", pub) for n in names):
                 excluded = (f.get("match") or {}).get("not_in_family", "")
                 if excluded:
                     other = yaml.safe_load((ROOT / excluded).read_text(encoding="utf-8")) or {}

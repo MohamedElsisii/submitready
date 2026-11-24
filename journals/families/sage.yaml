@@ -1,0 +1,20 @@
+# A family: Sage journals. Sage publishes one manuscript preparation page for all its journals
+# and says statements, keywords and reference style vary by journal.
+name: "Sage journals"
+publisher: "Sage"
+match:
+  publisher: ["SAGE Publications", "Sage Publications", "SAGE", "Sage", "SAGE Publishing"]
+  journal_page: "https://journals.sagepub.com/author-instructions/<journal-code>"
+guidelines:
+  url: "https://www.sagepub.com/journals/information-for-authors/preparing-your-manuscript"
+  checked: "2026-11-24"
+requirements_snapshot: "journals/requirements/sage.2026-11-24.json (Research article, publisher-wide guidance)"
+journal_specific:
+  - "Keywords (Sage says journals typically ask for 4 to 5)"
+  - "Reference style (Sage Harvard, Sage Vancouver, APA and others)"
+  - "Which statements are required, and whether review is double-anonymized"
+  - "Article types and word limits"
+known_quirks:
+  - text: "Every declaration sub-heading stays in the 'Statements and Declarations' section; write 'Not applicable' under any that does not apply."
+    source: "https://www.sagepub.com/journals/information-for-authors/preparing-your-manuscript"
+    checked: "2026-11-24"

@@ -1,0 +1,286 @@
+{
+ "journal": "Dove Medical Press journals (shared author guidelines)",
+ "article_type": "Original research",
+ "snapshot_note": "Dove Medical Press publishes one set of author guidelines for all its journals. Scope, article types and the publishing fee differ by journal: SubmitReady reads the journal's own page on every run.",
+ "sources": [
+  {
+   "name": "Dove Medical Press: Manuscript preparation",
+   "url": "https://www.dovepress.com/author-guidelines/manuscript-preparation",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "Dove Medical Press: Manuscript structure",
+   "url": "https://www.dovepress.com/author-guidelines/manuscript-structure",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "Dove Medical Press: Figures and tables",
+   "url": "https://www.dovepress.com/author-guidelines/figures-tables",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "Dove Medical Press: Reference Style Guidelines",
+   "url": "https://www.dovepress.com/author-guidelines/reference-stylesheet",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "american-medical-association",
+  "title": "American Medical Association 11th edition",
+  "source": "https://www.zotero.org/styles/american-medical-association",
+  "note": "Dove follows AMA style; EndNote users are told to pick the JAMA style. Superscript numbers placed after punctuation."
+ },
+ "requirements": [
+  {
+   "id": "line-spacing",
+   "rule": "Double line spacing",
+   "quote": "Double-spacing",
+   "source": 0,
+   "check": {
+    "type": "line_spacing",
+    "value": 2.0
+   }
+  },
+  {
+   "id": "page-numbers",
+   "rule": "Page numbers",
+   "quote": "Page numbers",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "line-numbers",
+   "rule": "Line numbers",
+   "quote": "Line numbers",
+   "source": 0,
+   "check": {
+    "type": "line_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "margins",
+   "rule": "3 cm margins",
+   "quote": "3-cm margins",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "word-format",
+   "rule": "Manuscript in Microsoft Word",
+   "quote": "Manuscripts should be submitted in Microsoft Word format",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "english",
+   "rule": "American spelling; edited by a native English speaker before submission",
+   "quote": "American spelling (all components of a manuscript must be in English)",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract-words",
+   "rule": "Structured abstract of at most 300 words for original research",
+   "quote": "Both types of abstracts should be no more than 300 words.",
+   "source": 1,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 300
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "3 to 6 keywords",
+   "quote": "3–6 keywords",
+   "source": 1,
+   "check": {
+    "type": "keywords",
+    "min": 3,
+    "max": 6
+   }
+  },
+  {
+   "id": "plain-summary",
+   "rule": "Optional plain language summary of at most 250 words, after the abstract",
+   "quote": "The plain language summary has no minimum word length, but should be no more than 250 words, be written in plain English, and be placed after the Abstract and before the Introduction.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Title page with full names, affiliations (department, institution, city, state, country) and ORCID iDs when available",
+   "quote": "ORCID number(s) for all authors whenever available",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ethics",
+   "rule": "Ethics approval and informed consent statement for human or animal research, naming the committee",
+   "quote": "All research studies on humans (individuals, samples or data) or animals must include a statement on ethics approval and, when human research is involved, consent.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement (where applicable)",
+   "quote": "Please include a statement about where data supporting the results reported in the manuscript can be found and about data sharing including, where applicable, links to the publicly archived datasets.",
+   "source": 1,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding section with the sponsor's role, or a statement that it had none",
+   "quote": "Please declare all the sources of funding including financial support.",
+   "source": 1,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interests declaration from all authors",
+   "quote": "all authors of a paper submitted to any Dove Medical Press journal are required to complete a declaration of competing interests.",
+   "source": 1,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author contributions meeting all five Dove authorship criteria",
+   "quote": "All authors must meet conditions 1, 2, 3, 4 and 5 and appropriate credit for each author’s contribution should be given.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "sequences",
+   "rule": "Accession numbers for any molecular sequences used",
+   "quote": "If molecular sequences are used, provide a statement that the data have been deposited in a publicly accessible database, eg, GenBank, and indicate the database accession number",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-separate",
+   "rule": "No pasted figures in the manuscript; figures as separate files",
+   "quote": "The manuscript should not contain any pasted figures.",
+   "source": 2,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": false
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files in JPEG, BMP, PNG, GIF or TIFF, RGB, colour photos at least 300 dpi, at most 50 MB, named Figure 1, Figure 2",
+   "quote": "Colour photographic images: minimum 300 dpi",
+   "source": 2,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "jpg",
+     "jpeg",
+     "bmp",
+     "png",
+     "gif",
+     "tif",
+     "tiff"
+    ],
+    "dpi_min": 300,
+    "color_modes": [
+     "RGB"
+    ],
+    "name_pattern": "Figure {n}"
+   }
+  },
+  {
+   "id": "figure-fonts",
+   "rule": "Arial or Symbol in figures, consistent size, lines at least 0.3 pt",
+   "quote": "All fonts used are embedded and are the journal’s standard font style - Arial or Symbol",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-legends",
+   "rule": "Legends start with the figure number (e.g. 'Figure 1:') and label every panel",
+   "quote": "Figure legends must begin with the number of the figure being described (eg ‘Figure 1: ‘).",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Editable tables (not images), legend above the table, footnotes as superscript letters below",
+   "quote": "Present table legends above each table, rather than including these as the first row of the table.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "citations",
+   "rule": "Superscript numbers with no brackets, placed after punctuation",
+   "quote": "Cite references sequentially in text, tables, and legends by superscript Arabic numerals with no parentheses, eg, 1 or 3,4 or 10–15.",
+   "source": 3,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "et-al",
+   "rule": "List all authors if six or fewer; otherwise the first three and et al.",
+   "quote": "List all authors if six or less, otherwise list first three only, followed by \"et al.\"",
+   "source": 3,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "no-fields",
+   "rule": "Remove EndNote field codes from the upload copy (SubmitReady makes a plain copy and keeps your working file live)",
+   "quote": "Please disable EndNote® before you submit your manuscript.",
+   "source": 3,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "no-word-notes",
+   "rule": "Do not build the reference list with Word footnotes or endnotes",
+   "quote": "Do not use Microsoft Word’s footnote/endnotes function to build the reference list as this can introduce errors during the typesetting process.",
+   "source": 3,
+   "check": {
+    "type": "footnotes",
+    "allowed": false
+   }
+  }
+ ]
+}

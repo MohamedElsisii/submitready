@@ -105,6 +105,9 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 | Springer (classic) | Springer journals with the classic Instructions for Authors (SpringerOpen journals use the BMC layout) | Molecular Biology Reports and 3 Biotech compared |
 | Wiley | Wiley journals with Free Format submission | Proteins, Journal of Cellular and Molecular Medicine and Journal of Cellular Biochemistry compared |
 | Hindawi (Wiley) | Hindawi journals on Wiley Online Library | Oxidative Medicine and Cellular Longevity and BioMed Research International compared |
+| Dove Medical Press | every Dove journal | Dove's shared author guidelines (preparation, structure, figures, references) |
+| Oxford University Press | OUP journals | OUP's publisher-wide preparation checklist |
+| Sage | Sage journals | Sage's publisher-wide manuscript preparation page |
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 

@@ -1,0 +1,30 @@
+# A family: Dove Medical Press journals share one set of author guidelines.
+# Crossref may list Dove journals under "Informa UK Limited", the same name as Taylor & Francis.
+# If the journal page is on dovepress.com, use this family.
+name: "Dove Medical Press journals"
+publisher: "Dove Medical Press (Taylor & Francis)"
+match:
+  publisher: ["Dove Medical Press", "Dove Press"]
+  journal_page: "https://www.dovepress.com/author-guidelines"
+journals_list:
+  url: "https://www.dovepress.com/browse_journals.php"
+  checked: "2026-11-24"
+guidelines:
+  url: "https://www.dovepress.com/author-guidelines"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://www.dovepress.com/author-guidelines/manuscript-preparation"
+    - "https://www.dovepress.com/author-guidelines/manuscript-structure"
+    - "https://www.dovepress.com/author-guidelines/figures-tables"
+    - "https://www.dovepress.com/author-guidelines/reference-stylesheet"
+requirements_snapshot: "journals/requirements/dove.2026-11-24.json (Original research)"
+journal_specific:
+  - "Scope and accepted article types, on the journal's own page"
+  - "The article publishing charge for the journal"
+known_quirks:
+  - text: "Dove asks EndNote users to convert citations to plain text before submitting. SubmitReady does this only on the upload copy and keeps your working file live."
+    source: "https://www.dovepress.com/author-guidelines/reference-stylesheet"
+    checked: "2026-11-24"
+  - text: "Figure files are named '[manuscript ID] Figure [number]' once you have a manuscript ID."
+    source: "https://www.dovepress.com/author-guidelines/figures-tables"
+    checked: "2026-11-24"
