@@ -1,0 +1,209 @@
+{
+ "journal": "Wiley journals with Free Format submission (shared rules)",
+ "article_type": "Research article, first submission",
+ "snapshot_note": "Rules that three Wiley Author Guidelines pages state word for word in their Free Format submission section (Proteins; Journal of Cellular and Molecular Medicine; Journal of Cellular Biochemistry). Abstract and keyword limits, word limits, reference style after acceptance and article types differ by journal (for example abstract at most 250, 200 or 300 words): SubmitReady reads those from the journal's own page on every run. Revised files usually must follow the full journal format.",
+ "sources": [
+  {
+   "name": "Proteins: Author Guidelines",
+   "url": "https://onlinelibrary.wiley.com/page/journal/10970134/homepage/forauthors.html",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "Journal of Cellular and Molecular Medicine: Author Guidelines",
+   "url": "https://onlinelibrary.wiley.com/page/journal/15824934/homepage/forauthors.html",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "Journal of Cellular Biochemistry: Author Guidelines",
+   "url": "https://onlinelibrary.wiley.com/page/journal/10974644/homepage/forauthors.html",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Any consistent style at first submission. After acceptance the journal's own style applies (for example Proteins uses numbered superscripts, AMA style)."
+ },
+ "requirements": [
+  {
+   "id": "abstract",
+   "rule": "An abstract",
+   "quote": "All required sections should be contained in your manuscript, including abstract, introduction, methods, results, and conclusions.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "abstract"
+   }
+  },
+  {
+   "id": "introduction",
+   "rule": "An introduction",
+   "quote": "All required sections should be contained in your manuscript, including abstract, introduction, methods, results, and conclusions.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "introduction"
+   }
+  },
+  {
+   "id": "methods",
+   "rule": "A methods section",
+   "quote": "All required sections should be contained in your manuscript, including abstract, introduction, methods, results, and conclusions.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "methods"
+   }
+  },
+  {
+   "id": "results",
+   "rule": "A results section",
+   "quote": "All required sections should be contained in your manuscript, including abstract, introduction, methods, results, and conclusions.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "results"
+   }
+  },
+  {
+   "id": "conclusions",
+   "rule": "Conclusions (a section, or clear concluding text)",
+   "quote": "All required sections should be contained in your manuscript, including abstract, introduction, methods, results, and conclusions.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "one-or-separate-files",
+   "rule": "One editable file with text, figures and tables, or separate files, as you prefer",
+   "quote": "Your manuscript: this should be an editable file including text, figures, and tables, or separate files",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "legends",
+   "rule": "Every figure and table has a legend",
+   "quote": "Figures and tables should have legends.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-quality",
+   "rule": "Figures at the highest resolution you have",
+   "quote": "Figures should be uploaded in the highest resolution possible.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references-any-style",
+   "rule": "References in any style, as long as it is consistent",
+   "quote": "References may be submitted in any style or format, as long as it is consistent throughout the manuscript.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supporting-separate",
+   "rule": "Supporting information in separate files",
+   "quote": "Supporting information should be submitted in separate files.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "orcid",
+   "rule": "An ORCID iD for the submitting author",
+   "quote": "An ORCID ID, freely available at https://orcid.org.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Title page with all co-author details (affiliation and email)",
+   "quote": "Your co-author details, including affiliation and email address.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement",
+   "quote": "data availability statement",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding statement",
+   "quote": "funding statement",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Conflict of interest disclosure",
+   "quote": "conflict of interest disclosure",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "ethics-consent",
+   "rule": "Ethics approval and patient consent statements, and permission for reproduced material, where they apply",
+   "quote": "ethics approval statement",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "acknowledgments",
+   "rule": "People who are not authors listed, with permission, in Acknowledgments",
+   "quote": "Contributions from anyone who does not meet the criteria for authorship should be listed, with permission from the contributor, in an Acknowledgments section",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "readability",
+   "rule": "Clear, legible text, figures and tables in good English; otherwise the office sends it back",
+   "quote": "If the manuscript, figures or tables are difficult for you to read, they will also be difficult for the editors and reviewers, and the editorial office will send it back to you for revision.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for abstract and keyword limits, word limits, article types and data sharing rules",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

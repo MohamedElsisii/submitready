@@ -1,0 +1,139 @@
+{
+ "journal": "Hindawi journals published by Wiley (shared rules)",
+ "article_type": "Research article",
+ "snapshot_note": "Rules that two Hindawi journal pages on Wiley Online Library both state (Oxidative Medicine and Cellular Longevity; BioMed Research International). The two pages use different templates, so each rule quotes the page it comes from, and only rules found on both are kept. Keyword limits, the minimum number of references and the final reference style differ by journal: SubmitReady reads those from the journal's own page on every run.",
+ "sources": [
+  {
+   "name": "Oxidative Medicine and Cellular Longevity: Author Guidelines",
+   "url": "https://onlinelibrary.wiley.com/page/journal/2572/homepage/author-guidelines",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "BioMed Research International: Author Guidelines",
+   "url": "https://onlinelibrary.wiley.com/page/journal/2738/author-guidelines",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Any consistent style at submission. Oxidative Medicine and Cellular Longevity asks for numbers in square brackets and reformats to Chicago style after acceptance."
+ },
+ "requirements": [
+  {
+   "id": "abstract-words",
+   "rule": "Abstract of at most 300 words, self-contained and without citations",
+   "quote": "The abstract should be self-contained, citation-free, and should not exceed 300 words.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 300
+   }
+  },
+  {
+   "id": "introduction",
+   "rule": "Short introduction with no subheadings",
+   "quote": "This section should be succinct, with no subheadings.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "conclusions",
+   "rule": "Conclusions that state the main findings and why they matter",
+   "quote": "This should clearly explain the main conclusions of the article, highlighting its importance and relevance.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures",
+   "rule": "Figures at the highest resolution, inside the file or separate",
+   "quote": "Please provide figures in the highest resolution possible, whether this means they are embedded or provided separately.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement",
+   "quote": "Authors must include a data availability statement with their submission.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Conflicts of interest statement, saying so if there are none",
+   "quote": "If no conflicts exist, the authors should state this.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding statement naming each funder in full with grant numbers",
+   "quote": "All funding, whether a conflict or not, must be declared in the funding statement.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "references-any-style",
+   "rule": "References in any consistent style at submission",
+   "quote": "Authors may submit their references in any style.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "orcid",
+   "rule": "An ORCID iD for the submitting author",
+   "quote": "At submission, an ORCID iD must be provided for the submitting author(s).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "checklists",
+   "rule": "Reporting checklists (CONSORT, PRISMA, ARRIVE and others) uploaded as supplementary files",
+   "quote": "Completed checklists should be provided in the supplementary files on submission.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "three-under-review",
+   "rule": "No more than three of your manuscripts under review at the same journal at once",
+   "quote": "authors will be limited to having three manuscripts under review at any point in time.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for keyword limits, the minimum number of references, article types and the fee",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

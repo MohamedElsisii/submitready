@@ -1,0 +1,32 @@
+# A family: Wiley journals that offer Free Format submission.
+# Each Wiley journal writes its own Author Guidelines, so only the Free Format block is shared.
+# Hindawi journals (now part of Wiley) use a different template and are not in this family.
+# The journal's own page is always read.
+name: "Wiley journals (Free Format submission)"
+publisher: "Wiley"
+match:
+  publisher: ["Wiley", "John Wiley & Sons", "John Wiley and Sons", "Wiley-Blackwell", "Wiley-VCH", "Blackwell Publishing"]
+  journal_page: "https://onlinelibrary.wiley.com/page/journal/<ISSN>/homepage/forauthors.html"
+journals_list:
+  url: "https://onlinelibrary.wiley.com/action/showPublications?PubType=journal"
+  note: "Browse Publications lists every Wiley journal with its ISSN."
+  checked: "2026-11-24"
+guidelines:
+  url: "https://onlinelibrary.wiley.com/page/journal/10970134/homepage/forauthors.html"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://onlinelibrary.wiley.com/page/journal/15824934/homepage/forauthors.html"
+    - "https://onlinelibrary.wiley.com/page/journal/10974644/homepage/forauthors.html"
+requirements_snapshot: "journals/requirements/wiley.2026-11-24.json (Research article, first submission, shared rules only)"
+journal_specific:
+  - "Abstract limit (Proteins: 250 words; Journal of Cellular and Molecular Medicine: 200; Journal of Cellular Biochemistry: 300)"
+  - "Keyword count (Proteins and Journal of Cellular Biochemistry: 5 to 7 from MeSH; Journal of Cellular and Molecular Medicine: 3 to 10)"
+  - "Word limits by article type (Journal of Cellular and Molecular Medicine original article: 4,500 words; Journal of Cellular Biochemistry research article: usually at most 8,000 words including references and legends)"
+  - "Data sharing: Journal of Cellular Biochemistry does not accept 'available upon reasonable request'; data not in the paper must be in an open repository"
+  - "Whether the journal offers Free Format submission at all, and the full format required at revision"
+  - "Journal criteria, e.g. Journal of Cellular and Molecular Medicine will not review papers that propose one miRNA or lncRNA as a biomarker unless the author first sends an inquiry"
+  - "Cover letter content (Journal of Cellular and Molecular Medicine: recent papers by the corresponding or senior author, with DOIs)"
+known_quirks:
+  - text: "At revision, Proteins asks for the main text, tables, figures and supporting information as separate files in production-ready format."
+    source: "https://onlinelibrary.wiley.com/page/journal/10970134/homepage/forauthors.html"
+    checked: "2026-11-24"

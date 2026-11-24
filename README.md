@@ -103,6 +103,8 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 | Taylor & Francis (standard) | T&F journals with the standard instructions | JBSD and Biotechnology & Biotechnological Equipment compared |
 | Elsevier | Elsevier journals with the current Guide for Authors | Gene, Computers in Biology and Medicine and International Journal of Biological Macromolecules compared |
 | Springer (classic) | Springer journals with the classic Instructions for Authors (SpringerOpen journals use the BMC layout) | Molecular Biology Reports and 3 Biotech compared |
+| Wiley | Wiley journals with Free Format submission | Proteins, Journal of Cellular and Molecular Medicine and Journal of Cellular Biochemistry compared |
+| Hindawi (Wiley) | Hindawi journals on Wiley Online Library | Oxidative Medicine and Cellular Longevity and BioMed Research International compared |
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 

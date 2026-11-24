@@ -1,0 +1,20 @@
+# A family: Hindawi journals, now published by Wiley on Wiley Online Library.
+# Hindawi pages come in two templates (an older one and a newer Free Format one), so only
+# rules both state are shared. The journal's own page is always read.
+name: "Hindawi journals (Wiley)"
+publisher: "Hindawi (Wiley)"
+match:
+  publisher: ["Hindawi", "Hindawi Limited", "Hindawi Publishing Corporation"]
+  journal_page: "https://onlinelibrary.wiley.com/page/journal/<id>/author-guidelines"
+guidelines:
+  url: "https://onlinelibrary.wiley.com/page/journal/2572/homepage/author-guidelines"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://onlinelibrary.wiley.com/page/journal/2738/author-guidelines"
+requirements_snapshot: "journals/requirements/hindawi.2026-11-24.json (Research article, shared rules only)"
+journal_specific:
+  - "Keywords (BioMed Research International: up to 7)"
+  - "Minimum references (BioMed Research International: more than 5 in research articles, at least half of them journal articles)"
+  - "Reference style after acceptance (Oxidative Medicine and Cellular Longevity: Chicago, numbers in square brackets in the text)"
+  - "The page address: some journals use /homepage/author-guidelines, others /author-guidelines"
+  - "The article processing charge, on the journal's Open Access page"

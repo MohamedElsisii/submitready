@@ -44,3 +44,13 @@ def test_springer_and_bmc_share_a_publisher_name():
     assert families.find("BMC Plant Biology", pub)["file"].endswith("bmc.yaml")
     assert families.find("Molecular Biology Reports", pub)["file"].endswith("springer.yaml")
     assert families.find("Gene", "Elsevier BV")["file"].endswith("elsevier.yaml")
+
+
+def test_wiley_family():
+    r = families.find("Proteins: Structure, Function, and Bioinformatics", "Wiley")
+    assert r["file"].endswith("wiley.yaml") and r["journal_specific"]
+    assert families.find("Journal of Cellular Biochemistry", "John Wiley & Sons")["file"].endswith("wiley.yaml")
+
+
+def test_hindawi_is_not_the_wiley_family():
+    assert families.find("BioMed Research International", "Hindawi Limited")["file"].endswith("hindawi.yaml")
