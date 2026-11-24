@@ -13,7 +13,7 @@ Follow the five rules in `${CLAUDE_PLUGIN_ROOT}/skills/submitready/SKILL.md` on 
 
 ## 1. Gather the inputs (one round of questions at most)
 
-- Manuscript and journal: from the arguments. If the journal is missing, ask for it.
+- Manuscript and journal: from the arguments. If the journal is missing, run the journal finder (`${CLAUDE_PLUGIN_ROOT}/skills/find/SKILL.md`) first and continue here with the journal the user picks.
 - Article type: use the one in the arguments. If missing, use the journal's research article type and say so.
 - Figures folder: look next to the manuscript for a folder whose name contains "fig". If there is none, use the figures inside the manuscript file.
 - Supplementary folder: look next to the manuscript for a folder whose name contains "supp" or "SI".

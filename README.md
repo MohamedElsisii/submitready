@@ -39,6 +39,10 @@ Nothing was changed in the references. Every finding is a suggestion for the aut
 4. **Flag, don't fix, references.** If a reference disagrees with Crossref or PubMed, you see both versions and decide. Nothing is invented or silently corrected.
 5. **New text is a separate draft.** Cover letters, statements and reviewer responses are separate files, marked as drafts, never mixed into your manuscript.
 
+## Find the right journal
+
+No journal yet? `/submitready:find my_paper.docx` looks for journals that published papers like yours in the last five years, screens out ones it cannot confirm as legitimate, applies your filters (open access, subscription or hybrid, a fee limit, MEDLINE) and shows 5 with the numbers that matter. Every number has its source; anything that can't be found says "not found". Pick one and it is prepared. After a rejection, `/submitready:next` moves to the next journal on your list.
+
 ## What you get
 
 One folder per paper and journal, with:
@@ -68,16 +72,16 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 
 | Command | What it does | Version |
 | --- | --- | --- |
-| `/submitready:submit <paper> <journal>` | **Start here.** Does everything below in one go and gives you one to-do list and a copy-paste sheet for the journal website | v1 |
+| `/submitready:find <paper>` | **No journal yet? Start here.** Finds journals that publish papers like yours, filtered your way (open access, subscription or hybrid, fee limit, MEDLINE), with fit quotes, review times and fees; then prepares the one you pick | v1 |
+| `/submitready:next <paper>` | After a rejection: the next journal on your list, refreshed, then prepared once you say yes | v1 |
+| `/submitready:submit <paper> <journal>` | **Journal already chosen? Start here.** Does everything below in one go and gives you one to-do list and a copy-paste sheet for the journal website | v1 |
 | `/submitready:lock` | Fingerprints your manuscript and proves later that nothing changed | v1 |
 | `/submitready:prepare <journal>` | Reads the journal's live guidelines, builds a checklist, formats your files | v1 |
 | `/submitready:refs` | Verifies every reference against Crossref and PubMed, flags problems, tells you which style to pick | v1 |
 | `/submitready:check` | Final pre-submission audit | v1 |
 | `/supp` | Numbers, checks and packages supplementary material | v2 |
 | `/cover` | Drafts a cover letter for your approval | v2 |
-| `/match` | Cross-publisher journal shortlist with real review times | v2 |
 | `/respond` | Organizes reviewer comments and drafts replies for your approval | v3 |
-| `/resubmit <journal>` | After a rejection, prepares everything for the next journal | v3 |
 
 ## Journals
 

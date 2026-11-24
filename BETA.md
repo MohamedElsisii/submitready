@@ -22,6 +22,14 @@ Thank you for testing. SubmitReady prepares your manuscript for one journal in o
 
 To get new versions during the beta, type `/plugin marketplace update submitready`. Or turn on auto-update: type `/plugin`, open **Marketplaces**, pick SubmitReady and choose **Enable auto-update**.
 
+## No journal yet?
+
+```
+/submitready:find my_paper.docx
+```
+
+It asks how you want to publish (open access, subscription or hybrid, a fee limit, MEDLINE) and shows 5 journals that publish papers like yours: fit, the impact factor as the journal states it, a free citation measure, median days from submission to acceptance, access model and fee. Pick one and it is prepared. If that journal rejects the paper, `/submitready:next my_paper.docx` prepares the next one on your list.
+
 ## Run it
 
 1. Put your manuscript in a folder. If you have them, put the figure files in a folder whose name contains "fig" and the supplementary files in a folder whose name contains "supp", next to the manuscript.
