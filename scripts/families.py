@@ -33,7 +33,7 @@ def profiles() -> list[dict]:
         if p.name.startswith("_"):
             continue
         d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-        d["_file"] = str(p.relative_to(ROOT))
+        d["_file"] = p.relative_to(ROOT).as_posix()
         out.append(d)
     return out
 
@@ -42,7 +42,7 @@ def families() -> list[dict]:
     out = []
     for p in sorted((JOURNALS / "families").glob("*.yaml")):
         d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-        d["_file"] = str(p.relative_to(ROOT))
+        d["_file"] = p.relative_to(ROOT).as_posix()
         out.append(d)
     return out
 
