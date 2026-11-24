@@ -1,0 +1,27 @@
+# A family: Taylor & Francis journals whose Instructions for Authors use the standard template
+# (a numbered "Checklist: What to Include"). Expert Medicine journals have their own family file.
+name: "Taylor & Francis journals (standard instructions)"
+publisher: "Taylor & Francis"
+match:
+  publisher: ["Taylor & Francis", "Taylor and Francis", "Informa UK Limited", "Routledge"]
+  journal_page: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=<code>"
+  not_in_family: "journals/families/expert-medicine.yaml"
+journals_list:
+  url: "https://www.tandfonline.com/action/showPublications?pubType=journal"
+  checked: "2026-11-24"
+guidelines:
+  url: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbsd20"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbeq20"
+requirements_snapshot: "journals/requirements/taylor-and-francis.2026-11-24.json (shared checklist rules only)"
+journal_specific:
+  - "Abstract length and type (JBSD: unstructured, 250 words)"
+  - "Number of keywords (JBSD: 5 to 10; Biotechnology & Biotechnological Equipment: 3 to 6)"
+  - "Section structure and word or page limits (Biotechnology & Biotechnological Equipment gives an order and about 10 pages)"
+  - "Format-free submission and the reference style"
+  - "Publication fees (JBSD: none; Biotechnology & Biotechnological Equipment: an APC)"
+known_quirks:
+  - text: "A declaration of generative AI use is asked for even when none was used."
+    source: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbeq20"
+    checked: "2026-11-24"

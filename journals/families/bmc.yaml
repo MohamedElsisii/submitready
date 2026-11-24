@@ -1,0 +1,27 @@
+# A family: BMC (BioMed Central) journals share one template for their submission guidelines.
+name: "BMC journals"
+publisher: "BioMed Central (Springer Nature)"
+match:
+  publisher: ["BioMed Central", "BMC", "Springer Nature (BMC)"]
+  journal_page: "https://link.springer.com/journal/<id>/submission-guidelines/research-article"
+journals_list:
+  url: "https://link.springer.com/brands/bmc/journals"
+  note: "biomedcentral.com/journals redirects here."
+  checked: "2026-11-24"
+guidelines:
+  url: "https://link.springer.com/journal/12859/submission-guidelines"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://link.springer.com/journal/12859/submission-guidelines/research-article"
+    - "https://link.springer.com/journal/12885/submission-guidelines/research-article"
+    - "https://link.springer.com/journal/12864/submission-guidelines/research-article"
+requirements_snapshot: "journals/requirements/bmc.2026-11-24.json (Research article, shared rules only)"
+journal_specific:
+  - "Abstract headings (BMC Bioinformatics: Background, Results, Conclusions; BMC Cancer adds Methods and Trial registration)"
+  - "Whether a list of abbreviations is required (BMC Cancer: should be provided; BMC Bioinformatics: can be provided)"
+  - "Journal criteria, e.g. BMC Cancer does not consider purely computational studies without validation"
+  - "The publication fee (APC), on the journal's submission guidelines page"
+known_quirks:
+  - text: "Every Declarations subheading must be present; write 'Not applicable' where one does not apply."
+    source: "https://link.springer.com/journal/12859/submission-guidelines/research-article"
+    checked: "2026-11-24"

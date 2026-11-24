@@ -1,0 +1,139 @@
+{
+  "journal": "Taylor & Francis journals with the standard Instructions for Authors (shared rules)",
+  "article_type": "Original Article",
+  "snapshot_note": "Rules that the 'Checklist: What to Include' of two T&F Instructions for Authors pages states the same way (Journal of Biomolecular Structure and Dynamics; Biotechnology & Biotechnological Equipment). Abstract, keywords, structure, word limits, reference style and fees differ by journal: SubmitReady reads those from the journal's own page on every run. Expert Medicine journals have their own family.",
+  "sources": [
+    {
+      "name": "JBSD Instructions for Authors",
+      "url": "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbsd20",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "Biotechnology & Biotechnological Equipment Instructions for Authors",
+      "url": "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbeq20",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "",
+    "title": "",
+    "source": "",
+    "note": "Depends on the journal; many accept any consistent style at first submission (format-free)."
+  },
+  "requirements": [
+    {
+      "id": "author-details",
+      "rule": "Full name and affiliation of every author on the cover page; ORCID where available; one corresponding author with email",
+      "quote": "All authors of a manuscript should include their full name and affiliation on the cover page of the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "credit",
+      "rule": "CRediT roles for every author are entered during submission",
+      "quote": "Submitting authors should be prepared to submit CRediT roles for themselves and their co-authors",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "funding",
+      "rule": "Funding details, or a statement that no funding was obtained",
+      "quote": "If no funding was obtained for the reported work, please declare that no funding was obtained.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "funding"
+      }
+    },
+    {
+      "id": "disclosure",
+      "rule": "Disclosure statement on competing interests",
+      "quote": "Disclosure statement.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "competing"
+      }
+    },
+    {
+      "id": "ai-declaration",
+      "rule": "Declaration of generative AI use, also when none was used",
+      "quote": "If generative AI was not used, please state this",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "ai"
+      }
+    },
+    {
+      "id": "data-availability",
+      "rule": "Data availability statement with a link, DOI or other persistent identifier where applicable",
+      "quote": "Data availability statement.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "data"
+      }
+    },
+    {
+      "id": "figure-files",
+      "rule": "Figures: 300 dpi for colour, 600 dpi for grayscale, 1200 dpi for line art; PS, JPEG, TIFF, or Word for figures drawn in Word",
+      "quote": "Figures should be high quality (1200 dpi for line art, 600 dpi for grayscale and 300 dpi for colour, at the correct size).",
+      "source": 0,
+      "check": {
+        "type": "figure_files",
+        "formats": [
+          "ps",
+          "eps",
+          "jpg",
+          "jpeg",
+          "tif",
+          "tiff",
+          "doc",
+          "docx"
+        ],
+        "dpi_min": 300
+      }
+    },
+    {
+      "id": "tables-editable",
+      "rule": "Tables are editable",
+      "quote": "Please supply editable files.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "equations-editable",
+      "rule": "Equations in Word are editable",
+      "quote": "please ensure that equations are editable.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "si-units",
+      "rule": "SI units, not italic",
+      "quote": "Please use SI units (non-italicized).",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "journal-specific",
+      "rule": "Read on the journal's own page: abstract length and type, number of keywords, section structure, word limits, format-free submission and reference style, and the fee",
+      "quote": "",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

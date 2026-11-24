@@ -91,7 +91,18 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 
 PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review), Epigenomics, Journal of Biomolecular Structure and Dynamics.
 
-**Families** cover many journals at once, when they share one guidelines document. The Expert Medicine family (Taylor & Francis) covers 24 journals, among them Epigenomics, Future Oncology, Nanomedicine, Pharmacogenomics and Immunotherapy. See `journals/families/`.
+**Families** give a checked starting point to many journals at once, when they share one guidelines document or template. Each family says which rules are shared and which must still be read from the journal's own page:
+
+| Family | Covers | Built from |
+| --- | --- | --- |
+| Expert Medicine (Taylor & Francis) | 24 journals, e.g. Epigenomics, Future Oncology, Nanomedicine | the shared author guidelines PDF |
+| MDPI | every MDPI journal | IJMS, Cancers, Molecules and Applied Sciences compared line by line |
+| Frontiers | every Frontiers journal | the shared Frontiers author guidelines |
+| BMC | every BMC journal | BMC Bioinformatics, BMC Cancer and BMC Genomics compared |
+| PLOS | the 16 PLOS journals | PLOS ONE and PLOS Computational Biology compared |
+| Taylor & Francis (standard) | T&F journals with the standard instructions | JBSD and Biotechnology & Biotechnological Equipment compared |
+
+`python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 
 Adding a journal or a family is a good first contribution. Copy `journals/_TEMPLATE.yaml` and quote the guidelines page for each rule.
 

@@ -224,6 +224,20 @@ def test_families_point_to_real_snapshots():
         assert fam["guidelines"]["url"].startswith("https://") and fam["guidelines"]["checked"], p.name
         snap = fam["requirements_snapshot"].split(" ")[0]
         assert (ROOT / snap).exists(), (p.name, snap)
-        assert len(fam["journals"]) == len(set(fam["journals"])) > 1, p.name
+        if "journals" in fam:  # a named list, or a publisher match with a list page
+            assert len(fam["journals"]) == len(set(fam["journals"])) > 1, p.name
+        else:
+            assert fam["match"]["publisher"] and fam["journals_list"]["url"].startswith("https://"), p.name
+            assert fam["journal_specific"], p.name  # what must still be read from each journal's page
         for q in fam.get("known_quirks", []):
             assert q["source"].startswith("https://") and q["checked"], p.name
+
+
+def test_rules_for_things_the_paper_does_not_have_pass():
+    # seen with a real preprint: no tables, no supplementary items
+    facts = {"captions_placement": {"figure_end": 2}, "caption_duplicates": [], "figures": [1, 2], "tables": [],
+             "sections_found": ["introduction"], "supplementary_items": []}
+    res = prepare.check(facts, req({"type": "captions_placement", "value": "in_text", "kind": "table"},
+                                   {"type": "section_present", "section": "supplementary"},
+                                   {"type": "captions_placement", "value": "in_text", "kind": "figure"}))
+    assert [r["status"] for r in res] == ["PASS", "PASS", "FIX"]

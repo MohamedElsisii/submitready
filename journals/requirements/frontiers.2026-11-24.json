@@ -1,0 +1,245 @@
+{
+  "journal": "Frontiers journals (shared rules), Original Research",
+  "article_type": "Original Research",
+  "snapshot_note": "Rules from the Frontiers author guidelines, which apply to every Frontiers journal. The reference style (Harvard or Vancouver) and the limits for each article type differ by journal: SubmitReady reads those from the journal's pages on every run.",
+  "sources": [
+    {
+      "name": "Frontiers author guidelines",
+      "url": "https://www.frontiersin.org/guidelines/author-guidelines",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "Frontiers help center: reference style per journal",
+      "url": "https://helpcenter.frontiersin.org/s/article/What-reference-style-does-each-journal-use",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "",
+    "title": "",
+    "source": "",
+    "note": "Depends on the journal: Harvard (frontiers.csl) or Vancouver (frontiers-medical-journals.csl); see the help center page."
+  },
+  "requirements": [
+    {
+      "id": "format",
+      "rule": "Recommended sections for Original Research: Introduction, Materials and methods, Results, Discussion (or the equivalents in your field)",
+      "quote": "it is recommended to organize your manuscript in the following sections or their equivalents for your field.",
+      "source": 0,
+      "check": {
+        "type": "sections_order",
+        "order": [
+          "introduction",
+          "methods",
+          "results",
+          "discussion"
+        ]
+      }
+    },
+    {
+      "id": "keywords",
+      "rule": "Five to eight keywords",
+      "quote": "Pick 5-8 keywords using a mix of generic and more specific terms on the article subject(s)",
+      "source": 0,
+      "check": {
+        "type": "keywords",
+        "min": 5,
+        "max": 8
+      }
+    },
+    {
+      "id": "first-page-counts",
+      "rule": "Word count and number of figures and tables are stated on the first page",
+      "quote": "Please indicate the number of words and the number of figures and tables included in your manuscript on the first page.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "abstract",
+      "rule": "Abstract is one paragraph with no citations of references, figures or tables",
+      "quote": "Minimize the use of abbreviations and do not cite references, figures or tables.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "intro-no-subheadings",
+      "rule": "Introduction has no subheadings",
+      "quote": "Succinct, with no subheadings.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "single-spacing",
+      "rule": "Whole document single-spaced",
+      "quote": "The entire document should be single-spaced and must contain page and line numbers in order to facilitate the review process.",
+      "source": 0,
+      "check": {
+        "type": "line_spacing",
+        "value": 1.0
+      }
+    },
+    {
+      "id": "line-numbers",
+      "rule": "Line numbers",
+      "quote": "The entire document should be single-spaced and must contain page and line numbers in order to facilitate the review process.",
+      "source": 0,
+      "check": {
+        "type": "line_numbers",
+        "value": true
+      }
+    },
+    {
+      "id": "page-numbers",
+      "rule": "Page numbers",
+      "quote": "The entire document should be single-spaced and must contain page and line numbers in order to facilitate the review process.",
+      "source": 0,
+      "check": {
+        "type": "page_numbers",
+        "value": true
+      }
+    },
+    {
+      "id": "figures-separate",
+      "rule": "Each figure is a separate file, in the order cited",
+      "quote": "We require figures to be submitted individually, in the same order as they are referred to in the manuscript",
+      "source": 0,
+      "check": {
+        "type": "figures_embedded",
+        "allowed": false
+      }
+    },
+    {
+      "id": "captions-end",
+      "rule": "Figure captions at the end of the manuscript; tables at the end with the caption just above",
+      "quote": "Figure captions should be placed at the end of the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "captions_placement",
+        "value": "end"
+      }
+    },
+    {
+      "id": "figure-files",
+      "rule": "Figures: TIF/TIFF, JPEG or EPS, RGB, 300 dpi at final size, 85 mm or 180 mm wide, text at least 8 pt",
+      "quote": "All images must have a resolution of 300 dpi at final size.",
+      "source": 0,
+      "check": {
+        "type": "figure_files",
+        "formats": [
+          "tif",
+          "tiff",
+          "jpg",
+          "jpeg",
+          "eps"
+        ],
+        "dpi_min": 300,
+        "dpi_at_final_size": true,
+        "column_widths_mm": [
+          85,
+          180
+        ],
+        "color_modes": [
+          "RGB"
+        ]
+      }
+    },
+    {
+      "id": "ai-statement",
+      "rule": "Generative AI use is acknowledged in Acknowledgements (and Methods where relevant), with name, version, model and source",
+      "quote": "such use must be acknowledged in the acknowledgements section of the manuscript and the methods section if applicable.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "gene-symbols",
+      "rule": "Gene symbols in italics, with approved (HGNC) nomenclature",
+      "quote": "Italicize gene symbols and use the approved gene nomenclature where it is available.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "equations",
+      "rule": "Equations in an editable equation-editor format",
+      "quote": "Equations should be inserted in editable format from the equation editor.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "supp-clean",
+      "rule": "Supplementary files have no tracked changes, highlights or line numbers, and include their caption",
+      "quote": "please ensure that all information is clearly presented without tracked changes/highlighted text/line numbers, and the appropriate caption is included in the file.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "statements-headings",
+      "rule": "Headings for data availability, author contributions, conflict of interest and funding are not stated on the guidelines page; check the Frontiers Word template",
+      "quote": "",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "tables-end",
+      "rule": "Tables at the end of the manuscript, editable, with the caption just above each table",
+      "quote": "Tables should be inserted at the end of the manuscript in an editable format.",
+      "source": 0,
+      "check": {
+        "type": "captions_placement",
+        "value": "end",
+        "kind": "table"
+      }
+    },
+    {
+      "id": "heading-levels",
+      "rule": "At most 5 heading levels",
+      "quote": "You may insert up to 5 heading levels into your manuscript",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "author-list",
+      "rule": "References list the first six authors, then et al., with the DOI when available",
+      "quote": "The names of the first six authors followed by et al. and the DOI (when available) should be provided.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "websites",
+      "rule": "Website URLs go in footnotes, not the reference list",
+      "quote": "Website URLs should be included as footnotes.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "journal-specific",
+      "rule": "Read on the journal's own pages: reference style (Harvard author-date or Vancouver numbered, per the help center), and word, abstract and figure limits on the 'Article types' page",
+      "quote": "Frontiers' journals use one of two reference styles, either Harvard (author-date) or Vancouver (numbered).",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

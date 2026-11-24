@@ -1,0 +1,24 @@
+# A family: every Frontiers journal follows the same author guidelines page.
+name: "Frontiers journals"
+publisher: "Frontiers Media"
+match:
+  publisher: ["Frontiers Media", "Frontiers Media S.A.", "Frontiers Media SA", "Frontiers"]
+  journal_page: "https://www.frontiersin.org/journals/<journal>/for-authors/article-types"
+journals_list:
+  url: "https://www.frontiersin.org/journals"
+  note: "The page heading said '228 journals' when checked."
+  checked: "2026-11-24"
+guidelines:
+  url: "https://www.frontiersin.org/guidelines/author-guidelines"
+  checked: "2026-11-24"
+requirements_snapshot: "journals/requirements/frontiers.2026-11-24.json (Original Research, shared rules only)"
+journal_specific:
+  - "Reference style: Harvard (author-date) or Vancouver (numbered), listed per journal in the Frontiers help center"
+  - "Word, abstract and figure limits for each article type, on the journal's 'Article types' page"
+known_quirks:
+  - text: "Figures are uploaded one by one and embedded at the end of the manuscript by the system."
+    source: "https://www.frontiersin.org/guidelines/author-guidelines"
+    checked: "2026-11-24"
+  - text: "Website URLs go in footnotes, although Results should have no footnotes."
+    source: "https://www.frontiersin.org/guidelines/author-guidelines"
+    checked: "2026-11-24"

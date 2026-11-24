@@ -553,6 +553,8 @@ def check(facts: dict, req: dict) -> list[dict]:
             elif t == "section_present":
                 ok = c["section"] in facts["sections_found"]
                 status, found = ("PASS" if ok else "FIX"), "found" if ok else "not found"
+                if not ok and c["section"] == "supplementary" and not facts.get("supplementary_items"):
+                    status, found = "PASS", "no supplementary items are cited, so none is needed"
             elif t == "section_absent":
                 bad = c["section"] in facts["sections_found"]
                 status, found = ("FIX" if bad else "PASS"), "present in the file" if bad else "not in the file"
@@ -584,6 +586,7 @@ def check(facts: dict, req: dict) -> list[dict]:
                 want = c["value"]
                 good = sum(v for k, v in pl.items() if k.endswith("_" + want))
                 ok = good > 0 and sum(pl.values()) == good
+                none_of_kind = kind and not facts.get({"figure": "figures", "table": "tables"}[kind], [1])
                 found = ", ".join(f"{v} {k.split('_', 1)[0]} caption{'s' if v > 1 else ''} { {'end': 'at the end', 'in_text': 'in the text'}[k.split('_', 1)[1]] }"
                                   for k, v in sorted(pl.items())) or "no captions found"
                 dups = [d for d in facts.get("caption_duplicates", []) if not kind or d.lower().startswith(kind)]
@@ -594,6 +597,9 @@ def check(facts: dict, req: dict) -> list[dict]:
                     found += (f"; {', '.join(dups)} {verb} twice: keep the copy {where[want]}, "
                               f"delete the one {where[other]}")
                 status = "PASS" if ok else "FIX"
+                if not pl:
+                    # nothing to place: no tables at all is fine; captions we could not find need a look
+                    status, found = ("PASS", f"no {kind}s in the manuscript") if none_of_kind else ("CHECK", found)
             elif t == "citation_format":
                 ok = facts["citation_format"].startswith(c["value"])
                 status = "PASS" if ok else "STYLE"

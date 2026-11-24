@@ -1,0 +1,121 @@
+{
+  "journal": "PLOS journals (shared rules), Research Article",
+  "article_type": "Research Article",
+  "snapshot_note": "Rules that PLOS ONE and PLOS Computational Biology state word for word. Title and abstract limits, an Author Summary, whether figures go in the file at first submission, and whether funding and competing interests stay out of the file differ by journal: SubmitReady reads those from the journal's own page on every run.",
+  "sources": [
+    {
+      "name": "PLOS ONE submission guidelines",
+      "url": "https://journals.plos.org/plosone/s/submission-guidelines",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "PLOS Computational Biology submission guidelines",
+      "url": "https://journals.plos.org/ploscompbiol/s/submission-guidelines",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "CSL styles repository: PLOS",
+      "url": "https://github.com/citation-style-language/styles/blob/master/plos.csl",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "plos",
+    "title": "Public Library of Science",
+    "source": "https://github.com/citation-style-language/styles/blob/master/plos.csl",
+    "note": "Journals such as PLOS ONE also have a dependent style of the same parent."
+  },
+  "requirements": [
+    {
+      "id": "double-spacing",
+      "rule": "Text is double-spaced",
+      "quote": "Manuscript text should be double-spaced.",
+      "source": 0,
+      "check": {
+        "type": "line_spacing",
+        "value": 2.0
+      }
+    },
+    {
+      "id": "line-numbers",
+      "rule": "Continuous line numbers",
+      "quote": "Include page numbers and line numbers in the manuscript file.",
+      "source": 0,
+      "check": {
+        "type": "line_numbers",
+        "value": true
+      }
+    },
+    {
+      "id": "page-numbers",
+      "rule": "Page numbers",
+      "quote": "Include page numbers and line numbers in the manuscript file.",
+      "source": 0,
+      "check": {
+        "type": "page_numbers",
+        "value": true
+      }
+    },
+    {
+      "id": "reference-style",
+      "rule": "Vancouver references, numbered in square brackets",
+      "quote": "PLOS uses “Vancouver” style",
+      "source": 0,
+      "check": {
+        "type": "citation_format",
+        "value": "numeric, square brackets"
+      }
+    },
+    {
+      "id": "figure-captions",
+      "rule": "Figure captions go right after the paragraph where the figure is first cited",
+      "quote": "Insert figure captions in manuscript text, immediately following the paragraph where the figure is first cited (read order).",
+      "source": 1,
+      "check": {
+        "type": "captions_placement",
+        "value": "in_text",
+        "kind": "figure"
+      }
+    },
+    {
+      "id": "table-placement",
+      "rule": "Each table goes right after the paragraph where it is first cited",
+      "quote": "Place each table in your manuscript file directly after the paragraph in which it is first cited (read order).",
+      "source": 1,
+      "check": {
+        "type": "captions_placement",
+        "value": "in_text",
+        "kind": "table"
+      }
+    },
+    {
+      "id": "supp-captions",
+      "rule": "Supporting information captions are listed at the end of the manuscript",
+      "quote": "List supporting information captions at the end of the manuscript file.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "supplementary"
+      }
+    },
+    {
+      "id": "supp-labels",
+      "rule": "Supporting information is labeled like \"S1 Table\"",
+      "quote": "For example, “S1 Appendix” and “S2 Appendix,” “S1 Table” and “S2 Table,” and so forth.",
+      "source": 0,
+      "check": {
+        "type": "supp_label_style",
+        "value": "S1 Table"
+      }
+    },
+    {
+      "id": "journal-specific",
+      "rule": "Read on the journal's own page: title and short-title limits, abstract limit and headings, an Author Summary, figures inside the file or separate at first submission, funding and competing interests in the file or only in the form, and the figure file rules",
+      "quote": "",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

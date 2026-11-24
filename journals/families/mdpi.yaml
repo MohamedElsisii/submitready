@@ -1,0 +1,31 @@
+# A family: journals that share one set of author guidelines.
+# MDPI journals each have their own Instructions for Authors page, built from one template.
+# SubmitReady starts from the shared rules, then reads the journal's own page for the parts that differ.
+name: "MDPI journals"
+publisher: "MDPI"
+match:
+  publisher: ["MDPI", "Multidisciplinary Digital Publishing Institute"]
+  journal_page: "https://www.mdpi.com/journal/<journal>/instructions"
+journals_list:
+  url: "https://www.mdpi.com/about/journals"
+  note: "The page said 'Browse 551 open access journals' when checked."
+  checked: "2026-11-24"
+guidelines:
+  url: "https://www.mdpi.com/journal/ijms/instructions"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://www.mdpi.com/journal/cancers/instructions"
+    - "https://www.mdpi.com/journal/molecules/instructions"
+    - "https://www.mdpi.com/journal/applsci/instructions"
+requirements_snapshot: "journals/requirements/mdpi.2026-11-24.json (Article, shared rules only)"
+journal_specific:   # differ between the four pages compared; always read from the journal's own page
+  - "Abstract length and headings (IJMS: about 200 words, one paragraph; Cancers: around 250 words with headings)"
+  - "Main-text section order (IJMS and Molecules: Results before Materials and Methods; Cancers and Applied Sciences: Materials and Methods first)"
+  - "Conclusions optional or mandatory (mandatory in Cancers)"
+  - "Extra sections such as the Simple Summary (Cancers)"
+  - "Figure resolution (Cancers, Molecules and Applied Sciences say preferably no less than 600 dpi)"
+  - "Journal-only rules, e.g. Cancers: more than 30 references in Articles and no Case Reports"
+known_quirks:
+  - text: "Free format submission is accepted, but the required sections must be there."
+    source: "https://www.mdpi.com/journal/ijms/instructions"
+    checked: "2026-11-24"

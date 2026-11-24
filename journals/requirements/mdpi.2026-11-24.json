@@ -1,0 +1,226 @@
+{
+  "journal": "MDPI journals (shared rules), Article",
+  "article_type": "Article",
+  "snapshot_note": "Rules that four MDPI journals' Instructions for Authors pages state word for word (IJMS, Cancers, Molecules, Applied Sciences). The abstract, the main-text section order, whether Conclusions or a Simple Summary are required, and figure resolution differ by journal: SubmitReady reads those from the journal's own page on every run.",
+  "sources": [
+    {
+      "name": "IJMS Instructions for Authors",
+      "url": "https://www.mdpi.com/journal/ijms/instructions",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "Cancers Instructions for Authors",
+      "url": "https://www.mdpi.com/journal/cancers/instructions",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "Molecules Instructions for Authors",
+      "url": "https://www.mdpi.com/journal/molecules/instructions",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "Applied Sciences Instructions for Authors",
+      "url": "https://www.mdpi.com/journal/applsci/instructions",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "CSL styles repository: MDPI",
+      "url": "https://github.com/citation-style-language/styles/blob/master/multidisciplinary-digital-publishing-institute.csl",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "multidisciplinary-digital-publishing-institute",
+    "title": "Multidisciplinary Digital Publishing Institute",
+    "source": "https://github.com/citation-style-language/styles/blob/master/multidisciplinary-digital-publishing-institute.csl",
+    "note": "The style the instructions link for Zotero. Many MDPI journals also have a dependent style of the same parent."
+  },
+  "requirements": [
+    {
+      "id": "keywords",
+      "rule": "Three to ten keywords after the abstract",
+      "quote": "Three to ten pertinent keywords need to be added after the abstract.",
+      "source": 0,
+      "check": {
+        "type": "keywords",
+        "min": 3,
+        "max": 10
+      }
+    },
+    {
+      "id": "order-back",
+      "rule": "Back matter in this order: Supplementary Materials, Author Contributions, Funding, Data Availability Statement, Acknowledgments, Conflicts of Interest, References",
+      "quote": "Back matter: Supplementary Materials, Author Contributions, Funding, Data Availability Statement, Acknowledgments, Conflicts of Interest, References.",
+      "source": 0,
+      "check": {
+        "type": "sections_order",
+        "order": [
+          "supplementary",
+          "contributions",
+          "funding",
+          "data",
+          "acknowledgements",
+          "competing",
+          "references"
+        ],
+        "optional": [
+          "supplementary",
+          "acknowledgements"
+        ]
+      }
+    },
+    {
+      "id": "contributions",
+      "rule": "Author Contributions paragraph with CRediT roles",
+      "quote": "For research articles with several authors, a short paragraph specifying their individual contributions must be provided.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "contributions"
+      }
+    },
+    {
+      "id": "funding",
+      "rule": "Funding section: all sources, grants and any funds for publication costs",
+      "quote": "All sources of funding of the study should be disclosed.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "funding"
+      }
+    },
+    {
+      "id": "data-availability",
+      "rule": "Data Availability Statement, even when no new data were made",
+      "quote": "It is mandatory for the authors to include a “Data Availability Statement (DAS)” section in their manuscripts",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "data"
+      }
+    },
+    {
+      "id": "competing",
+      "rule": "Conflicts of Interest section",
+      "quote": "If there is no conflict of interest, please state",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "competing"
+      }
+    },
+    {
+      "id": "irb-consent",
+      "rule": "Institutional Review Board and Informed Consent statements for studies with humans or animals",
+      "quote": "In this section, please add the Institutional Review Board Statement and approval number for studies involving humans or animals.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "citation-format",
+      "rule": "Reference numbers in square brackets, before the punctuation, e.g. [1], [1–3] or [1,3]",
+      "quote": "In the text, reference numbers should be placed in square brackets [ ], and placed before the punctuation; for example [1], [1–3] or [1,3].",
+      "source": 0,
+      "check": {
+        "type": "citation_format",
+        "value": "numeric, square brackets"
+      }
+    },
+    {
+      "id": "citation-position",
+      "rule": "Citations sit before the punctuation",
+      "quote": "placed before the punctuation",
+      "source": 0,
+      "check": {
+        "type": "citation_punctuation",
+        "value": "before"
+      }
+    },
+    {
+      "id": "figures-in-text",
+      "rule": "Figures, schemes and tables go in the main text close to their first citation, numbered in order of appearance",
+      "quote": "inserted into the main text close to their first citation",
+      "source": 0,
+      "check": {
+        "type": "captions_placement",
+        "value": "in_text"
+      }
+    },
+    {
+      "id": "figures-embedded",
+      "rule": "Figures are inserted in the manuscript file",
+      "quote": "inserted into the main text close to their first citation",
+      "source": 0,
+      "check": {
+        "type": "figures_embedded",
+        "allowed": true
+      }
+    },
+    {
+      "id": "supp-labels",
+      "rule": "Supplementary items named like 'Figure S1: title, Table S1: title'",
+      "quote": "Please indicate the name and title of each element as follows Figure S1: title, Table S1: title, etc.",
+      "source": 0,
+      "check": {
+        "type": "supp_label_style",
+        "value": "Table S1"
+      }
+    },
+    {
+      "id": "genai",
+      "rule": "Generative AI use: in Methods how it was used, and in Acknowledgments the tool, version and purpose",
+      "quote": "Where applicable, authors are required to disclose in this section details of how GenAI has been used in the paper",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "acronyms",
+      "rule": "Acronyms defined at first use in the abstract, the main text and the first figure or table",
+      "quote": "should be defined the first time they appear in each of three sections: the abstract; the main text; the first figure or table.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "equations",
+      "rule": "Equations are editable, not pictures",
+      "quote": "Equations should be editable by the editorial office and not appear in a picture format.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "file-size",
+      "rule": "All files together at most 120 MB",
+      "quote": "The total amount of data for all files must not exceed 120 MB.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "blot-images",
+      "rule": "Original, uncropped blot, gel and microscopy images may be requested: at least 1000 pixels or 300 dpi",
+      "quote": "a minimum of 1000 pixels in width/height, or a resolution of 300 dpi or higher",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "journal-specific",
+      "rule": "Read on the journal's own page: abstract length and headings, main-text section order, whether Conclusions or a Simple Summary are required, and figure resolution",
+      "quote": "",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

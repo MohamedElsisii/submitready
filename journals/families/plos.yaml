@@ -1,0 +1,34 @@
+# A family: PLOS journals share most of their submission guidelines.
+name: "PLOS journals"
+publisher: "Public Library of Science"
+guidelines:
+  url: "https://journals.plos.org/plosone/s/submission-guidelines"
+  checked: "2026-11-24"
+  compared_with:
+    - "https://journals.plos.org/ploscompbiol/s/submission-guidelines"
+requirements_snapshot: "journals/requirements/plos.2026-11-24.json (Research Article, shared rules only)"
+journals_source: "https://journals.plos.org/plosone/s/publishing-information"
+journals:   # 'Current Titles' on the PLOS publishing information page
+  - "PLOS Aging and Health"
+  - "PLOS Biology"
+  - "PLOS Climate"
+  - "PLOS Complex Systems"
+  - "PLOS Computational Biology"
+  - "PLOS Digital Health"
+  - "PLOS Ecosystems"
+  - "PLOS Genetics"
+  - "PLOS Global Public Health"
+  - "PLOS Medicine"
+  - "PLOS Mental Health"
+  - "PLOS Neglected Tropical Diseases"
+  - "PLOS ONE"
+  - "PLOS Pathogens"
+  - "PLOS Sustainability and Transformation"
+  - "PLOS Water"
+journal_specific:
+  - "Title and short-title limits (PLOS ONE: 250 and 100 characters; PLOS Computational Biology: 200 and 70)"
+  - "Abstract limit and an Author Summary (PLOS Computational Biology asks for a 150-200 word summary after the abstract)"
+  - "Figures inside the manuscript file at first submission (PLOS Computational Biology allows it; PLOS ONE does not)"
+  - "Whether funding and competing interests stay out of the manuscript file (PLOS ONE: 'Do not include it in your manuscript file')"
+  - "Figure file rules, on the journal's figures page"
+known_quirks: []
