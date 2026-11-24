@@ -275,6 +275,7 @@ def analyze_tex(path: Path) -> dict:
         "citation_samples": [m.group(0) for m in latex.CITE_RE.finditer(body)][:5],
         "references": len(latex.cited_keys(path)),
         "format": "latex",
+        **text_style_facts(latex.detex(body), [latex.detex(b) for b in re.split(r"\n\s*\n", body)]),
     }
 
 
@@ -471,6 +472,38 @@ def analyze(path: Path) -> dict:
         "citation_format": cite_fmt,
         "citation_samples": cite_samples,
         "references": refs,
+        **text_style_facts(" ".join(p["text"] for p in paras if not p["bib"]), [p["text"] for p in paras if not p["bib"]]),
+    }
+
+
+P_NO_ZERO = re.compile(r"\b[pP]\s*(?:-?value\s*)?[<=>\u2264\u2265]\s*\.\d+")
+P_ANY = re.compile(r"\b[pP]\s*(?:-?value\s*)?[<=>\u2264\u2265]\s*0?\.\d")
+NUM_CITE = r"\[\d{1,3}(?:\s*[-\u2013,]\s*\d{1,3})*\]"
+CITE_BEFORE = re.compile(rf"\w\s?{NUM_CITE}[.,;:]")      # "... text [12]."
+CITE_AFTER = re.compile(rf"\w[.,;:]\s?{NUM_CITE}")         # "... text.[12]" or "text. [12]"
+
+
+def text_style_facts(text: str, paragraphs: list[str]) -> dict:
+    """House-style facts some journals check: a leading zero on p-values (P = 0.03, not P = .03),
+    where numbered citations sit against punctuation, and how many references carry an annotation
+    (a "* ..." or "** ..." line right after a typed "[6] Author ..." line, as Epigenomics and other
+    Future Science journals ask). Measured paragraph by paragraph, so two paragraphs never join."""
+    no_zero, before, after, samples, notes = [], 0, 0, [], 0
+    for i, t in enumerate(paragraphs):
+        no_zero += [m.group(0) for m in P_NO_ZERO.finditer(t)]
+        before += len(CITE_BEFORE.findall(t))
+        hits = [t[max(0, m.start() - 12):m.end()].strip() for m in CITE_AFTER.finditer(t)]
+        after += len(hits)
+        samples += hits
+        if re.match(r"\s*\*{1,2}\s*\w", t) and i and re.match(r"\s*(\[\d{1,3}\]|\d{1,3}\.)\s", paragraphs[i - 1]):
+            notes += 1
+    return {
+        "p_values": sum(len(P_ANY.findall(t)) for t in paragraphs),
+        "p_values_without_zero": no_zero,
+        "citations_before_punctuation": before,
+        "citations_after_punctuation": after,
+        "citation_punctuation_samples": samples[:3],
+        "reference_annotations": notes,
     }
 
 
@@ -495,7 +528,8 @@ def check(facts: dict, req: dict) -> list[dict]:
     """Check types: max_chars, max_words, keywords, section_present, section_absent, sections_order,
     line_numbers, page_numbers, line_spacing, footnotes, figures_embedded,
     captions_placement (value "in_text" or "end"; optional kind "figure" or "table", default both),
-    citation_format, supp_label_style, max_count, figure_files, manual."""
+    citation_format, supp_label_style, max_count, min_count, p_leading_zero,
+    citation_punctuation (value "before" or "after"), figure_files, manual."""
     out = []
     for r in req["requirements"]:
         c = r.get("check", {"type": "manual"})
@@ -574,6 +608,22 @@ def check(facts: dict, req: dict) -> list[dict]:
                     x = facts[c["target"]]
                     v = x if isinstance(x, int) else len(x)
                 status, found = ("PASS" if v <= c["value"] else "FIX"), f"{v}"
+            elif t == "min_count":
+                x = facts[c["target"]]
+                v = x if isinstance(x, int) else len(x)
+                status, found = ("PASS" if v >= c["value"] else "FIX"), f"{v}"
+            elif t == "p_leading_zero":
+                bad = facts["p_values_without_zero"]
+                status = "FIX" if bad else "PASS"
+                found = (f"{len(bad)} without a zero, e.g. {', '.join(bad[:3])}" if bad
+                         else f"{facts['p_values']} p-values, all with a zero")
+            elif t == "citation_punctuation":
+                want = c["value"]  # "before": text [1]. ; "after": text.[1]
+                wrong = facts["citations_after_punctuation" if want == "before" else "citations_before_punctuation"]
+                status = "PASS" if not wrong else "FIX"
+                found = (f"{wrong} citation{'s' if wrong != 1 else ''} on the other side of the punctuation"
+                         + (f", e.g. {', '.join(facts['citation_punctuation_samples'])}"
+                            if want == "before" and facts["citation_punctuation_samples"] else ""))
             elif t == "manual":
                 status = "CHECK"
         except KeyError as e:

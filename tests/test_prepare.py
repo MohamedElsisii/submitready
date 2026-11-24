@@ -154,3 +154,49 @@ def test_unnamed_heading_ends_the_abstract(tmp_path):
     p = tmp_path / "a.docx"
     d.save(p)
     assert prepare.analyze(p)["abstract_words"] == 3
+
+
+# ---- house-style checks from real editor letters (Epigenomics, 2026) ----
+
+def _doc(tmp_path, paragraphs, name="h.docx"):
+    import docx
+    d = docx.Document()
+    for t in paragraphs:
+        d.add_paragraph(t)
+    p = tmp_path / name
+    d.save(p)
+    return p
+
+
+HOUSE = ["A made-up title for house style",
+         "Abstract",
+         "Values were higher in group A (p < .05) and lower in group B (P = 0.01).",
+         "Introduction",
+         "Earlier work showed this [1]. Later work did not.[2] A third study agreed [3].",
+         "References",
+         "[1] Doe J. A made-up paper. J Tests. 2020;1:1-2.",
+         "** Of considerable interest: it set up the method.",
+         "[2] Roe R. Another made-up paper. J Tests. 2021;2:3-4.",
+         "* Of interest: it tested the method.",
+         "[3] Moe M. A third made-up paper. J Tests. 2022;3:5-6."]
+
+
+def test_p_values_need_a_leading_zero(tmp_path):
+    facts = prepare.analyze(_doc(tmp_path, HOUSE))
+    res = prepare.check(facts, req({"type": "p_leading_zero", "value": True}))
+    assert res[0]["status"] == "FIX" and "p < .05" in res[0]["found"]
+
+
+def test_citation_side_of_punctuation(tmp_path):
+    facts = prepare.analyze(_doc(tmp_path, HOUSE))
+    before, after = prepare.check(facts, req({"type": "citation_punctuation", "value": "before"},
+                                             {"type": "citation_punctuation", "value": "after"}))
+    assert before["status"] == "FIX" and "did not.[2]" in before["found"]
+    assert after["status"] == "FIX"
+
+
+def test_reference_annotations_are_counted(tmp_path):
+    facts = prepare.analyze(_doc(tmp_path, HOUSE))
+    assert facts["reference_annotations"] == 2
+    res = prepare.check(facts, req({"type": "min_count", "target": "reference_annotations", "value": 6}))
+    assert res[0]["status"] == "FIX" and res[0]["found"] == "2"

@@ -579,3 +579,37 @@ def test_article_number_against_pages_from_one():
                                                                 "issued": {"date-parts": [[2021]]}, "author": [{"family": "Doe"}]}}})
     f, _ = refs.verify(ms, fetch, pause=0)
     assert "mismatch-first-page" not in codes(f)
+
+
+def test_typed_reference_numbers_are_checked(tmp_path):
+    """A reference-annotation list typed by hand next to live citations: [2] must still be the second entry."""
+    import docx
+    import sys as _s
+    _s.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+    import jats_to_docx as jd
+    a = dict(CITED, id="a1", author=[{"family": "Doe", "given": "Jane"}], DOI="10.5555/syn.a1")
+    b = dict(CITED, id="b2", title="A second made-up paper", author=[{"family": "Roe", "given": "Rick"}], DOI="10.5555/syn.b2")
+    d = docx.Document()
+    p = d.add_paragraph("Shown before ")
+    jd.field_citation(p, "zotero", [dict(a, _n=1)], "[1]")
+    p.add_run(" and again ")
+    jd.field_citation(p, "zotero", [dict(b, _n=2)], "[2]")
+    p.add_run(". A number typed by hand [2] does not update.")
+    d.add_paragraph("Reference annotation")
+    d.add_paragraph("[1] Doe J. A made-up cited paper. J Tests. 2020.")
+    d.add_paragraph("** Of considerable interest.")
+    d.add_paragraph("[2] Doe J. The wrong paper for this number. J Tests. 2020.")
+    out = tmp_path / "typed.docx"
+    d.save(out)
+    f = refs.audit(refs.load(out))
+    c = [x.code for x in f]
+    assert c.count("typed-number-wrong") == 1 and "Roe" in next(x for x in f if x.code == "typed-number-wrong").message
+    assert "typed-citation" in c
+
+
+def test_website_without_access_date(tmp_path):
+    body = "TY  - ELEC\nAU  - Doe, Jane\nPY  - 2024\nTI  - A made-up web page\nUR  - https://example.org/page\nER  -\n"
+    codes_ = {x.code for x in refs.audit(refs.load(_ris(tmp_path, body)))}
+    assert "no-access-date" in codes_
+    codes_ = {x.code for x in refs.audit(refs.load(_ris(tmp_path, body.replace("ER  -", "Y2  - 2026/11/24\nER  -"), "b.ris")))}
+    assert "no-access-date" not in codes_

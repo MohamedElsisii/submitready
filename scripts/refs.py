@@ -69,6 +69,7 @@ class ManuscriptRefs:
     plain: bool = False                       # references typed as plain text (no reference manager)
     body_text: str = ""                       # manuscript text before the reference list (plain mode)
     manager: str = ""                         # "Mendeley", "Zotero", "EndNote" or "" (typed or a file)
+    text_units: list[str] = field(default_factory=list)  # paragraphs outside the reference list, live citations as a token
 
 
 # ---------------------------------------------------------------- reference managers
@@ -542,6 +543,8 @@ def read_ris(path: Path) -> list[Ref]:
             cur["DOI"] = v
         elif k == "UR":
             cur.setdefault("URL", v)
+        elif k == "Y2" and v:
+            cur["accessed"] = {"raw": v}
         elif k == "PB":
             cur["publisher"] = v
         elif k == "SN":
@@ -668,7 +671,13 @@ def read_csl_json(path: Path) -> list[Ref]:
 def load(path: Path) -> ManuscriptRefs:
     suf = path.suffix.lower()
     if suf == ".docx":
-        return read_docx(path)
+        ms = read_docx(path)
+        try:
+            import lock  # same folder; paragraphs with live citations replaced by a token, reference list left out
+            ms.text_units = [u.text for u in lock.extract(path)["units"]]
+        except Exception:  # the reference checks still run without it
+            ms.text_units = []
+        return ms
     if suf == ".tex":
         return read_tex(path)
     reader = {".ris": read_ris, ".bib": read_bib, ".json": read_csl_json, ".xml": read_endnote_xml}.get(suf)
@@ -760,6 +769,49 @@ def _page_key(p: str) -> str:
     p = str(p or "").replace("\u2013", "-").replace(" ", "")
     m = re.fullmatch(r"(\S+?)-(\S+)", p)
     return m.group(1) if m and m.group(1) == m.group(2) else p
+
+
+CITE_TOKEN = "\u27e6CITE\u27e7"   # as in lock.py
+
+
+def typed_reference_numbers(ms: ManuscriptRefs) -> list[Finding]:
+    """Reference numbers typed by hand in a manuscript whose citations are live.
+
+    A reference-annotation list ("[6] Hasin Y, ... ** why it matters") or a number typed into a sentence
+    does not renumber when the reference manager does. Each typed list number is checked against the
+    first author of that entry in the generated list."""
+    out: list[Finding] = []
+    listed, checked, wrong = len(ms.refs), 0, 0
+    for t in ms.text_units:
+        m = re.match(r"\s*\[(\d{1,3})\]\s+([^\W\d][\w\u00C0-\u017F'\- ]{1,40}?)[,\s]", t)
+        if m:
+            n = int(m.group(1))
+            checked += 1
+            if n > listed:
+                wrong += 1
+                out.append(Finding(f"[{n}] (typed)", "typed-number-missing", "error",
+                                   f"Typed as reference [{n}], but the reference list has only {listed} entries", t[:80]))
+                continue
+            fam = norm_text(((ms.refs[n - 1].data.get("author") or [{}])[0].get("family") or
+                             (ms.refs[n - 1].data.get("author") or [{}])[0].get("literal") or ""))
+            last = fam.split(" ")[-1] if fam else ""
+            if last and last not in norm_text(t[:80]):
+                wrong += 1
+                out.append(Finding(f"[{n}] (typed)", "typed-number-wrong", "error",
+                                   f"Typed as reference [{n}], but reference {n} in the list is {label(ms.refs[n - 1])}. "
+                                   "Typed numbers do not update when citations move", t[:80]))
+            continue
+        bare = re.sub(re.escape(CITE_TOKEN), " ", t)
+        for hit in re.finditer(r"(?<![\w\[])\[(\d{1,3}(?:\s*[-\u2013,]\s*\d{1,3})*)\](?!\w)", bare):
+            out.append(Finding(f"[{hit.group(1)}] (typed)", "typed-citation", "warning",
+                               "A citation number typed by hand among live citations; it will not update. "
+                               "Insert it with your reference manager instead",
+                               bare[max(0, hit.start() - 40):hit.end() + 10].strip()))
+    if checked and not wrong:
+        out.append(Finding("(typed numbers)", "typed-numbers-ok", "info",
+                           f"{checked} reference numbers are typed by hand (for example a reference annotation list). "
+                           "They match the list now; check them again after you add, remove or move a citation"))
+    return out
 
 
 UNCITED_LIST_MAX = 10
@@ -859,6 +911,12 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
                         "Reference type is 'generic'; styles may format it wrongly. Set the real type "
                         "(e.g. journal article) in your reference manager",
                         d.get("_ris_type", "generic")))
+        if (typ in ("webpage", "post", "post-weblog") or (d.get("URL") and not doi and not d.get("container-title")
+                                                          and typ in ("generic", "webpage", "software", "dataset"))) \
+                and not d.get("accessed"):
+            add(Finding(L, "no-access-date", "warning",
+                        "Website without an access date; most journals ask for the date you viewed it "
+                        "(set 'Accessed' in your reference manager)", d.get("URL", "")))
         if preprint:
             add(Finding(L, "preprint", "info",
                         "Preprint: check whether it is published now and cite the journal version if so "
@@ -954,6 +1012,8 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             if not ((doi and doi in lib_dois) or norm_text(r.data.get("title", "")) in lib_titles):
                 add(Finding(label(r), "not-in-library", "info",
                             "Cited in the manuscript but not in the library export you provided"))
+    if ms.citations and not ms.plain and ms.text_units:
+        out += typed_reference_numbers(ms)
     return out
 
 

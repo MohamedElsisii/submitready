@@ -132,3 +132,23 @@ def test_rerun_on_manuscript_inside_package(tmp_path):
     r = check.run(inside, lk, req, tmp_path / "pkg")
     assert r["verdict"] == "READY", r["blocking"]
     assert inside.exists() and inside.stat().st_size > 0
+
+
+def test_table_with_empty_first_cells_is_flagged(tmp_path):
+    # "Table 2 has information misalignment issues such as missing gene name filling in partial rows"
+    import docx
+    d = docx.Document()
+    d.add_paragraph("A made-up table study")
+    t = d.add_table(rows=4, cols=3)
+    for r, row in enumerate([["Gene", "Site", "Value"], ["GENEA", "cg01", "0.1"], ["", "cg02", "0.2"], ["GENEB", "cg03", "0.3"]]):
+        for c, v in enumerate(row):
+            t.cell(r, c).text = v
+    m = d.add_table(rows=3, cols=2)  # a merged first column is fine
+    m.cell(0, 0).text, m.cell(0, 1).text = "Group", "Item"
+    m.cell(1, 0).text, m.cell(1, 1).text = "G1", "a"
+    m.cell(2, 1).text = "b"
+    m.cell(1, 0).merge(m.cell(2, 0))
+    p = tmp_path / "t.docx"
+    d.save(p)
+    gaps = check.table_gaps(p)
+    assert len(gaps) == 1 and gaps[0]["item"].startswith("Table 1") and "rows 3" in gaps[0]["problem"]

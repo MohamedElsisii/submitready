@@ -283,6 +283,11 @@ def crossrefs(facts: dict, docx: Path, supp_files: list[Path] | None) -> list[di
                 issues.append({"severity": "FIX", "item": f"{k} {n}", "problem": "has a caption but is never cited in the text"})
         if order != sorted(order):
             issues.append({"severity": "FIX", "item": k, "problem": f"first cited out of order: {order}"})
+    issues += table_gaps(docx)
+    if re.search(r"\bBio\s?Render\b", text, re.I):
+        issues.append({"severity": "CHECK", "item": "BioRender",
+                       "problem": "the manuscript mentions BioRender: journals ask for the BioRender publication "
+                                  "licence for each figure, and a credit in the figure legend"})
     supp_mentioned = {_norm_supp(s) for s in facts["supplementary_items"]}
     if supp_files is not None:
         have = {_norm_supp(k): v for k, v in _supp_labels_in_files(supp_files).items()}
@@ -299,6 +304,43 @@ def _norm_supp(s: str) -> str:
         return s
     kind = {"Fig": "Figure"}.get(m.group(1).title(), m.group(1).title())
     return f"{kind} S{int(m.group(2))}"
+
+
+def table_gaps(docx: Path) -> list[dict]:
+    """Rows of a table whose first cell is empty while the rest of the row has data, as in
+    "Table 2 has missing gene names in partial rows" (a real reviewer comment). Cells merged
+    downwards (vMerge) are not empty and do not count."""
+    if docx.suffix.lower() != ".docx":
+        return []
+    from lxml import etree
+    W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    root = etree.fromstring(zipfile.ZipFile(docx).read("word/document.xml"))
+    issues = []
+    for tn, tbl in enumerate(root.iter(W + "tbl"), 1):
+        if any(a.tag == W + "tbl" for a in tbl.iterancestors()):
+            continue  # a table inside a table cell
+        rows = tbl.findall(W + "tr")
+        bad = []
+        for rn, tr in enumerate(rows[1:], 2):  # row 1 is the header
+            cells = tr.findall(W + "tc")
+            if len(cells) < 2:
+                continue
+            first = cells[0]
+            pr = first.find(W + "tcPr")
+            vm = pr.find(W + "vMerge") if pr is not None else None
+            if vm is not None and vm.get(W + "val") != "restart":
+                continue
+            def txt(c):
+                return "".join(t.text or "" for t in c.iter(W + "t")).strip()
+            if not txt(first) and sum(1 for c in cells[1:] if txt(c)) >= max(1, (len(cells) - 1) // 2):
+                bad.append(rn)
+        if bad:
+            shown = ", ".join(map(str, bad[:8])) + (" ..." if len(bad) > 8 else "")
+            issues.append({"severity": "CHECK", "item": f"Table {tn} (in the file)",
+                           "problem": f"rows {shown} have an empty first cell but data in the others. If they belong "
+                                      "to the row above, merge those cells so the grouping survives typesetting; "
+                                      "otherwise fill them in (reviewers read empty cells as missing data)"})
+    return issues
 
 
 def prepare_text(docx: Path) -> list[str]:
