@@ -6,26 +6,19 @@ Thank you for testing. SubmitReady prepares your manuscript for one journal in o
 
 - **Claude Code**, signed in with a Claude Pro or Max plan. Run `claude update` first to get the latest version. If the start banner says "API Usage Billing", type `/login` and choose your Claude account, or every message is charged.
 - **Python 3.10 or newer.** On first use, SubmitReady asks before installing the few packages it needs.
-- **Git and the GitHub CLI** (`gh`), with your GitHub account added to the beta.
+- **Git.** No GitHub account is needed.
 - **A manuscript** in Word (.docx) or LaTeX. Keep a backup anyway, even though SubmitReady never changes your original.
 
 ## Install (once)
 
-1. Sign in to GitHub on your computer, in a normal terminal:
-
-   ```
-   gh auth login
-   gh auth setup-git
-   ```
-
-2. Start Claude Code and type these two commands:
+1. Start Claude Code and type these two commands:
 
    ```
    /plugin marketplace add MohamedElsisii/submitready
    /plugin install submitready@submitready
    ```
 
-3. Restart Claude Code. You should now see `/submitready:submit` when you type `/submitready`.
+2. Restart Claude Code. You should now see `/submitready:submit` when you type `/submitready`.
 
 To get new versions during the beta, type `/plugin marketplace update submitready`. Or turn on auto-update: type `/plugin`, open **Marketplaces**, pick SubmitReady and choose **Enable auto-update**.
 
@@ -56,7 +49,7 @@ Make your fixes in your **original** manuscript, then run the same command again
 
 ## Send feedback
 
-Open [a beta feedback form](https://github.com/MohamedElsisii/submitready/issues/new/choose). It takes about 2 minutes. Something broke? Use "Something went wrong" on the same page.
+Open [a beta feedback form](https://github.com/MohamedElsisii/submitready/issues/new/choose) (a free GitHub account is needed to post). It takes about 2 minutes. Something broke? Use "Something went wrong" on the same page. No GitHub account? Send your answers to the person who invited you.
 
 **Never attach an unpublished manuscript** to an issue. Describe the problem, or paste the message you saw.
 
