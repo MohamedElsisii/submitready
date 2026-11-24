@@ -1,0 +1,36 @@
+name: Something went wrong
+description: A crash, a wrong result, or a confusing message
+title: "Bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please **do not attach unpublished manuscripts**. Describe the problem, or share a small made-up example.
+  - type: input
+    id: command
+    attributes:
+      label: Command you ran
+      placeholder: /submitready:submit my_paper.docx PLOS ONE
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: The message or report lines (if any)
+      render: text
+  - type: dropdown
+    id: os
+    attributes:
+      label: Computer
+      options: [Windows, Mac, Linux]
+  - type: dropdown
+    id: file
+    attributes:
+      label: Manuscript file and references
+      options: [Word with Mendeley, Word with Zotero, Word with EndNote, Word with typed references, LaTeX with BibTeX, Other]

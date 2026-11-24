@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How to install and run SubmitReady
+    url: https://github.com/MohamedElsisii/submitready/blob/main/BETA.md
+    about: The 2-minute start guide

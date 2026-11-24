@@ -1,0 +1,24 @@
+name: Add a journal
+description: Ask for a journal profile, or share what you know about its guidelines
+title: "Add journal: "
+labels: [journal-profile]
+body:
+  - type: markdown
+    attributes:
+      value: SubmitReady reads every journal's live guidelines, so any journal already works. A profile adds a checked starting point. Every rule needs a source link.
+  - type: input
+    id: name
+    attributes:
+      label: Journal name
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Author guidelines URL
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything unusual about its requirements (with the source link)

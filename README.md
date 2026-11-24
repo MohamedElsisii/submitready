@@ -51,11 +51,14 @@ One folder per paper and journal, with:
 
 ## Install
 
-In Claude Code (version 2.1.275 or later):
+In Claude Code (run `claude update` first):
 
 ```
-/plugin install submitready --marketplace MohamedElsisii/submitready
+/plugin marketplace add MohamedElsisii/submitready
+/plugin install submitready@submitready
 ```
+
+Then restart Claude Code and run `/submitready:submit my_paper.docx PLOS ONE`. Beta testers: see [BETA.md](BETA.md).
 
 SubmitReady's scripts need Python 3.10+ and a few packages. On first use, Claude checks for them and asks before installing (`pip install -r requirements.txt`).
 
@@ -92,7 +95,7 @@ Adding a journal is a good first contribution. Copy `journals/_TEMPLATE.yaml` an
 
 ## Privacy
 
-Your manuscript stays on your machine and in your Claude session. Outside services receive only what a lookup needs (a DOI, a title, a journal name). SubmitReady collects no usage data.
+SubmitReady's scripts run on your computer and never change your original file. Claude reads parts of your manuscript while it works, as with anything you open in Claude Code. Outside services receive only what a lookup needs: reference titles and DOIs go to Crossref and PubMed, and guideline pages are read from the journal's website. SubmitReady collects no usage data.
 
 ## Contributing
 

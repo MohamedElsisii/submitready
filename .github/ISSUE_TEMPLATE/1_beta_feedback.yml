@@ -1,0 +1,71 @@
+name: Beta feedback
+description: Tell us how a run went, good or bad. Takes about 2 minutes.
+title: "Beta: "
+labels: [beta-feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing SubmitReady. Please **do not attach your manuscript** or paste unpublished text. Describe what happened instead.
+  - type: input
+    id: journal
+    attributes:
+      label: Target journal
+      placeholder: e.g. PLOS ONE
+    validations:
+      required: true
+  - type: dropdown
+    id: file
+    attributes:
+      label: Manuscript file
+      options: [Word (.docx), LaTeX]
+    validations:
+      required: true
+  - type: dropdown
+    id: refs
+    attributes:
+      label: How are your references inserted?
+      options: [Mendeley Cite, Zotero, EndNote, Typed by hand, BibTeX (LaTeX), Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Computer
+      options: [Windows, Mac, Linux]
+    validations:
+      required: true
+  - type: dropdown
+    id: finished
+    attributes:
+      label: Did /submitready:submit finish?
+      options: [Yes, No, it stopped with an error, No, I stopped it]
+    validations:
+      required: true
+  - type: dropdown
+    id: text_safe
+    attributes:
+      label: After the run, did your text look exactly the same in Word?
+      description: The lock says every sentence is unchanged. Please spot-check a few paragraphs yourself.
+      options: [Yes, No (please describe below), Did not check]
+    validations:
+      required: true
+  - type: textarea
+    id: useful
+    attributes:
+      label: What helped most?
+  - type: textarea
+    id: confusing
+    attributes:
+      label: What was confusing, wrong or missing?
+      description: Paste messages or report lines if useful, but no unpublished manuscript text.
+  - type: dropdown
+    id: time
+    attributes:
+      label: Compared with preparing a submission by hand, this was
+      options: [Much faster, A bit faster, About the same, Slower]
+  - type: dropdown
+    id: recommend
+    attributes:
+      label: Would you recommend it to a colleague?
+      options: [Yes, Maybe, No]
