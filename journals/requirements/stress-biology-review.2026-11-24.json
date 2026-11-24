@@ -1,0 +1,222 @@
+{
+ "journal": "Stress Biology",
+ "article_type": "Review",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "Stress Biology submission guidelines (read in a browser)",
+   "url": "https://link.springer.com/journal/44154/submission-guidelines",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "CSL styles repository: Springer Basic (author-date)",
+   "url": "https://github.com/citation-style-language/styles/blob/master/springer-basic-author-date.csl",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "springer-basic-author-date",
+  "title": "Springer Basic (author-date)",
+  "source": "https://github.com/citation-style-language/styles/blob/master/springer-basic-author-date.csl",
+  "note": "Stress Biology has no style of its own in the CSL repository. Springer Basic (author-date) follows the reference examples on its guidelines page; check the result."
+ },
+ "requirements": [
+  {
+   "id": "main-words",
+   "rule": "At most 9,000 words",
+   "quote": "Articles should be no more than 9,000 words with 8 tables and figures in the main text.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "main",
+    "value": 9000
+   }
+  },
+  {
+   "id": "display-items",
+   "rule": "At most 8 tables and figures in the main text",
+   "quote": "Articles should be no more than 9,000 words with 8 tables and figures in the main text.",
+   "source": 0,
+   "check": {
+    "type": "max_count",
+    "target": "display_items",
+    "value": 8
+   }
+  },
+  {
+   "id": "references",
+   "rule": "At most 250 references, as recent as possible",
+   "quote": "References are limited to 250 and should be as recent as possible.",
+   "source": 0,
+   "check": {
+    "type": "max_count",
+    "target": "references",
+    "value": 250
+   }
+  },
+  {
+   "id": "abstract-words",
+   "rule": "Abstract of 150 to 250 words",
+   "quote": "Please provide an abstract of 150 to 250 words.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 250
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "4 to 6 keywords",
+   "quote": "Please provide 4 to 6 keywords which can be used for indexing purposes.",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 4,
+    "max": 6
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Author-year citations in parentheses",
+   "quote": "Cite references in the text by name and year in parentheses.",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "author-date"
+   }
+  },
+  {
+   "id": "page-numbers",
+   "rule": "Automatic page numbers",
+   "quote": "Use the automatic page numbering function to number the pages.",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "declarations",
+   "rule": "A 'Statements and Declarations' section before the reference list",
+   "quote": "The following statements should be included under the heading \"Statements and Declarations\"",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "declarations"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interests statement in the Declarations",
+   "quote": "Review articles therefore require a disclosure statement.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "figures-in-text",
+   "rule": "Figures go within the body of the text",
+   "quote": "Figures should be submitted within the body of the text.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files named Fig1, Fig2...; EPS for vector, TIFF for halftones; halftones at least 300 dpi; RGB",
+   "quote": "Name your figure files with \"Fig\" and the figure number, e.g., Fig1.eps.",
+   "source": 0,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "eps",
+     "tif",
+     "tiff"
+    ],
+    "dpi_min": 300,
+    "color_modes": [
+     "RGB",
+     "L"
+    ],
+    "name_pattern": "Fig{n}"
+   }
+  },
+  {
+   "id": "headings",
+   "rule": "At most three levels of headings",
+   "quote": "Please use no more than three levels of displayed headings.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "no-fields",
+   "rule": "No Word field functions (citations from Zotero or EndNote are fields; Mendeley Cite uses content controls)",
+   "quote": "Do not use field functions.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "font",
+   "rule": "Plain font such as 10-point Times Roman",
+   "quote": "Use a normal, plain font (e.g., 10-point Times Roman) for text.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Title page: authors, affiliations with city and country, corresponding author e-mail, ORCID if available",
+   "quote": "Please make sure your title page contains the following information.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "acknowledgments",
+   "rule": "Acknowledgments in a separate section on the title page",
+   "quote": "Acknowledgments of people, grants, funds, etc. should be placed in a separate section on the title page.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "llm",
+   "rule": "Use of a large language model is documented in Methods (copy editing does not need declaring)",
+   "quote": "Use of an LLM should be properly documented in the Methods section",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supp-naming",
+   "rule": "Supplementary files are called \"Online Resource\" in the text and named ESM_1, ESM_2...",
+   "quote": "Refer to the supplementary files as “Online Resource”",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-captions",
+   "rule": "Captions in the manuscript text, starting with \"Fig.\" and the number in bold, no full stop at the end",
+   "quote": "Include the captions in the text file of the manuscript, not in the figure file.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

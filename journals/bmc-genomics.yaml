@@ -1,0 +1,25 @@
+name: "BMC Genomics"
+slug: bmc-genomics
+publisher: "BioMed Central (Springer Nature)"
+
+guidelines:
+  url: "https://link.springer.com/journal/12864/submission-guidelines/research-article"
+  checked: "2026-11-24"
+
+reference_style:
+  csl_style_id: "bmc-genomics"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/bmc-genomics.csl"
+  checked: "2026-11-24"
+
+requirements_snapshot: "journals/requirements/bmc-genomics.2026-11-24.json"
+
+known_quirks:
+  - text: "Publication fee stated by the journal: GBP 2390 / USD 3190 / EUR 2790, with country-tiered pricing"
+    source: "https://link.springer.com/journal/12864/submission-guidelines"
+    checked: "2026-11-24"
+  - text: "The old biomedcentral.com guidelines address now redirects to Springer Nature Link, which only loads in a real browser"
+    source: "https://link.springer.com/journal/12864/submission-guidelines"
+    checked: "2026-11-24"
+  - text: "A 'Declarations' section with all subheadings is required; write 'Not applicable' where a subheading does not apply"
+    source: "https://link.springer.com/journal/12864/submission-guidelines/research-article"
+    checked: "2026-11-24"

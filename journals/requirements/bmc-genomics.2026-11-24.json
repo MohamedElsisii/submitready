@@ -1,0 +1,289 @@
+{
+ "journal": "BMC Genomics",
+ "article_type": "Research article",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "BMC Genomics research article guidelines (read in a browser)",
+   "url": "https://link.springer.com/journal/12864/submission-guidelines/research-article",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "BMC Genomics submission guidelines (read in a browser)",
+   "url": "https://link.springer.com/journal/12864/submission-guidelines",
+   "checked": "2026-11-24"
+  },
+  {
+   "name": "CSL styles repository: BMC Genomics",
+   "url": "https://github.com/citation-style-language/styles/blob/master/dependent/bmc-genomics.csl",
+   "checked": "2026-11-24"
+  }
+ ],
+ "csl_style": {
+  "id": "bmc-genomics",
+  "title": "BMC Genomics",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/bmc-genomics.csl"
+ },
+ "requirements": [
+  {
+   "id": "abstract-words",
+   "rule": "Abstract at most 350 words, no references",
+   "quote": "The Abstract should not exceed 350 words.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 350
+   }
+  },
+  {
+   "id": "abstract-structure",
+   "rule": "Abstract with separate sections: Background, Results, Conclusions",
+   "quote": "The abstract must include the following separate sections:",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "Three to ten keywords",
+   "quote": "Three to ten keywords representing the main content of the article.",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 3,
+    "max": 10
+   }
+  },
+  {
+   "id": "order",
+   "rule": "Background, Methods, Results, Discussion, Conclusions",
+   "quote": "The information below details the section headings that you should include in your manuscript",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "introduction",
+     "methods",
+     "results",
+     "discussion",
+     "conclusion"
+    ]
+   }
+  },
+  {
+   "id": "declarations",
+   "rule": "A 'Declarations' section with all its subheadings ('Not applicable' where relevant)",
+   "quote": "Please note that your manuscript must include a 'Declarations' section including all of the subheadings",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "declarations"
+   }
+  },
+  {
+   "id": "ethics",
+   "rule": "Declarations: Ethics approval and consent to participate",
+   "quote": "All manuscripts must contain the following sections under the heading 'Declarations':",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "ethics"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Declarations: Availability of data and materials",
+   "quote": "All manuscripts must include an ‘Availability of data and materials’ statement.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Declarations: Competing interests",
+   "quote": "All financial and non-financial competing interests must be declared in this section.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Declarations: Funding",
+   "quote": "All sources of funding for the research reported should be declared.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Declarations: Authors' contributions, using initials",
+   "quote": "The individual contributions of authors to the manuscript should be specified in this section.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "contributions"
+   }
+  },
+  {
+   "id": "acknowledgements",
+   "rule": "Declarations: Acknowledgements (or 'Not applicable')",
+   "quote": "If you do not have anyone to acknowledge, please write \"Not applicable\" in this section.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "acknowledgements"
+   }
+  },
+  {
+   "id": "consent-publication",
+   "rule": "Declarations: Consent for publication",
+   "quote": "Consent for publication",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "line-spacing",
+   "rule": "Double line spacing",
+   "quote": "Use double-line spacing",
+   "source": 1,
+   "check": {
+    "type": "line_spacing",
+    "value": 2.0
+   }
+  },
+  {
+   "id": "line-numbers",
+   "rule": "Line numbers",
+   "quote": "Include line and page numbering",
+   "source": 1,
+   "check": {
+    "type": "line_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "page-numbers",
+   "rule": "Page numbers",
+   "quote": "Include line and page numbering",
+   "source": 1,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "citation-format",
+   "rule": "Numbered citations in square brackets (Vancouver style), per the journal's CSL style",
+   "quote": "Examples of the Vancouver reference style are shown below.",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric, square brackets"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files at most 10 MB, about 300 dpi at final size (85 mm or 170 mm wide); TIFF with LZW",
+   "quote": "Individual figure files should not exceed 10 MB.",
+   "source": 1,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "eps",
+     "pdf",
+     "tif",
+     "tiff",
+     "jpg",
+     "jpeg",
+     "png",
+     "bmp",
+     "doc",
+     "docx",
+     "ppt",
+     "pptx",
+     "cdx"
+    ],
+    "dpi_min": 300,
+    "dpi_at_final_size": true,
+    "column_widths_mm": [
+     85,
+     170
+    ],
+    "max_mb": 10
+   }
+  },
+  {
+   "id": "figure-legends",
+   "rule": "Figure titles (max 15 words) and legends (max 300 words) in the manuscript, not in the image",
+   "quote": "Figure titles (max 15 words) and legends (max 300 words) should be provided in the main manuscript, not in the graphic file.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Table titles (max 15 words) above, legends below; no colour or shading",
+   "quote": "Table titles (max 15 words) should be included above the table, and legends (max 300 words) should be included underneath the table.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "additional-files",
+   "rule": "Supplementary files are called \"Additional file 1\" and so on, each at most 20 MB, listed in a separate section",
+   "quote": "Additional files should be named \"Additional file 1\" and so on",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "no-page-breaks",
+   "rule": "No page breaks",
+   "quote": "Do not use page breaks in your manuscript",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data-deposit",
+   "rule": "Genomics data deposited in a community-endorsed public repository",
+   "quote": "submission to a community-endorsed, public repository is mandatory.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "llm",
+   "rule": "Use of a large language model documented in Methods",
+   "quote": "Use of an LLM should be properly documented in the Methods section",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cover-letter",
+   "rule": "Cover letter: why BMC Genomics, policy issues, competing interests, all authors approved, not published elsewhere",
+   "quote": "An explanation of why your manuscript should be published in BMC Genomics",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

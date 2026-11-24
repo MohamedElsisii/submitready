@@ -53,7 +53,7 @@ SECTIONS = [
     ("ethics", r"ethic(s|al)( approval| conduct of research| statement| approval and consent.*)?"),
     ("contributions", r"authors?'?s?'? contributions?( statement)?|credit authorship.*"),
     ("ai", r"(generative )?ai (use |usage )?(statement|disclosure)|use of (generative )?ai.*|writing assistance disclosure"),
-    ("declarations", r"declarations"),
+    ("declarations", r"(statements and )?declarations"),
     ("references", r"references|bibliography|literature cited"),
     ("figure_legends", r"figure (and table )?(legends|captions)|figure legends"),
     ("supplementary", r"supplementary( material| information| files?)?( legends)?|supporting information"),
@@ -552,7 +552,11 @@ def check(facts: dict, req: dict) -> list[dict]:
                 ok = s is None or s == c["value"]
                 status, found = ("PASS" if ok else "FIX"), f"{s or 'none found'}"
             elif t == "max_count":
-                v = len(facts[c["target"]])
+                if c["target"] == "display_items":  # figures and tables together
+                    v = len(facts["figures"]) + len(facts["tables"])
+                else:
+                    x = facts[c["target"]]
+                    v = x if isinstance(x, int) else len(x)
                 status, found = ("PASS" if v <= c["value"] else "FIX"), f"{v}"
             elif t == "manual":
                 status = "CHECK"

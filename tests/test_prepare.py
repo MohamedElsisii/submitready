@@ -124,3 +124,12 @@ def test_format_never_overwrites_silently(tmp_path):
     kept = list(tmp_path.glob("s_journal.previous-*.docx"))
     assert len(kept) == 1 and kept[0].read_bytes() == b"my own edits"
     assert out.exists() and out.read_bytes() != b"my own edits"
+
+
+def test_count_limits_and_springer_declarations():
+    assert prepare._section_of("Statements and Declarations") == "declarations"
+    facts = {"figures": [1, 2, 3], "tables": [1], "references": 120}
+    res = prepare.check(facts, req({"type": "max_count", "target": "display_items", "value": 3},
+                                    {"type": "max_count", "target": "references", "value": 100},
+                                    {"type": "max_count", "target": "references", "value": 250}))
+    assert [(r["status"], r["found"]) for r in res] == [("FIX", "4"), ("FIX", "120"), ("PASS", "120")]

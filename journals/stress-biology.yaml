@@ -1,0 +1,25 @@
+name: "Stress Biology"
+slug: stress-biology
+publisher: "Springer Nature"
+
+guidelines:
+  url: "https://link.springer.com/journal/44154/submission-guidelines"
+  checked: "2026-11-24"
+
+reference_style:
+  csl_style_id: "springer-basic-author-date"
+  source: "https://github.com/citation-style-language/styles/blob/master/springer-basic-author-date.csl"
+  checked: "2026-11-24"
+  note: "No Stress Biology style in the CSL repository; this one follows the examples on the guidelines page"
+
+requirements_snapshot:
+  - "journals/requirements/stress-biology.2026-11-24.json (Original Paper)"
+  - "journals/requirements/stress-biology-review.2026-11-24.json (Review)"
+
+known_quirks:
+  - text: "The guidelines page only loads in a real browser (it shows a JavaScript challenge to simple readers)"
+    source: "https://link.springer.com/journal/44154/submission-guidelines"
+    checked: "2026-11-24"
+  - text: "Word limits differ by article type: Original Paper 7,000; Review 9,000; Short Communication 3,000"
+    source: "https://link.springer.com/journal/44154/submission-guidelines"
+    checked: "2026-11-24"

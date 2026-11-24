@@ -89,7 +89,7 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 
 `/prepare` works with any journal: it reads the live author guidelines each time. These journals also have a checked starting profile, with a source link and date for every rule:
 
-PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon.
+PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review).
 
 Adding a journal is a good first contribution. Copy `journals/_TEMPLATE.yaml` and quote the guidelines page for each rule.
 
