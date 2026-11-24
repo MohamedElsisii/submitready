@@ -100,6 +100,7 @@ Adding a journal is a good first contribution. Copy `journals/_TEMPLATE.yaml` an
 - References typed by hand, numbered or author-year, also work
 - Library exports: RIS (all managers), BibTeX and CSL JSON (Zotero), EndNote XML
 - If a journal wants plain text instead of live citations, the text lock still passes after Zotero's Unlink Citations or EndNote's Convert to Plain Text, as long as the visible text is the same
+- Tested on real files saved by Zotero 10 in Word (APA, Vancouver, and after Unlink Citations). EndNote is tested on files built to its format; if you use EndNote, your feedback helps most
 - Language: English
 
 ## Privacy

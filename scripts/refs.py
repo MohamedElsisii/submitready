@@ -152,34 +152,51 @@ def read_docx(path: Path) -> ManuscriptRefs:
     return out
 
 
-def _field_instructions(xml: bytes) -> list[str]:
-    """The instruction text of every Word field, in document order (fields can span many runs)."""
+def _fields(xml: bytes) -> list[tuple[str, str]]:
+    """(instruction, visible result text) of every Word field, in document order.
+
+    Fields can span many runs and can be nested; a nested field's text also counts in the outer result."""
     from lxml import etree
     W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
-    out, stack = [], []
-    for el in etree.fromstring(xml).iter(W + "fldChar", W + "instrText", W + "fldSimple"):
+    out: list[tuple[str, str]] = []
+    stack: list[dict] = []
+    for el in etree.fromstring(xml).iter(W + "fldChar", W + "instrText", W + "fldSimple", W + "t"):
         if el.tag == W + "fldSimple":
-            out.append(el.get(W + "instr") or "")
+            out.append((el.get(W + "instr") or "", "".join(t.text or "" for t in el.iter(W + "t"))))
         elif el.tag == W + "instrText":
-            if stack and stack[-1] is not None:
-                stack[-1].append(el.text or "")
+            if stack and not stack[-1]["sep"]:
+                stack[-1]["instr"].append(el.text or "")
+        elif el.tag == W + "t":
+            if any(a.tag == W + "fldSimple" for a in el.iterancestors()):
+                continue
+            for f in stack:
+                if f["sep"]:
+                    f["res"].append(el.text or "")
         else:
             kind = el.get(W + "fldCharType")
             if kind == "begin":
-                stack.append([])
+                stack.append({"instr": [], "res": [], "sep": False})
                 data = el.find(W + "fldData")
                 if data is not None and (data.text or "").strip():
                     # EndNote keeps long citation records here, base64-encoded (EN.CITE.DATA)
-                    stack[-1].append("\x00FLDDATA" + re.sub(r"\s+", "", data.text) + "\x00")
+                    stack[-1]["instr"].append("\x00FLDDATA" + re.sub(r"\s+", "", data.text) + "\x00")
             elif kind == "separate" and stack:
-                if stack[-1] is not None:
-                    out.append("".join(stack[-1]))
-                stack[-1] = None
+                stack[-1]["sep"] = True
             elif kind == "end" and stack:
-                if stack[-1] is not None:
-                    out.append("".join(stack[-1]))
-                stack.pop()
+                f = stack.pop()
+                out.append(("".join(f["instr"]), "".join(f["res"])))
     return out
+
+
+def _field_instructions(xml: bytes) -> list[str]:
+    """The instruction text of every Word field, in document order."""
+    return [i for i, _ in _fields(xml)]
+
+
+def _same_citation_text(a: str, b: str) -> bool:
+    """Equal after spacing differences: Word and Zotero do not always agree on spaces."""
+    n = lambda s: re.sub(r"\s+", " ", s.replace("\u00a0", " ")).strip()
+    return n(a) == n(b)
 
 
 def _endnote_to_csl(rec) -> dict:
@@ -214,7 +231,7 @@ def read_docx_fields(path: Path) -> ManuscriptRefs:
             out.refs.append(by_key[k])
         by_key[k].cited += 1
 
-    for instr in _field_instructions(zipfile.ZipFile(path).read("word/document.xml")):
+    for instr, visible in _fields(zipfile.ZipFile(path).read("word/document.xml")):
         z = re.match(r"\s*ADDIN ZOTERO_ITEM\s+CSL_CITATION\s*(\{.*\})\s*$", instr, re.S)
         if z:
             try:
@@ -224,9 +241,14 @@ def read_docx_fields(path: Path) -> ManuscriptRefs:
             out.citations += 1
             kinds.add("Zotero")
             props = c.get("properties") or {}
-            if props.get("plainCitation") and props.get("formattedCitation") and \
-                    props.get("plainCitation") != re.sub(r"<[^>]+>", "", props.get("formattedCitation", "")):
-                out.manual_overrides.append(f"{props.get('formattedCitation')} edited by hand as {props.get('plainCitation')!r}")
+            # formattedCitation is RTF or HTML and never matches the page text, so it is not compared.
+            # Zotero marks a kept hand edit with dontUpdate; an edit made after the last refresh shows
+            # as page text that differs from plainCitation.
+            plain = props.get("plainCitation") or ""
+            if props.get("dontUpdate"):
+                out.manual_overrides.append(f"{plain!r} is set to keep a hand edit, so Zotero will not update it")
+            elif plain and visible and not _same_citation_text(plain, visible):
+                out.manual_overrides.append(f"{plain} edited by hand as {visible!r}")
             for item in c.get("citationItems", []):
                 d = item.get("itemData") or {}
                 add(str(item.get("id") or d.get("id") or d.get("DOI") or d.get("title", "")), d, out.citations)
@@ -311,6 +333,31 @@ def parse_plain(text: str) -> dict:
     return d
 
 
+def _looks_like_reference(t: str) -> bool:
+    """One typed reference: starts with a name or a number, has a year, and has a DOI, a journal-like
+    volume(issue) or pages. Used only when the list has no "References" heading."""
+    if len(t) < 40 or len(t) > 1500:
+        return False
+    starts = re.match(r"\s*(\[\d+\]|\d+\.|[A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+,?\s+[A-Z\u00C0-\u00DE])", t)
+    year = re.search(r"(?<!\d)(?:19|20)\d{2}[a-z]?(?!\d)", t)
+    detail = PLAIN_DOI.search(t) or re.search(r"\d+\s*\(\d+[^)]*\)|\d+\s*[-\u2013]\s*\d+|;\s*\d+", t)
+    return bool(starts and year and detail)
+
+
+def _guess_reference_start(texts: list[str]) -> int | None:
+    """Index of the first paragraph of a reference list at the end of the document, or None.
+
+    At least 3 paragraphs in a row must look like references, counted back from the last text."""
+    idx = [i for i, t in enumerate(texts) if t]
+    first = None
+    count = 0
+    for i in reversed(idx):
+        if not _looks_like_reference(texts[i]):
+            break
+        first, count = i, count + 1
+    return first if count >= 3 else None
+
+
 def read_docx_plain(path: Path) -> ManuscriptRefs:
     import docx as pydocx
 
@@ -321,11 +368,12 @@ def read_docx_plain(path: Path) -> ManuscriptRefs:
         if re.fullmatch(r"(?:\d+\.?\s*)?(references|bibliography|literature cited)\s*:?", t, re.I):
             start = i
     out = ManuscriptRefs(plain=True)
-    if start is None:
+    first = start + 1 if start is not None else _guess_reference_start(texts)
+    if first is None:
         return out
     # body text before the reference list, table cells included (reviews often cite inside tables)
     doc = pydocx.Document(path)
-    ref_el = paras[start]._p
+    ref_el = paras[start if start is not None else first]._p
     chunks = []
     for el in doc.element.body.iterchildren():
         if el is ref_el:
@@ -333,7 +381,7 @@ def read_docx_plain(path: Path) -> ManuscriptRefs:
         chunks.append("".join(t.text or "" for t in el.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t")))
     out.body_text = " ".join(chunks)
     n = 0
-    for p, t in zip(paras[start + 1:], texts[start + 1:]):
+    for p, t in zip(paras[first:], texts[first:]):
         if not t:
             continue
         if p.style.name.lower().startswith("heading"):
@@ -721,11 +769,11 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             if not d.get("issue"):
                 add(Finding(L, "missing-issue", "info", "Missing issue"))
         vol = str(d.get("volume") or "")
-        if vol and not re.fullmatch(r"[A-Za-z]?\d+[A-Za-z]?(-\d+)?", vol):
+        if vol and not re.fullmatch(r"[A-Za-z]?\d+[A-Za-z]?(\s*[-/\u2013]\s*\d+)?", vol):
             m = re.search(r"\d+", vol)
             add(Finding(L, "odd-volume", "warning", "Volume has extra text", vol, m.group(0) if m else ""))
         iss = str(d.get("issue") or "")
-        if iss and not re.fullmatch(r"[A-Za-z]{0,2}\d+[A-Za-z]?(-\d+)?|S\d+|Suppl.*|W\d+", iss):
+        if iss and not re.fullmatch(r"[A-Za-z]{0,2}\d+[A-Za-z]?(\s*[-/\u2013&]\s*\d+)?|S\d+|Suppl.*|W\d+", iss):
             m = re.match(r"\d+", iss)
             add(Finding(L, "odd-issue", "warning", "Issue has extra text", iss, m.group(0) if m else ""))
         page = str(d.get("page") or "")

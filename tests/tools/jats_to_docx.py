@@ -113,7 +113,9 @@ def _fld(p, kind: str, instr: str | None = None):
 
 def field_citation(p, mode: str, items: list[dict], shown: str):
     if mode == "zotero":
-        data = {"citationID": f"c{abs(hash(shown)) % 10**8}", "properties": {"formattedCitation": shown, "plainCitation": shown},
+        # real Zotero stores formattedCitation as RTF: non-ASCII as \uc0\uN{} (seen in Zotero 10 files)
+        rtf = "".join(ch if ord(ch) < 128 else f"\\uc0\\u{ord(ch)}{{}}" for ch in shown)
+        data = {"citationID": f"c{abs(hash(shown)) % 10**8}", "properties": {"formattedCitation": rtf, "plainCitation": shown, "noteIndex": 0},
                 "citationItems": [{"id": it["_n"], "itemData": {k: v for k, v in it.items() if not k.startswith("_")}} for it in items],
                 "schema": "https://github.com/citation-style-language/schema/raw/master/csl-citation.json"}
         instr = f" ADDIN ZOTERO_ITEM CSL_CITATION {json.dumps(data, ensure_ascii=False)} "

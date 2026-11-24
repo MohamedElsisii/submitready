@@ -6,8 +6,6 @@ These steps load SubmitReady into Claude Code from a local copy of the repo. Not
 
 Open a terminal (on Windows: Anaconda Prompt, or Git Bash) and run:
 
-While the repo is private, sign in first with `gh auth login` (GitHub does not accept passwords for `git clone`).
-
 ```
 cd %USERPROFILE%\Documents            (Windows)   or   cd ~/Documents   (Mac/Linux)
 git clone https://github.com/MohamedElsisii/submitready

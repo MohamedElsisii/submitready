@@ -25,7 +25,7 @@ from docx_tools import plant_edit, read_doc, text_nodes  # noqa: E402
 
 def run(n: int) -> int:
     private = ROOT / "tests" / "private"
-    files = sorted(p for p in list(private.glob("*.docx")) + list(private.glob("preprints/*.docx"))
+    files = sorted(p for p in list(private.glob("*.docx")) + list(private.glob("*/*.docx")) + list(private.glob("*/*/*.docx"))
                    if not p.name.startswith("~$"))
     if not files:
         print("No manuscripts in tests/private/. Nothing to do.")
@@ -36,6 +36,9 @@ def run(n: int) -> int:
             td = Path(td)
             lk = td / "m.lock.json"
             info = lock.create(src, lk)
+            if not info["sentences"]:
+                print(f"{src.name}: no locked text (only citations and a reference list), skipped")
+                continue
             root = read_doc(src)
             have_cite = bool(text_nodes(root, "citation"))
             have_bib = bool(text_nodes(root, "bibliography"))

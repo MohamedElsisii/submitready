@@ -398,7 +398,8 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
                     + f" Then {steps['refresh']} and run the check again.")
         elif r["status"] == "CHECK" and r["id"] != "figure-files":
             extra = f" {steps['plain']}" if r["id"] == "no-fields" and steps["plain"] else ""
-            checks.append(r["rule"] + extra)
+            rule = r["rule"].rstrip()
+            checks.append((rule if not extra or rule.endswith((".", ":", "!", "?")) else rule + ".") + extra)
 
     # 3. references
     lib = refsmod.load(library).refs if library else None

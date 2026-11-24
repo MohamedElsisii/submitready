@@ -372,6 +372,63 @@ def test_endnote_xml_export(tmp_path):
     assert len(lib) == 1 and lib[0].data["DOI"] == "10.5555/syn.en.7" and lib[0].data["volume"] == "3"
 
 
+def _zotero_runs(plain: str, visible: str, formatted: str = "", dont_update: bool = False) -> str:
+    import json
+    from xml.sax.saxutils import escape
+    props = {"formattedCitation": formatted or plain, "plainCitation": plain, "noteIndex": 0}
+    if dont_update:
+        props["dontUpdate"] = True
+    data = {"citationID": "abc", "properties": props, "citationItems": [{"id": 1, "itemData": {
+        "id": 1, "type": "article-journal", "title": "A made-up paper", "author": [{"family": "Doe", "given": "Jane"}],
+        "container-title": "Journal of Tests", "volume": "30", "issue": "1/2", "page": "180-187",
+        "issued": {"date-parts": [["1938"]]}}}]}
+    return ('<w:r><w:fldChar w:fldCharType="begin"/></w:r>'
+            '<w:r><w:instrText xml:space="preserve"> ADDIN ZOTERO_ITEM CSL_CITATION ' + escape(json.dumps(data)) + '</w:instrText></w:r>'
+            '<w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t xml:space="preserve">' + escape(visible) + '</w:t></w:r>'
+            '<w:r><w:fldChar w:fldCharType="end"/></w:r>')
+
+
+def test_zotero_rtf_formatted_citation_is_not_a_hand_edit(tmp_path):
+    # seen in a real Zotero 10 file: formattedCitation is RTF, so it never equals the page text
+    runs = _zotero_runs("(Doe, 1938; Szab\u00f3, 2025)", "(Doe, 1938; Szab\u00f3, 2025)",
+                        formatted="(Doe, 1938; Szab\\uc0\\u243{}, 2025)")
+    ms = refs.load(_field_doc(tmp_path, runs))
+    assert ms.manager == "Zotero" and ms.citations == 1
+    assert ms.manual_overrides == []
+
+
+def test_zotero_text_typed_over_after_insert_is_flagged(tmp_path):
+    ms = refs.load(_field_doc(tmp_path, _zotero_runs("(Doe, 1938)", "(Doe, 1939)")))
+    assert len(ms.manual_overrides) == 1 and "(Doe, 1939)" in ms.manual_overrides[0]
+
+
+def test_zotero_kept_hand_edit_is_flagged(tmp_path):
+    ms = refs.load(_field_doc(tmp_path, _zotero_runs("(Doe, 1938)", "(Doe 1938)", dont_update=True)))
+    assert len(ms.manual_overrides) == 1 and "will not update" in ms.manual_overrides[0]
+
+
+def test_combined_issue_is_not_extra_text(tmp_path):
+    # a double issue such as 30(1/2), written as Zotero exports it
+    ms = refs.load(_field_doc(tmp_path, _zotero_runs("(Doe, 1938)", "(Doe, 1938)")))
+    codes = {f.code for f in refs.audit(ms)}
+    assert "odd-issue" not in codes
+
+
+def test_unlinked_list_without_a_heading_is_found(tmp_path):
+    import docx
+    d = docx.Document()
+    d.add_paragraph("As shown before (Doe et al., 2020; Roe & Poe, 2010; Moe, 1938).")
+    d.add_paragraph("Doe, J., Lee, K., & Kim, S. (2020). A made-up paper. Journal of Tests, 32(3), 608\u2013626. "
+                    "https://doi.org/10.5555/syn.1")
+    d.add_paragraph("Roe, R., & Poe, P. (2010). Another made-up paper. Test Biology, 11(3), R25.")
+    d.add_paragraph("Moe, D. N. (1938). An old made-up paper. Biometrika Tests, 30(1/2), 180\u2013187.")
+    p = tmp_path / "unlinked.docx"
+    d.save(p)
+    ms = refs.load(p)
+    assert len(ms.refs) == 3 and ms.refs[0].data.get("DOI") == "10.5555/syn.1"
+    assert "As shown before" in ms.body_text
+
+
 def test_manager_steps_name_the_right_buttons():
     assert "Document Preferences" in refs.manager_steps("Zotero")["style"]
     assert "Update Citations and Bibliography" in refs.manager_steps("EndNote")["refresh"]
