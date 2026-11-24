@@ -1,0 +1,161 @@
+{
+  "journal": "Journal of Biomolecular Structure and Dynamics",
+  "article_type": "Research Article",
+  "snapshot_note": "Snapshot for tests and as a starting point. The journal accepts format-free first submissions; an editable file is needed at revision. SubmitReady re-reads the live guidelines on every run.",
+  "sources": [
+    {
+      "name": "JBSD Instructions for Authors (page says 'Updated 27/10/2026')",
+      "url": "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbsd20",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "CSL styles repository: Journal of Biomolecular Structure and Dynamics",
+      "url": "https://github.com/citation-style-language/styles/blob/master/dependent/journal-of-biomolecular-structure-and-dynamics.csl",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "journal-of-biomolecular-structure-and-dynamics",
+    "title": "Journal of Biomolecular Structure and Dynamics",
+    "source": "https://github.com/citation-style-language/styles/blob/master/dependent/journal-of-biomolecular-structure-and-dynamics.csl",
+    "note": "A dependent style of APA. The instructions page sets no reference style for first submission."
+  },
+  "requirements": [
+    {
+      "id": "author-details",
+      "rule": "Full name and affiliation of every author on the cover page; ORCID where available; one corresponding author with email",
+      "quote": "All authors of a manuscript should include their full name and affiliation on the cover page of the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "abstract-length",
+      "rule": "Unstructured abstract of 250 words",
+      "quote": "Should contain an unstructured abstract of 250 words.",
+      "source": 0,
+      "check": {
+        "type": "max_words",
+        "target": "abstract",
+        "value": 250
+      }
+    },
+    {
+      "id": "keywords",
+      "rule": "5 to 10 keywords",
+      "quote": "Between 5 and 10 keywords.",
+      "source": 0,
+      "check": {
+        "type": "keywords",
+        "min": 5,
+        "max": 10
+      }
+    },
+    {
+      "id": "funding",
+      "rule": "Funding details, or a statement that no funding was obtained",
+      "quote": "If no funding was obtained for the reported work, please declare that no funding was obtained.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "funding"
+      }
+    },
+    {
+      "id": "disclosure",
+      "rule": "Disclosure statement, e.g. 'The authors report there are no competing interests to declare.'",
+      "quote": "If there are no relevant competing interests to declare please state this within the article",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "competing"
+      }
+    },
+    {
+      "id": "ai-declaration",
+      "rule": "Declaration of generative AI use, also when none was used",
+      "quote": "If generative AI was not used, please state this",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "ai"
+      }
+    },
+    {
+      "id": "data-availability",
+      "rule": "Data availability statement with a link, DOI or other persistent identifier where applicable",
+      "quote": "Where applicable, this should include the hyperlink, DOI or other persistent identifier associated with the data set(s).",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "data"
+      }
+    },
+    {
+      "id": "figure-files",
+      "rule": "Figures: 300 dpi for colour, 600 dpi for grayscale, 1200 dpi for line art; PS, JPEG, TIFF, or Word for figures drawn in Word",
+      "quote": "Figures should be high quality (1200 dpi for line art, 600 dpi for grayscale and 300 dpi for colour, at the correct size).",
+      "source": 0,
+      "check": {
+        "type": "figure_files",
+        "formats": [
+          "ps",
+          "eps",
+          "jpg",
+          "jpeg",
+          "tif",
+          "tiff",
+          "doc",
+          "docx"
+        ],
+        "dpi_min": 300
+      }
+    },
+    {
+      "id": "graphical-abstract",
+      "rule": "Graphical abstract is optional: 525 px wide, JPG, PNG or TIFF, a separate file named GraphicalAbstract1",
+      "quote": "Please do not embed it in the manuscript file but save it as a separate file, labelled GraphicalAbstract1.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "tables-editable",
+      "rule": "Tables are editable",
+      "quote": "Please supply editable files.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "equations-editable",
+      "rule": "Equations in Word are editable",
+      "quote": "please ensure that equations are editable.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "si-units",
+      "rule": "SI units, not italic",
+      "quote": "Please use SI units (non-italicized).",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "credit",
+      "rule": "CRediT roles for every author are entered during submission",
+      "quote": "Submitting authors should be prepared to submit CRediT roles for themselves and their co-authors",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

@@ -52,7 +52,8 @@ SECTIONS = [
     ("data", r"data (and code )?availability( statement)?|availability of data.*"),
     ("ethics", r"ethic(s|al)( approval| conduct of research| statement| approval and consent.*)?"),
     ("contributions", r"authors?'?s?'? contributions?( statement)?|credit authorship.*"),
-    ("ai", r"(generative )?ai (use |usage )?(statement|disclosure)|use of (generative )?ai.*|writing assistance disclosure"),
+    ("ai", r"(generative )?ai (use |usage )?(statement|disclosure)|use of (generative )?ai.*|writing assistance disclosure|"
+           r"declaration of (the use of )?(generative )?(ai|artificial intelligence).*"),
     ("declarations", r"(statements and )?declarations"),
     ("references", r"references|bibliography|literature cited"),
     ("figure_legends", r"figure (and table )?(legends|captions)|figure legends"),

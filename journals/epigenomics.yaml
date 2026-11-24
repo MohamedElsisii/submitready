@@ -1,0 +1,26 @@
+name: "Epigenomics"
+slug: epigenomics
+publisher: "Taylor & Francis"
+family: "journals/families/expert-medicine.yaml"
+
+guidelines:
+  url: "https://files.taylorandfrancis.com/expert-medicine-author-guidelines.pdf"
+  checked: "2026-11-24"
+  journal_page: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=iepi20"
+
+reference_style:
+  csl_style_id: "taylor-and-francis-national-library-of-medicine"
+  source: "https://github.com/citation-style-language/styles/blob/master/taylor-and-francis-national-library-of-medicine.csl"
+  checked: "2026-11-24"
+  note: "The CSL repository's 'Epigenomics' style follows the older Future Medicine style (et al. after 7 authors). The guidelines ask for all authors when fewer than four, otherwise three and et al., which the T&F NLM style does."
+
+requirements_snapshot:
+  - "journals/requirements/epigenomics.2026-11-24.json (Research Article)"
+
+known_quirks:
+  - text: "Bioinformatic and data re-analysis studies must upload the Epigenomics Research Article Reporting Checklist, with where in the manuscript each item and the FAIR principles are covered."
+    source: "https://files.taylorandfrancis.com/expert-medicine-author-guidelines.pdf"
+    checked: "2026-11-24"
+  - text: "Reference annotations (* of interest, ** of considerable interest, each with one sentence) are a required section."
+    source: "https://files.taylorandfrancis.com/expert-medicine-author-guidelines.pdf"
+    checked: "2026-11-24"

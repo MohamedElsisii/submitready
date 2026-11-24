@@ -1,0 +1,284 @@
+{
+  "journal": "Expert Medicine journals (Taylor & Francis), Research Article",
+  "article_type": "Research Article",
+  "snapshot_note": "Snapshot for tests and as a starting point. Shared by the 24 Expert Medicine journals listed in journals/families/expert-medicine.yaml. SubmitReady re-reads the live guidelines on every run, plus the journal's own Instructions for Authors page.",
+  "sources": [
+    {
+      "name": "Expert Medicine Author Guidelines (PDF)",
+      "url": "https://files.taylorandfrancis.com/expert-medicine-author-guidelines.pdf",
+      "checked": "2026-11-24"
+    },
+    {
+      "name": "CSL styles repository: Taylor & Francis NLM",
+      "url": "https://github.com/citation-style-language/styles/blob/master/taylor-and-francis-national-library-of-medicine.csl",
+      "checked": "2026-11-24"
+    }
+  ],
+  "csl_style": {
+    "id": "taylor-and-francis-national-library-of-medicine",
+    "title": "Taylor & Francis - NLM/Vancouver (citation-sequence, brackets)",
+    "source": "https://github.com/citation-style-language/styles/blob/master/taylor-and-francis-national-library-of-medicine.csl",
+    "note": "Matches the guidelines' reference rules (square brackets; all authors when fewer than four, otherwise three and et al.). The CSL repository's dependent 'Epigenomics' style still follows the older Future Medicine style (et al. after 7 authors), so it is not used."
+  },
+  "requirements": [
+    {
+      "id": "title-length",
+      "rule": "Title is at most 200 characters, including spaces",
+      "quote": "not more than 200 characters (including spaces).",
+      "source": 0,
+      "check": {
+        "type": "max_chars",
+        "target": "title",
+        "value": 200
+      }
+    },
+    {
+      "id": "abstract-length",
+      "rule": "Structured abstract of at most 200 words",
+      "quote": "Not more than 200 words, broken down into Aims, Patients & Methods/Materials & Methods, Results and Conclusions.",
+      "source": 0,
+      "check": {
+        "type": "max_words",
+        "target": "abstract",
+        "value": 200
+      }
+    },
+    {
+      "id": "abstract-structure",
+      "rule": "Abstract headings: Aims, Patients & Methods or Materials & Methods, Results, Conclusions; no references in the abstract",
+      "quote": "no references should be cited in the abstract.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "keywords",
+      "rule": "5 to 8 keywords",
+      "quote": "Up to eight keywords (minimum of five)",
+      "source": 0,
+      "check": {
+        "type": "keywords",
+        "min": 5,
+        "max": 8
+      }
+    },
+    {
+      "id": "word-count",
+      "rule": "Main text 2,000 to 8,000 words, not counting abstract, article highlights, references and legends",
+      "quote": "2000–8000 words (excluding abstract, article highlights, references and figure/table legends)",
+      "source": 0,
+      "check": {
+        "type": "max_words",
+        "target": "main",
+        "value": 8000
+      }
+    },
+    {
+      "id": "order",
+      "rule": "Sections in this order: Abstract, Introduction, Methods, Results, Discussion, Conclusions, Article highlights, References",
+      "quote": "",
+      "source": 0,
+      "check": {
+        "type": "sections_order",
+        "order": [
+          "abstract",
+          "introduction",
+          "methods",
+          "results",
+          "discussion",
+          "conclusion",
+          "highlights",
+          "references"
+        ]
+      }
+    },
+    {
+      "id": "highlights",
+      "rule": "Article highlights: bullet points, at most 500 words",
+      "quote": "Article highlights (max 500 words)",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "highlights"
+      }
+    },
+    {
+      "id": "plain-summary",
+      "rule": "Plain language summary is optional, at most 250 words",
+      "quote": "Expert Medicine encourages publication of PLS, but submission is not mandatory.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "annotations",
+      "rule": "Reference annotations: mark key references with * (of interest) or ** (of considerable interest) and one sentence on why",
+      "quote": "Each of the chosen references should be annotated with a brief sentence explaining why the reference is considered to be of interest/considerable interest.",
+      "source": 0,
+      "check": {
+        "type": "min_count",
+        "target": "reference_annotations",
+        "value": 1
+      }
+    },
+    {
+      "id": "disclosures",
+      "rule": "Disclosures: funding, declaration of interests, writing assistance and its funding, ethical conduct",
+      "quote": "to include funding information, declaration of interest disclosures, disclosure of any writing assistance (and the funding source for this), ethical disclosure and any other relevant information",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "competing"
+      }
+    },
+    {
+      "id": "ai-in-acknowledgements",
+      "rule": "Any use of AI is declared in the Acknowledgements",
+      "quote": "All use of Artificial Intelligence (AI) needs to be declared in the Acknowledgments section.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "credit",
+      "rule": "CRediT author contributions are given on the title page during submission",
+      "quote": "CRediT (Contributor Roles Taxonomy) statements should be provided on the Title Page during the submission process",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "no-abbreviations-section",
+      "rule": "No separate abbreviations section; define each abbreviation at first use in the abstract, the text and the legends",
+      "quote": "There is no need to include a separate abbreviations section in the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "section_absent",
+        "section": "abbreviations"
+      }
+    },
+    {
+      "id": "reference-style",
+      "rule": "Numbered references in square brackets, e.g. [1,2], in order of first citation",
+      "quote": "References should appear as a number i.e., [1,2] in the text in square brackets.",
+      "source": 0,
+      "check": {
+        "type": "citation_format",
+        "value": "numeric, square brackets"
+      }
+    },
+    {
+      "id": "citation-position",
+      "rule": "Citations sit before the sentence-end punctuation, e.g. ...[2].",
+      "quote": "All reference citations in the text should appear at the end of the sentence, prior to punctuation.",
+      "source": 0,
+      "check": {
+        "type": "citation_punctuation",
+        "value": "before"
+      }
+    },
+    {
+      "id": "website-dates",
+      "rule": "Websites are in the reference list with an access date",
+      "quote": "if citing a website, please ensure your access date is also included.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "figure-limit",
+      "rule": "At most 5 figures in the manuscript (more go to the supplement)",
+      "quote": "A limit of 5 figures and 5 tables to be included in the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "max_count",
+        "target": "figures",
+        "value": 5
+      }
+    },
+    {
+      "id": "table-limit",
+      "rule": "At most 5 tables in the manuscript (more go to the supplement)",
+      "quote": "A limit of 5 figures and 5 tables to be included in the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "max_count",
+        "target": "tables",
+        "value": 5
+      }
+    },
+    {
+      "id": "figures-separate",
+      "rule": "Figures, tables and boxes are separate files, not inside the manuscript",
+      "quote": "All figures, tables and boxes should be submitted as separate files, not within the main manuscript document.",
+      "source": 0,
+      "check": {
+        "type": "figures_embedded",
+        "allowed": false
+      }
+    },
+    {
+      "id": "legends-at-end",
+      "rule": "Legends for all figures and tables in a separate section at the end of the manuscript",
+      "quote": "Please provide legends for all of your figures and tables, in a separate section at the end of the manuscript document.",
+      "source": 0,
+      "check": {
+        "type": "captions_placement",
+        "value": "end"
+      }
+    },
+    {
+      "id": "figure-files",
+      "rule": "Figures as high resolution as possible, ideally 300 dpi or more for JPG; graphs as vector files (.ai, .eps, .svg) where possible",
+      "quote": "Figure resolution should be as high as possible, ideally 300 dpi or higher for a .jpg.",
+      "source": 0,
+      "check": {
+        "type": "figure_files",
+        "formats": [
+          "jpg",
+          "jpeg",
+          "png",
+          "tif",
+          "tiff",
+          "ai",
+          "eps",
+          "svg",
+          "pdf"
+        ],
+        "dpi_min": 300
+      }
+    },
+    {
+      "id": "biorender",
+      "rule": "BioRender figures need the BioRender publication licence",
+      "quote": "If Biorender had been used, please provide copies of the publication licenses",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "cover-letter",
+      "rule": "A cover letter on relevance, novelty, advance and implications",
+      "quote": "Authors must provide a supporting Cover Letter on submission",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "data-deposition",
+      "rule": "Deposited data: dataset name, repository and number at the end of the abstract",
+      "quote": "authors should state at the end of the abstract the data set name, repository name and number.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}

@@ -89,9 +89,11 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 
 `/prepare` works with any journal: it reads the live author guidelines each time. These journals also have a checked starting profile, with a source link and date for every rule:
 
-PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review).
+PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review), Epigenomics, Journal of Biomolecular Structure and Dynamics.
 
-Adding a journal is a good first contribution. Copy `journals/_TEMPLATE.yaml` and quote the guidelines page for each rule.
+**Families** cover many journals at once, when they share one guidelines document. The Expert Medicine family (Taylor & Francis) covers 24 journals, among them Epigenomics, Future Oncology, Nanomedicine, Pharmacogenomics and Immunotherapy. See `journals/families/`.
+
+Adding a journal or a family is a good first contribution. Copy `journals/_TEMPLATE.yaml` and quote the guidelines page for each rule.
 
 ## Supported inputs (v1)
 

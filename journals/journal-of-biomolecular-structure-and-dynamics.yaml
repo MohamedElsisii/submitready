@@ -1,0 +1,28 @@
+name: "Journal of Biomolecular Structure and Dynamics"
+slug: journal-of-biomolecular-structure-and-dynamics
+publisher: "Taylor & Francis"
+
+guidelines:
+  url: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbsd20"
+  checked: "2026-11-24"
+
+reference_style:
+  csl_style_id: "journal-of-biomolecular-structure-and-dynamics"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/journal-of-biomolecular-structure-and-dynamics.csl"
+  checked: "2026-11-24"
+  note: "A dependent style of APA."
+
+submission_system:
+  url: "https://rp.tandfonline.com/submission/create?journalCode=TBSD"
+  checked: "2026-11-24"
+
+requirements_snapshot:
+  - "journals/requirements/journal-of-biomolecular-structure-and-dynamics.2026-11-24.json (Research Article)"
+
+known_quirks:
+  - text: "No submission fees, publication fees or page charges; colour in print costs extra."
+    source: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbsd20"
+    checked: "2026-11-24"
+  - text: "A declaration of generative AI use is needed even when none was used."
+    source: "https://www.tandfonline.com/action/authorSubmission?show=instructions&journalCode=tbsd20"
+    checked: "2026-11-24"

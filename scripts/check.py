@@ -93,7 +93,7 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
     for f in sorted(files, key=lambda p: (_fig_number(p) or 999, p.name)):
         n = _fig_number(f)
         row = {"file": f.name, "number": n, "problems": []}
-        if f.suffix.lower() in (".pdf", ".eps", ".svg"):
+        if f.suffix.lower() in (".pdf", ".eps", ".svg", ".ai", ".ps"):
             rows.append(_vector_figure(f, n, rule, dest, actions))
             continue
         try:
@@ -180,7 +180,7 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
 
 
 def _vector_figure(f: Path, n, rule: dict | None, dest: Path, actions: list) -> dict:
-    """PDF/EPS/SVG figures have no pixel size. Accept if the journal takes the format; otherwise
+    """PDF/EPS/SVG/AI/PS figures have no pixel size. Accept if the journal takes the format; otherwise
     offer a 600 dpi raster copy (needs pdftoppm), clearly marked for the author to check."""
     import subprocess
 

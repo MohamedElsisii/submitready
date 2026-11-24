@@ -200,3 +200,30 @@ def test_reference_annotations_are_counted(tmp_path):
     assert facts["reference_annotations"] == 2
     res = prepare.check(facts, req({"type": "min_count", "target": "reference_annotations", "value": 6}))
     assert res[0]["status"] == "FIX" and res[0]["found"] == "2"
+
+
+KNOWN_CHECKS = {"max_chars", "max_words", "keywords", "section_present", "section_absent", "sections_order",
+                "line_numbers", "page_numbers", "line_spacing", "footnotes", "figures_embedded", "captions_placement",
+                "citation_format", "supp_label_style", "max_count", "min_count", "p_leading_zero",
+                "citation_punctuation", "figure_files", "manual"}
+
+
+def test_snapshot_checks_are_known_types():
+    for p in (ROOT / "journals" / "requirements").glob("*.json"):
+        for r in json.loads(p.read_text(encoding="utf-8"))["requirements"]:
+            assert r["check"]["type"] in KNOWN_CHECKS, (p.name, r["id"], r["check"]["type"])
+            sec = r["check"].get("section")
+            if sec:
+                assert sec in {k for k, _ in prepare.SECTIONS}, (p.name, r["id"], sec)
+
+
+def test_families_point_to_real_snapshots():
+    import yaml
+    for p in (ROOT / "journals" / "families").glob("*.yaml"):
+        fam = yaml.safe_load(p.read_text(encoding="utf-8"))
+        assert fam["guidelines"]["url"].startswith("https://") and fam["guidelines"]["checked"], p.name
+        snap = fam["requirements_snapshot"].split(" ")[0]
+        assert (ROOT / snap).exists(), (p.name, snap)
+        assert len(fam["journals"]) == len(set(fam["journals"])) > 1, p.name
+        for q in fam.get("known_quirks", []):
+            assert q["source"].startswith("https://") and q["checked"], p.name
