@@ -308,3 +308,31 @@ def test_quartile_range_and_basis(paper):
     assert match.apply_filters(q3, "any", None, False, min_quartile="Q2") != ""
     assert match._quartile_text({"min_quartile": "Q3", "max_quartile": "Q2", "quartile_basis": "any"}) == \
         ", SJR Q2 to Q3 (any subject category)"
+
+
+def test_off_topic_journal_with_few_papers_is_left_out(paper):
+    paper_topics = {"T1": 0.6, "T2": 0.4}
+
+    class TopicNet(WideNet):
+        def json(self, url):
+            d = super().json(url)
+            if "/works?search=" in url and d:
+                for w in d["results"]:
+                    w["primary_topic"] = {"id": "https://openalex.org/T1" if int(w["id"][1:]) % 2 else "https://openalex.org/T2",
+                                          "subfield": {"id": "https://openalex.org/subfields/1312"},
+                                          "field": {"id": "https://openalex.org/fields/13"}}
+            if "/sources/" in url and d:
+                sid = url.rsplit("/", 1)[-1]
+                own = [("T1", "1312"), ("T2", "1312")] if sid == "H2" else [("T99", "2303")]
+                d = dict(d, topics=[{"id": f"https://openalex.org/{t}", "subfield": {"id": f"https://openalex.org/subfields/{s}"}}
+                                    for t, s in own])
+            return d
+
+    d = match.find(paper, TopicNet(), access="subscription", review_times=False)
+    names = [j["name"] for j in d["journals"]]
+    assert names == ["Hybrid Giant"]                                   # on topic, kept
+    left = {x["name"]: x["reason"] for x in d["left_out"]}
+    assert "main topics are far" in left["Hybrid Deep"]               # 2 papers, off topic
+    assert d["searched"]["left_out"]["off topic"] == 1
+    assert match.topic_overlap({"topics": [("T9", "1312")]}, {"topics": paper_topics,
+                                                             "topic_subfields": {"T1": "1312", "T2": "1100"}}) == 0.2

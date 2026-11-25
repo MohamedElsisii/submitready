@@ -44,6 +44,8 @@ CITED_REF = re.compile(r"^\s*[A-Z][\w'\-]+,\s+(?:[A-Z]\.\s*)+,.*\((?:19|20)\d{2}
 SECTION_LABEL = re.compile(r"^\s*(\d+(?:\.\d+)*)\.?\s*$")          # "2.9" or "4." on its own line
 STOP = re.compile(r"(post-acceptance services|scientific editing service|if you are considering reworking|"
                   r"look forward to receiving your revision|^\s*sincerely,?\s*$)", re.I)
+# Offers the journal asks you to answer (open access, videos): optional rows, one per "Author response:" line
+SERVICES = re.compile(r"post-acceptance services", re.I)
 HOW_TO = re.compile(r"(track(ed)? changes|highlight the changes|page and line|line numbers?|point[- ]by[- ]point|"
                     r"two versions|response (letter|document)|reply to the (referee|reviewer)|"
                     r"explain(ing)? the changes|marked[- ]up|clean (copy|version))", re.I)
@@ -95,6 +97,10 @@ def _blocks(lines: list[str]) -> tuple[list[str], list[dict]]:
                 continue
             pre.append(line)
             continue
+        if SERVICES.search(line) and cur is not None:
+            cur = {"who": "Editor", "services": True, "lines": []}
+            blocks.append(cur)
+            continue
         if STOP.search(line):
             cur = None
             continue
@@ -104,7 +110,24 @@ def _blocks(lines: list[str]) -> tuple[list[str], list[dict]]:
     return pre, blocks
 
 
+def _service_items(block: dict) -> list[dict]:
+    """Each offer ends at its own "Author response:" line. Text after the last one is not an offer."""
+    items, cur = [], []
+    for ln in block["lines"]:
+        if PLACEHOLDER.match(ln):
+            if cur:
+                items.append(cur)
+            cur = []
+            continue
+        cur.append(re.sub(r"^\s*[\u2022\-\u2013]\s*", "", ln).strip())
+    return [{"id": f"E.S{n}", "who": "Editor", "group": "Optional: post-acceptance services", "where_in_paper": "",
+             "comment": "\n".join(it).strip(), "response": "", "where_changed": "", "optional": True}
+            for n, it in enumerate(items, 1) if "\n".join(it).strip()]
+
+
 def _comments_in_block(block: dict) -> list[dict]:
+    if block.get("services"):
+        return _service_items(block)
     lines = [ln for ln in block["lines"] if not PLACEHOLDER.match(ln)]
     has_num = any(NUM.match(ln) or LETTER.match(ln) for ln in lines)
     has_bullet = any(BULLET.match(ln) for ln in lines)
@@ -235,6 +258,8 @@ def table(data: dict, out: Path) -> None:
             cells = t.add_row().cells
             cells[0].text = c["id"]
             text = c["comment"] if not c["where_in_paper"] else f"[{c['where_in_paper']}] {c['comment']}"
+            if c.get("optional"):
+                text = f"[Optional: an offer from the journal, not about the paper] {text}"
             cells[1].text = text
             cells[2].text = c.get("response", "")
             cells[3].text = c.get("where_changed", "")
@@ -258,7 +283,8 @@ def status(response_docx: Path) -> dict:
             rows.append({"id": cells[0], "has_response": bool(cells[2]), "has_where": bool(cells[3])})
     return {"comments": len(rows),
             "no_response": [r["id"] for r in rows if not r["has_response"]],
-            "no_where": [r["id"] for r in rows if r["has_response"] and not r["has_where"]]}
+            "no_where": [r["id"] for r in rows if r["has_response"] and not r["has_where"]
+                         and not re.search(r"\.S\d+$", r["id"])]}  # an offer needs an answer, not a change
 
 
 # ---------------------------------------------------------------- what changed
@@ -299,7 +325,7 @@ def changes(original: Path, revised: Path, comments: dict | None = None) -> dict
             for t in _terms(p):
                 df[t] = df.get(t, 0) + 1
         common = {t for t, n in df.items() if n > max(3, len(new) // 15)}
-        for c in comments["comments"]:
+        for c in [c for c in comments["comments"] if not c.get("optional")]:
             ct = _terms(c["comment"] + " " + c.get("where_in_paper", "")) - common
             if not ct:
                 continue
@@ -325,7 +351,7 @@ def changes_markdown(ch: dict, comments: dict | None = None) -> str:
         lines += ["", "## Comments and changes that share key terms", "",
                   "A hint for filling the 'Where changed' column, not a decision. "
                   "A comment with no match may still be answered elsewhere, or not yet.", ""]
-        for c in comments["comments"]:
+        for c in [c for c in comments["comments"] if not c.get("optional")]:
             hit = ch["hints"].get(c["id"])
             lines.append(f"- {c['id']}: " + (", ".join(f"change #{h + 1}" for h in hit) if hit else "no matching change found"))
     return "\n".join(lines) + "\n"

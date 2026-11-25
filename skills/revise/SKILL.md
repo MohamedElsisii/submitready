@@ -12,6 +12,7 @@ Follow the five rules in `${CLAUDE_PLUGIN_ROOT}/skills/submitready/SKILL.md`. Ab
 1. If the letter is in an email or a PDF, ask the author to save it as a .docx or .txt (copy and paste is fine). Then run:
    `python "${CLAUDE_PLUGIN_ROOT}/scripts/revision.py" split <letter> --out <manuscript>.comments.json`
    Show the count per reviewer and the editor. Show the "how to answer" lines the letter gives (tracked changes, page and line numbers, two versions).
+   Offers the journal asks you to answer, such as open access or videos ("post-acceptance services"), come out as optional rows with IDs like `E.S1`: one row per offer that has its own "Author response:" line. They need an answer but no change to the paper. Say how many there are in one line; do not ask whether to include them.
 2. Check the split with the author before going on: open the letter yourself and compare. If a comment was cut in two, joined with the next one, or missed, say which, and fix the JSON so each comment is word for word from the letter. Do not reword any comment.
 3. `python "${CLAUDE_PLUGIN_ROOT}/scripts/revision.py" table <manuscript>.comments.json --out <manuscript>_response_to_reviewers.docx`
    This is a DRAFT file for the author: one table per reviewer with empty Response and Where changed columns.

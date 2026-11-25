@@ -91,7 +91,7 @@ def _split(tmp, text):
 def test_numbered_letter(tmp_path):
     d = _split(tmp_path, LETTER_A)
     ids = [c["id"] for c in d["comments"]]
-    assert ids == ["R1.G", "R1.1", "R1.2", "R2.G", "R2.1A", "R2.1B", "R2.2", "E.1", "E.2"]
+    assert ids == ["R1.G", "R1.1", "R1.2", "R2.G", "R2.1A", "R2.1B", "R2.2", "E.1", "E.2", "E.S1"]
     by = {c["id"]: c for c in d["comments"]}
     assert by["R1.1"]["comment"] == "Abstract: Please list all thirty genes."      # word for word
     assert by["R2.1A"]["where_in_paper"] == "Results 3.1"
@@ -99,7 +99,9 @@ def test_numbered_letter(tmp_path):
     assert by["R2.G"]["comment"].count("\n") == 1
     assert "If the manuscript was not funded" in by["E.1"]["comment"]           # sub-bullets stay with item 1
     assert not any("Author response" in c["comment"] for c in d["comments"])
-    assert not any("post-acceptance" in c["comment"] or "Open access" in c["comment"] for c in d["comments"])
+    assert not any("post-acceptance" in c["comment"] for c in d["comments"])
+    assert by["E.S1"]["comment"] == "Open access publication: have you considered it?" and by["E.S1"]["optional"]
+    assert not any(c.get("optional") for c in d["comments"] if c["id"] != "E.S1")
     assert any("track changes" in h for h in d["how_to_answer"])
     assert any("page and line number" in h for h in d["how_to_answer"])
 
@@ -125,7 +127,8 @@ def test_table_and_status_round_trip(tmp_path):
     assert tables[0].rows[2].cells[1].text == "Abstract: Please list all thirty genes."
     assert all(r.cells[2].text == "" for t in tables for r in t.rows[1:])   # never writes a response
     st = R.status(out)
-    assert st["comments"] == 9 and len(st["no_response"]) == 9
+    assert st["comments"] == 10 and len(st["no_response"]) == 10
+    assert "Optional" in tables[2].rows[-1].cells[1].text
     tables[0].rows[2].cells[2].text = "We now list all thirty genes."
     tables[0].rows[3].cells[2].text = "Done."
     tables[0].rows[3].cells[3].text = "Page 4, lines 80-85"
@@ -153,3 +156,22 @@ def test_changes_and_hints(tmp_path):
     assert ch["hints"].get("R2.2") == [1]                     # "Validate on METABRIC." -> the new sentence
     md = R.changes_markdown(ch, d)
     assert "METABRIC" in md and "R2.2: change #2" in md
+
+
+def test_journal_offers_need_an_answer_but_no_change(tmp_path):
+    d = _split(tmp_path, LETTER_A)
+    out = tmp_path / "response.docx"
+    R.table(d, out)
+    doc = Document(str(out))
+    row = [r for t in doc.tables for r in t.rows if r.cells[0].text == "E.S1"][0]
+    row.cells[2].text = "Not at this time."
+    doc.save(str(out))
+    st = R.status(out)
+    assert "E.S1" not in st["no_response"] and "E.S1" not in st["no_where"]
+
+
+def test_offers_without_answer_lines_are_left_out(tmp_path):
+    text = LETTER_A.replace("Open access publication: have you considered it?\nAuthor response:\n",
+                            "Open access publication: have you considered it?\n")
+    d = _split(tmp_path, text)
+    assert not any(c.get("optional") for c in d["comments"])

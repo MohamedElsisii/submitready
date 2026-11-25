@@ -55,6 +55,7 @@ using use based via into their its our we study analysis approach new novel role
 than within without under over through effect effects""".split())
 SHOWN, KEPT = 5, 10
 MAX_CHECKED = 90  # journals looked up before the search stops widening
+OFF_TOPIC = 0.2  # topic overlap below this, with 2 similar papers or fewer: left out
 SIZE_UNIT = 500  # items in 2 years; journals larger than this get the size correction
 COMPUTATIONAL = ["in silico", "computational", "docking", "molecular dynamics", "simulation", "alphafold",
                  "structure prediction", "modeling", "modelling", "machine learning", "deep learning", "bioinformatic"]
@@ -192,6 +193,8 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
     seen: dict[str, int] = {}
     works: list[dict] = []
     fields: dict[str, float] = {}
+    topics: dict[str, float] = {}       # the paper's topics, from the papers most like it
+    subfields: dict[str, str] = {}
 
     def run(qtext, w_query, per_page, field_filter=""):
         url = (f"{OPENALEX}/works?search={urllib.parse.quote(qtext)}"
@@ -216,6 +219,12 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
                 f = (((w.get("primary_topic") or {}).get("field") or {}).get("id") or "").rsplit("/", 1)[-1]
                 if f:
                     fields[f] = fields.get(f, 0) + weight
+                pt = w.get("primary_topic") or {}
+                tid = (pt.get("id") or "").rsplit("/", 1)[-1]
+                sub = ((pt.get("subfield") or {}).get("id") or "").rsplit("/", 1)[-1]
+                if tid:
+                    topics[tid] = topics.get(tid, 0) + weight
+                    subfields[tid] = sub
             if w["id"] in seen:  # found again by another search: more weight, counted once
                 works[seen[w["id"]]]["weight"] += weight
                 continue
@@ -235,6 +244,10 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
         acc += w
     ff = f",primary_topic.field.id:{'|'.join(keep)}" if keep and total >= 5 else ""
     p["fields"] = keep
+    tsum = sum(topics.values()) or 1.0
+    top = sorted(topics.items(), key=lambda x: -x[1])[:15]
+    p["topics"] = {t: round(w / tsum, 4) for t, w in top}
+    p["topic_subfields"] = {t: subfields.get(t, "") for t, _ in top}
     for q in broad:
         run(*q, field_filter=ff)
     if len(wide) >= 3:
@@ -275,6 +288,8 @@ def journal_facts(sid: str, net: Net) -> dict | None:
         "medline": "medline" in listed, "listed_in": sorted(listed),
         "citations_2y_mean": (s.get("summary_stats") or {}).get("2yr_mean_citedness"),
         "h_index": (s.get("summary_stats") or {}).get("h_index"),
+        "topics": [(t.get("id", "").rsplit("/", 1)[-1], ((t.get("subfield") or {}).get("id") or "").rsplit("/", 1)[-1])
+                   for t in (s.get("topics") or [])[:25]],
     }
 
 
@@ -289,6 +304,20 @@ def medline_now(j: dict, net: Net) -> bool | None:
         if r and int((r.get("esearchresult") or {}).get("count", 0)) > 0:
             return True
     return False
+
+
+def topic_overlap(j: dict, p: dict) -> float | None:
+    """How much of the paper's topic profile sits in the journal's 25 main topics (0 to 1).
+
+    A topic the journal lists counts fully; a paper topic whose subfield the journal covers
+    counts a third. None when either side has no topics."""
+    pt, js = p.get("topics") or {}, j.get("topics") or []
+    if not pt or not js:
+        return None
+    jt = {t for t, _ in js}
+    jsub = {sub for _, sub in js if sub}
+    sub_of = p.get("topic_subfields") or {}
+    return round(sum(w if t in jt else (w / 3 if sub_of.get(t) in jsub else 0) for t, w in pt.items()), 3)
 
 
 def screen(j: dict) -> str:
@@ -354,7 +383,8 @@ def reason_group(reason: str) -> str:
                        ("medline", "not in MEDLINE"), ("discontinued", "discontinued by Scopus"),
                        ("scopus", "not active in Scopus"), ("quartile", "SJR quartile outside your range"),
                        ("legitimate", "could not be confirmed as legitimate"), ("no longer", "no longer publishing"),
-                       ("too few", "too few papers"), ("not a journal", "not a journal")):
+                       ("too few", "too few papers"), ("not a journal", "not a journal"),
+                       ("main topics are far", "off topic")):
         if key in r:
             return label
     return reason
@@ -464,7 +494,17 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
         # size correction by recent output: a focused journal with 7 similar papers should outrank a
         # journal that prints thousands of items a year and happened to carry 5 like this one
         size = max(1.0, (j.get("recent_works_2y") or 0) / SIZE_UNIT)
-        j["fit_score"] = round(score[sid] / size ** 0.5, 2)
+        fit = score[sid] / size ** 0.5
+        # topic check: does the journal's own main work sit where this paper sits?
+        ov = topic_overlap(j, p)
+        j["topic_overlap"] = ov
+        if ov is not None:
+            if ov < OFF_TOPIC and count[sid] <= 2:
+                left_out.append({"name": j["name"], "reason": f"only {count[sid]} similar paper{'s' if count[sid] > 1 else ''}, "
+                                 "and the journal's main topics are far from this paper's"})
+                continue
+            fit *= 0.5 + min(ov, 1.0)
+        j["fit_score"] = round(fit, 2)
         j["similar_papers"] = count[sid]
         j["similar_examples"] = [t for t in examples[sid][:3] if t]
         kept.append(j)
