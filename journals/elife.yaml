@@ -1,0 +1,24 @@
+name: "eLife"
+slug: elife
+publisher: "eLife Sciences Publications"
+issn_print: ""
+issn_online: ""
+
+guidelines:
+  url: "https://reviewer.elifesciences.org/author-guide/full"
+  checked: "2026-11-25"
+
+reference_style:
+  csl_style_id: "elife"
+  source: "https://github.com/citation-style-language/styles/blob/master/elife.csl"
+  checked: "2026-11-25"
+
+requirements_snapshot: "journals/requirements/elife.2026-11-25.json"
+
+known_quirks:
+  - text: "There is no accept or reject decision after peer review: every reviewed paper is published as a Reviewed Preprint with an eLife assessment."
+    source: "https://reviewer.elifesciences.org/author-guide/full"
+    checked: "2026-11-25"
+  - text: "Figure supplements are named and uploaded one by one, e.g. 'Figure 1—figure supplement 1'."
+    source: "https://reviewer.elifesciences.org/author-guide/full"
+    checked: "2026-11-25"

@@ -1,0 +1,159 @@
+{
+ "journal": "eLife",
+ "article_type": "Research Article (Reviewed Preprint)",
+ "snapshot_note": "Snapshot for tests and as a starting point. eLife reviews preprints and publishes every reviewed paper as a Reviewed Preprint; most format rules apply when the author asks for a Version of Record. SubmitReady re-reads the live author guide on every run.",
+ "sources": [
+  {
+   "name": "eLife Author Guide",
+   "url": "https://reviewer.elifesciences.org/author-guide/full",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "elife",
+  "title": "eLife",
+  "source": "https://github.com/citation-style-language/styles/blob/master/elife.csl",
+  "note": ""
+ },
+ "requirements": [
+  {
+   "id": "preprint",
+   "rule": "The work must be available as a preprint (eLife can post it to bioRxiv or medRxiv for you)",
+   "quote": "eLife only peer reviews submissions that are available as preprints",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "length",
+   "rule": "Research Articles: try not to exceed 5,000 words of main text, excluding Methods, References and legends",
+   "quote": "There is no maximum length for Research Articles, but we suggest that authors try not to exceed 5,000 words in the main text, excluding the Materials and methods, References, and Figure legends.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title",
+   "rule": "Title of up to about 120 characters, without abbreviations or unfamiliar acronyms",
+   "quote": "The title should be succinct (we suggest up to 120 characters), with a clear indication of the biological system under investigation (if appropriate), and should avoid abbreviations and unfamiliar acronyms if possible.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Abstract of about 150 to 200 words, no subheadings (medical papers: structured, about 250)",
+   "quote": "The abstract would normally be 150–200 words.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 200
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interests statement for each author",
+   "quote": "Co-author details should be entered: in addition to the full author name and affiliation (department, institution, city, and country), a competing interests statement is required for each author.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "credit",
+   "rule": "Author contributions in CRediT terms",
+   "quote": "Information about individual author contributions should be provided using the Contributor Roles Taxonomy:",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "datasets",
+   "rule": "All datasets cited in the text and listed in the references or data availability statement, with persistent identifiers",
+   "quote": "All datasets used in a publication should be cited in the text and listed in the reference section and/or data availability statement.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "impact",
+   "rule": "Impact statement of one sentence (typically 15 to 30 words) in the submission form",
+   "quote": "Impact statement: the impact statement is a single sentence (typically 15-30 words) that summarises the most important finding of the work: it needs to complement (rather than repeat) the title, and should avoid acronyms that are not well known to a broad readership.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "sections",
+   "rule": "Sections: Introduction, Results, Discussion, Materials and Methods (medicine: Methods before Results) (recommended, not required)",
+   "quote": "The manuscript should usually contain the following sections: Introduction; Results; Discussion; Materials and Methods.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "footnotes",
+   "rule": "No footnotes: put such notes in parentheses in the text",
+   "quote": "Any footnotes (including commentary or footnotes embedded within the reference list) should be placed inside parentheses at the appropriate place in the main text.",
+   "source": 0,
+   "check": {
+    "type": "footnotes",
+    "allowed": false
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Editable tables inside the article file, never as figures",
+   "quote": "Tables should be editable and included within the article file so that they can be typeset during the production process.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figures as TIFF (8-bit), JPG, EPS, AI or PDF, at least 300 dpi and 10 cm wide, each uploaded on its own",
+   "quote": "All figures must be uploaded at a minimum dpi of 300 and a minimum physical width size of 10cm.",
+   "source": 0,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "tif",
+     "tiff",
+     "jpg",
+     "jpeg",
+     "eps",
+     "ai",
+     "pdf"
+    ],
+    "dpi_min": 300
+   }
+  },
+  {
+   "id": "figure-legends",
+   "rule": "Legends give statistical tests, exact n, p values and replicates",
+   "quote": "Authors should provide information about data processing and analysis in their figure legends, including any statistical tests applied, with exact sample number, p values of tests, criteria for data inclusion or exclusion, and details of replicates.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "source-code",
+   "rule": "Software and source code deposited in an open software archive",
+   "quote": "Source code: relevant software or source code should be deposited in an open software archive.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

@@ -1,0 +1,151 @@
+{
+ "journal": "PNAS (Proceedings of the National Academy of Sciences)",
+ "article_type": "Research Report, initial submission",
+ "snapshot_note": "Snapshot for tests and as a starting point. PNAS is format-neutral at first submission but asks for set components. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "PNAS: Submitting your manuscript",
+   "url": "https://www.pnas.org/author-center/submitting-your-manuscript",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "pnas",
+  "title": "Proceedings of the National Academy of Sciences of the United States of America",
+  "source": "https://github.com/citation-style-language/styles/blob/master/pnas.csl",
+  "note": ""
+ },
+ "requirements": [
+  {
+   "id": "format-neutral",
+   "rule": "Any format at first submission, with all required components",
+   "quote": "PNAS follows a format-neutral policy for initial submissions, meaning your manuscript does not need to adhere to strict journal formatting guidelines to be considered.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Abstract of at most 250 words",
+   "quote": "Include no more than 250 words",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 250
+   }
+  },
+  {
+   "id": "significance",
+   "rule": "Significance statement of at most 120 words, for readers outside the field",
+   "quote": "Include no more than 120 words",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "At least three keywords",
+   "quote": "Include at least three keywords at submission.",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 3,
+    "max": 99
+   }
+  },
+  {
+   "id": "title",
+   "rule": "Title under 135 characters, naming the organism, without acronyms or puns",
+   "quote": "Keep the title brief (< 135 characters), descriptive, and comprehensible to a broad scientific audience.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "classification",
+   "rule": "A major and a minor classification on the title page",
+   "quote": "Select both a major and minor classification category.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "page-numbers",
+   "rule": "Number every page, starting with the title page",
+   "quote": "Please number all manuscript pages starting with the title page.",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "order",
+   "rule": "Recommended order: Abstract, Significance, Introduction, Results, Discussion, Materials and methods, Acknowledgments, References, Figure legends (recommended, not required)",
+   "quote": "The recommended order is:",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interest information for all authors",
+   "quote": "contact and competing interest information for all authors",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding information",
+   "quote": "funding information and whether an open access license has been selected",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "orcid",
+   "rule": "ORCID linked in the PNAS profile, not typed in the manuscript",
+   "quote": "Do not include ORCIDs in the manuscript file; individual authors must link their ORCID account to their PNAS profile at",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "no-novelty",
+   "rule": "No statements of novelty or priority",
+   "quote": "Do not include statements of novelty or priority.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "links",
+   "rule": "Links only to permanent public repositories, not personal pages",
+   "quote": "Links to an author's personal web page are not acceptable.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "final-files",
+   "rule": "After acceptance: Word, RTF or LaTeX with no embedded figures, tables or schemes",
+   "quote": "No embedded figures, tables, or schemes",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}
