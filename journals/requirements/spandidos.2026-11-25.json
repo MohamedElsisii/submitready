@@ -1,0 +1,314 @@
+{
+ "journal": "Spandidos Publications journals (shared submission guidelines)",
+ "article_type": "Research article",
+ "snapshot_note": "Spandidos Publications publishes one set of submission guidelines for all its journals (Oncology Letters, Molecular Medicine Reports, International Journal of Oncology and others). Article charges and scope differ by journal: SubmitReady reads the journal's own Information for Authors page on every run.",
+ "sources": [
+  {
+   "name": "Spandidos Publications: Submission guidelines (PDF)",
+   "url": "https://www.spandidos-publications.com/var/SubmissionGuidelines.pdf",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Spandidos house style: numbered references in parentheses, e.g. (1-3), no full stops after initials, NLM journal abbreviations, first 10 authors then et al. Check that the CSL style you use produces this."
+ },
+ "requirements": [
+  {
+   "id": "font-spacing",
+   "rule": "Times New Roman 12 pt, 1.5 line spacing, justified",
+   "quote": "Times New Roman. Font size 12. Spacing 1.5. Alignment Justified.",
+   "source": 0,
+   "check": {
+    "type": "line_spacing",
+    "value": 1.5
+   }
+  },
+  {
+   "id": "no-page-line-numbers",
+   "rule": "No page numbers or line numbers",
+   "quote": "Do not insert page numbers or line numbers.",
+   "source": 0,
+   "check": {
+    "type": "line_numbers",
+    "value": false
+   }
+  },
+  {
+   "id": "no-page-numbers",
+   "rule": "No page numbers",
+   "quote": "Do not insert page numbers or line numbers.",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": false
+   }
+  },
+  {
+   "id": "no-page-breaks",
+   "rule": "No page breaks or blank lines between sections",
+   "quote": "Do not use page breaks or multiple returns between sections (one section should directly follow the previous one on the page).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "headings-case",
+   "rule": "Headings in lower case, not capitals",
+   "quote": "Sub-headings and general headings should be presented in lower case letters (not capitals).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "one-spelling",
+   "rule": "British or American spelling, not both",
+   "quote": "Use British English or American English spellings throughout your manuscript, but not both.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "First page: title in sentence case, full names, numbered affiliations written in full, corresponding author's full postal address and email",
+   "quote": "The title of the manuscript in sentence case.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "5 to 10 key words",
+   "quote": "Key words (5-10).",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 5,
+    "max": 10
+   }
+  },
+  {
+   "id": "running-title",
+   "rule": "Running title with the first author's name, at most 100 characters",
+   "quote": "Running title preceded by the first author’s name (maximum 100 characters with spaces, including the author’s name).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Unstructured abstract of 150 to 300 words with no reference numbers",
+   "quote": "This section should have 150‐300 words, be continuous (not structured) and without reference numbers.",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 300
+   }
+  },
+  {
+   "id": "sections",
+   "rule": "Sections in this order: Abstract, Introduction, Materials and methods, Results, Discussion, Acknowledgements, Funding, Availability of data and materials, Authors' contributions, Ethics approval and consent to participate, Patient consent for publication, Competing interests, References, Figure legends, Tables",
+   "quote": "Manuscripts reporting experimental results must be divided into the following sections:",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "abstract",
+     "introduction",
+     "methods",
+     "results",
+     "discussion",
+     "acknowledgements",
+     "funding",
+     "data",
+     "contributions",
+     "ethics",
+     "competing",
+     "references"
+    ],
+    "optional": [
+     "acknowledgements"
+    ]
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding section",
+   "quote": "Funding",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "data",
+   "rule": "Availability of data and materials section",
+   "quote": "Availability of data and materials",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Authors' contributions section",
+   "quote": "Authors' contributions",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "contributions"
+   }
+  },
+  {
+   "id": "ethics",
+   "rule": "Ethics approval and consent to participate section",
+   "quote": "Ethics approval and consent to participate",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "ethics"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interests section",
+   "quote": "Competing interests",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "ai",
+   "rule": "'Use of artificial intelligence tools' section only when AI tools were used",
+   "quote": "Use of artificial intelligence tools (to be added only when AI tools are used)",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cell-lines",
+   "rule": "Cell line source, authentication and misidentification checked against ICLAC and Cellosaurus",
+   "quote": "Furthermore, information regarding misidentified or cross-contaminated cell lines must be provided and cross-checked from the International Cell Line Authentication Committee and ExPASy Cellosaurus databases in order to exclude their contamination with other cell lines or their incorrect identification.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-not-in-word",
+   "rule": "Figures as separate files, never pasted into Word or PowerPoint",
+   "quote": "Images imported or copy pasted into Word or PowerPoint.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": false
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files: TIFF with LZW compression or top-quality JPEG; RGB (CMYK accepted) or greyscale; at least 300 dpi at 8 or 17 cm wide",
+   "quote": "Images should be AT LEAST 300 dpi, at the size at which they will be printed (8 or 17 cm",
+   "source": 0,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "tif",
+     "tiff",
+     "jpg",
+     "jpeg"
+    ],
+    "dpi_min": 300,
+    "color_modes": [
+     "RGB",
+     "CMYK",
+     "L"
+    ]
+   }
+  },
+  {
+   "id": "figure-legends",
+   "rule": "Legends listed in the text document; a short title first, error bars defined, no method details",
+   "quote": "Legends should not contain any details of the methods.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables",
+   "rule": "Each table in its own Word file, Times New Roman 12 pt, 1.5 spacing, Roman numerals (Table I, Table II)",
+   "quote": "Each table should be submitted on a separate Word file.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "table-numerals",
+   "rule": "Tables labelled with Roman numerals",
+   "quote": "Label using Roman numerals, i.e. Table I, Table II, etc.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references",
+   "rule": "References numbered in order, cited by number in parentheses",
+   "quote": "In the text, cite references by number in parentheses e.g., (1-3) (1,2).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "reference-initials",
+   "rule": "No full stops after initials or abbreviations in references",
+   "quote": "Do NOT use full stop after initials or abbreviations.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-abbrev",
+   "rule": "Journal titles as NLM abbreviations",
+   "quote": "Cite journal titles using NLM Title Abbreviation found online in the U.S. National Library of Medicine Catalog.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cover-letter",
+   "rule": "Cover letter stating originality, approval by all authors, ethics approval and consent, and any conflict of interest",
+   "quote": "Summarize briefly the important points of the submitted work including a brief description of the study to be submitted, that it is an original study presenting novel work, that it has not been previously submitted to or accepted by any other journal, that is has been approved by all authors, that ethics approval and written informed consent have been obtained, and explain whether any author has a conflict of interest.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own Information for Authors for article charges and scope",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

@@ -243,3 +243,27 @@ def test_rules_for_things_the_paper_does_not_have_pass():
                                    {"type": "section_present", "section": "supplementary"},
                                    {"type": "captions_placement", "value": "in_text", "kind": "figure"}))
     assert [r["status"] for r in res] == ["PASS", "PASS", "FIX"]
+
+
+def test_line_numbers_turned_off_when_journal_says_no(tmp_path):
+    import zipfile
+    from docx import Document
+    from lxml import etree
+    src = tmp_path / "in.docx"
+    d = Document()
+    d.add_paragraph("Some text.")
+    sect = d.sections[0]._sectPr
+    ln = etree.SubElement(sect, "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}lnNumType")
+    ln.set("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}countBy", "1")
+    d.save(str(src))
+    req = {"requirements": [{"id": "ln", "check": {"type": "line_numbers", "value": False}}]}
+    out = tmp_path / "out.docx"
+    done = prepare.format_docx(src, req, out)
+    assert "Turned off line numbers" in done
+    assert b"lnNumType" not in zipfile.ZipFile(out).read("word/document.xml")
+    tex = tmp_path / "main.tex"
+    tex.write_text("\\documentclass{article}\n\\usepackage{lineno}\n\\begin{document}\n\\linenumbers\nHi.\n\\end{document}\n")
+    tout = tmp_path / "main_fmt.tex"
+    done = prepare.format_tex(tex, req, tout)
+    assert any("Turned off line numbers" in x for x in done)
+    assert "% \\linenumbers" in tout.read_text()

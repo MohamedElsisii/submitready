@@ -1,0 +1,34 @@
+# A family: Spandidos Publications journals share one set of submission guidelines.
+name: "Spandidos Publications journals"
+publisher: "Spandidos Publications"
+journals:
+  - "International Journal of Molecular Medicine"
+  - "International Journal of Oncology"
+  - "Experimental and Therapeutic Medicine"
+  - "Molecular and Clinical Oncology"
+  - "World Academy of Sciences Journal"
+  - "Molecular Medicine Reports"
+  - "Oncology Reports"
+  - "Biomedical Reports"
+  - "Oncology Letters"
+  - "International Journal of Functional Nutrition"
+  - "International Journal of Epigenetics"
+  - "Medicine International"
+match:
+  publisher: ["Spandidos Publications", "Spandidos"]
+  url_pattern: "^https?://(www\\.)?spandidos-publications\\.com/"
+  journal_page: "https://www.spandidos-publications.com/pages/info_for_authors_<journal-code>"
+guidelines:
+  url: "https://www.spandidos-publications.com/var/SubmissionGuidelines.pdf"
+  checked: "2026-11-25"
+requirements_snapshot: "journals/requirements/spandidos.2026-11-25.json (Research article)"
+journal_specific:
+  - "Article processing charges, on the journal's Information for Authors page"
+  - "Scope and accepted article types"
+known_quirks:
+  - text: "Spandidos asks for no page numbers and no line numbers, unlike most journals. SubmitReady turns them off in the upload copy only."
+    source: "https://www.spandidos-publications.com/var/SubmissionGuidelines.pdf"
+    checked: "2026-11-25"
+  - text: "Tables go in separate Word files, labelled with Roman numerals (Table I, Table II)."
+    source: "https://www.spandidos-publications.com/var/SubmissionGuidelines.pdf"
+    checked: "2026-11-25"

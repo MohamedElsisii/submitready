@@ -737,6 +737,9 @@ def format_tex(src: Path, req: dict, out: Path) -> list[str]:
         if not re.search(r"^[^%\n]*\\linenumbers\b", rest, re.M):
             rest = rest.replace("\\begin{document}", "\\begin{document}\n\\linenumbers % added by SubmitReady", 1)
         done.append("Turned on line numbers (lineno package)")
+    elif "line_numbers" in wanted and re.search(r"^[^%\n]*\\linenumbers\b", rest, re.M):
+        rest = re.sub(r"^([^%\n]*)\\linenumbers\b", r"\1% \\linenumbers % turned off by SubmitReady", rest, count=1, flags=re.M)
+        done.append("Turned off line numbers (commented out \\linenumbers)")
     if "line_spacing" in wanted:
         v = wanted["line_spacing"]["value"]
         cmd = {1.0: "\\singlespacing", 1.5: "\\onehalfspacing", 2.0: "\\doublespacing"}.get(v)
@@ -794,6 +797,14 @@ def format_docx(src: Path, req: dict, out: Path) -> list[str]:
                     added += 1
             if added:
                 done.append("Turned on continuous line numbers")
+        elif "line_numbers" in wanted:                       # the journal asks for no line numbers
+            removed = 0
+            for s in doc.iter(q("sectPr")):
+                for ln in s.findall(q("lnNumType")):
+                    s.remove(ln)
+                    removed += 1
+            if removed:
+                done.append("Turned off line numbers")
         if "line_spacing" in wanted and styles is not None:
             target = int(round(wanted["line_spacing"]["value"] * 240))
             for sp in doc.iter(q("spacing")):
