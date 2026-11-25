@@ -82,3 +82,10 @@ def test_chemistry_and_spandidos_families():
     assert families.find("Journal of Chemical Information and Modeling", "American Chemical Society")["file"].endswith("acs.yaml")
     assert families.find("RSC Advances", "Royal Society of Chemistry (RSC)")["file"].endswith("rsc.yaml")
     assert families.find("Oncology Letters")["file"].endswith("spandidos.yaml")
+
+
+def test_open_access_families():
+    assert families.find("Theranostics")["file"].endswith("ivyspring.yaml")
+    assert families.find("Oncotarget")["file"].endswith("impact-journals.yaml")
+    assert families.find("PNAS")["file"] == "journals/pnas.yaml"
+    assert families.find("eLife")["file"] == "journals/elife.yaml"

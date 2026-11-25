@@ -1,0 +1,152 @@
+{
+ "journal": "Ivyspring International Publisher journals (shared instructions)",
+ "article_type": "Research paper",
+ "snapshot_note": "Rules that the Theranostics and International Journal of Biological Sciences instructions both state. Keywords, the abstract format, fees and integrity reports differ by journal: SubmitReady reads the journal's own instructions on every run.",
+ "sources": [
+  {
+   "name": "Theranostics: Instructions for Authors",
+   "url": "https://www.thno.org/ms/author",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "International Journal of Biological Sciences: Instructions for Authors",
+   "url": "https://www.ijbs.com/ms/author",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Numbered references in square brackets; Ivyspring offers an EndNote style named 'ivyspring' that applies to all its journals."
+ },
+ "requirements": [
+  {
+   "id": "single-pdf",
+   "rule": "First submission: one PDF with all figures and tables embedded",
+   "quote": "Please embed all figures and tables within the manuscript to create a single file for submission in PDF.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "max-refs",
+   "rule": "At most 200 references",
+   "quote": "The number of references must not exceed 200 for any type of article, including reviews.",
+   "source": 0,
+   "check": {
+    "type": "max_count",
+    "target": "references",
+    "value": 200
+   }
+  },
+  {
+   "id": "citations",
+   "rule": "References numbered and cited as [1,2]",
+   "quote": "In the manuscript text, references should be cited by number, e.g., [1,2], and inserted before punctuation, with a space between the preceding word and the citation (e.g., “… as previously observed [4-7].”).",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric, square brackets"
+   }
+  },
+  {
+   "id": "no-unpublished",
+   "rule": "No personal communications, unpublished observations or conference abstracts in the references",
+   "quote": "Personal communications, unpublished observations, conference abstracts, or conference papers should not be included as references.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abbreviations",
+   "rule": "Abbreviations in one paragraph as 'term: definition;'",
+   "quote": "Abbreviations should be presented in a single paragraph in the format: \"term: definition.\" Separate items with a semicolon.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "'Competing Interests' paragraph after the Acknowledgments and before the References",
+   "quote": "Competing interests (also known as \"conflicts of interest\") that may influence the objective presentation of research findings should be disclosed in a paragraph titled \"Competing Interests,\" placed after the Acknowledgments section and before the References.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "no-coi-wording",
+   "rule": "If none: 'The authors have declared that no competing interests exist.'",
+   "quote": "If no conflicts exist, please state: \"The authors have declared that no competing interests exist.\"",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai",
+   "rule": "AI use disclosed in the Acknowledgements and described in the Methods",
+   "quote": "In accordance with COPE and the TITAN Guideline Checklist 2025, the use of any AI tool (such as ChatGPT) for writing, image generation, data collection, or analysis must be fully disclosed in the Acknowledgements section, while the Materials and Methods section should specify which tool was used, how it was applied, and which parts of the manuscript were affected.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supp-labels",
+   "rule": "Supplementary items labelled Table S1, Figure S1",
+   "quote": "Supplementary tables and figures should be identified with an \"S\": Table S1, Figure S1, etc.",
+   "source": 0,
+   "check": {
+    "type": "supp_label_style",
+    "value": "Table S1"
+   }
+  },
+  {
+   "id": "figures",
+   "rule": "Figures at 600 dpi; at publication a PDF of all figures and PNG files in one ZIP",
+   "quote": "Images should have a resolution of 600 dpi and be of high quality, with all text clear and legible.",
+   "source": 0,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "png"
+    ],
+    "dpi_min": 600
+   }
+  },
+  {
+   "id": "no-urls",
+   "rule": "Avoid web links and URLs in the manuscript",
+   "quote": "We strongly discourage mentioning or citing web links/URLs in your manuscript, as web addresses are frequently changed by their owners.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "word-final",
+   "rule": "Final files in Microsoft Word only, no LaTeX",
+   "quote": "Please note that we can only accept Microsoft Word files and cannot process LaTeX or TeX files.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own instructions for keywords, abstract format, fee and integrity reports",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

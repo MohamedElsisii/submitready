@@ -1,0 +1,32 @@
+# A family: Ivyspring International Publisher journals share one instructions template.
+name: "Ivyspring journals"
+publisher: "Ivyspring International Publisher"
+journals:
+  - "Theranostics"
+  - "International Journal of Biological Sciences"
+  - "International Journal of Medical Sciences"
+  - "Journal of Cancer"
+  - "Nanotheranostics"
+match:
+  publisher: ["Ivyspring International Publisher", "Ivyspring"]
+  url_pattern: "^https?://(www\\.)?(thno\\.org|ijbs\\.com|medsci\\.org|jcancer\\.org|ntno\\.org)/"
+  journal_page: "https://<journal-site>/ms/author"
+guidelines:
+  url: "https://www.thno.org/ms/author"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://www.ijbs.com/ms/author"
+requirements_snapshot: "journals/requirements/ivyspring.2026-11-25.json (Research paper)"
+journal_specific:
+  - "Keywords (Theranostics: 5; International Journal of Biological Sciences: 3 to 6)"
+  - "Abstract (Theranostics: structured with Methods, Results and Conclusions; International Journal of Biological Sciences: under 200 words, one paragraph, no subtitles)"
+  - "Publication fee (Theranostics: AUD 5000; International Journal of Biological Sciences: AUD 5500, both only after acceptance)"
+  - "Theranostics asks for a text similarity report, an AI-writing detection report and an image screening report"
+  - "International Journal of Biological Sciences does not consider studies that use a single cell line only, and asks for line and page numbers and at least six suggested reviewers"
+known_quirks:
+  - text: "Author names must be written first name first (e.g. 'Mike Johnson', not 'Johnson M.')."
+    source: "https://www.thno.org/ms/author"
+    checked: "2026-11-25"
+  - text: "Ivyspring's EndNote style 'ivyspring' applies to all its journals."
+    source: "https://www.thno.org/ms/author"
+    checked: "2026-11-25"

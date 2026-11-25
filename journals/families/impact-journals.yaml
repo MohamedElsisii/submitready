@@ -1,0 +1,26 @@
+# A family: Impact Journals (Oncotarget, Aging, Oncoscience, Genes & Cancer) share one set of instructions.
+name: "Impact Journals"
+publisher: "Impact Journals (Rapamycin Press)"
+journals:
+  - "Oncotarget"
+  - "Aging"
+  - "Aging (Albany NY)"
+  - "Oncoscience"
+  - "Genes & Cancer"
+match:
+  publisher: ["Impact Journals", "Impact Journals LLC", "Rapamycin Press"]
+  url_pattern: "^https?://(www\\.)?(oncotarget\\.com|aging-us\\.com|impactaging\\.com)/"
+  journal_page: "https://www.oncotarget.com/editorial-policies/"
+guidelines:
+  url: "https://www.oncotarget.com/editorial-policies/"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://www.aging-us.com/editorial-policies"
+requirements_snapshot: "journals/requirements/impact-journals.2026-11-25.json (Research paper)"
+journal_specific:
+  - "Article processing charge"
+  - "Scope (Aging: research on aging and age-related disease)"
+known_quirks:
+  - text: "The conflict of interest statement goes on the title page, even when there is nothing to declare."
+    source: "https://www.oncotarget.com/editorial-policies/"
+    checked: "2026-11-25"

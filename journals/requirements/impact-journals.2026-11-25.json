@@ -1,0 +1,155 @@
+{
+ "journal": "Impact Journals (Oncotarget, Aging) shared instructions",
+ "article_type": "Research paper",
+ "snapshot_note": "Rules that the Oncotarget and Aging instructions state word for word. Fees and scope differ: SubmitReady reads the journal's own page on every run.",
+ "sources": [
+  {
+   "name": "Oncotarget: Editorial policies and instructions",
+   "url": "https://www.oncotarget.com/editorial-policies/",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "Aging: Editorial policies and instructions",
+   "url": "https://www.aging-us.com/editorial-policies",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Impact Journals house style; check the journal page for the reference format."
+ },
+ "requirements": [
+  {
+   "id": "file",
+   "rule": "Manuscript as a Word file (doc or docx)",
+   "quote": "Manuscript files: Word, WordPerfect (doc or docx).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "keywords",
+   "rule": "Exactly 5 keywords",
+   "quote": "Research papers should contain the following sections in this order: Title, Authors, Affiliations, Contact Information, Keywords (5), Abstract, Introduction, Results, Discussion, Methods or Materials and Methods, Abbreviations, Author Contributions, Acknowledgments, Conflicts of Interest, Funding, References.",
+   "source": 0,
+   "check": {
+    "type": "keywords",
+    "min": 5,
+    "max": 5
+   }
+  },
+  {
+   "id": "order",
+   "rule": "Sections in order: Abstract, Introduction, Results, Discussion, Methods, Abbreviations, Author Contributions, Acknowledgments, Conflicts of Interest, Funding, References",
+   "quote": "Research papers should contain the following sections in this order: Title, Authors, Affiliations, Contact Information, Keywords (5), Abstract, Introduction, Results, Discussion, Methods or Materials and Methods, Abbreviations, Author Contributions, Acknowledgments, Conflicts of Interest, Funding, References.",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "abstract",
+     "introduction",
+     "results",
+     "discussion",
+     "methods",
+     "abbreviations",
+     "contributions",
+     "acknowledgements",
+     "competing",
+     "funding",
+     "references"
+    ],
+    "optional": [
+     "abbreviations",
+     "acknowledgements"
+    ]
+   }
+  },
+  {
+   "id": "coi",
+   "rule": "Conflict of interest statement, even if there are none",
+   "quote": "The authors are responsible for providing a detailed conflict of interest statement on the title page of their submission, even if there are no conflicts to disclose.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "funding",
+   "rule": "Funding section",
+   "quote": "Research papers should contain the following sections in this order: Title, Authors, Affiliations, Contact Information, Keywords (5), Abstract, Introduction, Results, Discussion, Methods or Materials and Methods, Abbreviations, Author Contributions, Acknowledgments, Conflicts of Interest, Funding, References.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "funding"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author Contributions section",
+   "quote": "Research papers should contain the following sections in this order: Title, Authors, Affiliations, Contact Information, Keywords (5), Abstract, Introduction, Results, Discussion, Methods or Materials and Methods, Abbreviations, Author Contributions, Acknowledgments, Conflicts of Interest, Funding, References.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "contributions"
+   }
+  },
+  {
+   "id": "ethics",
+   "rule": "Ethical Statement for human or animal work; Consent for case reports and clinical papers",
+   "quote": "Research papers involving animal work should contain the following section: Ethical Statement",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "llm",
+   "rule": "LLM use documented in the Methods",
+   "quote": "Researchers must document the use of LLMs in the Methods section of their manuscripts, or in an appropriate alternative section if a Methods section is not available.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai-images",
+   "rule": "No AI-generated images, with narrow exceptions",
+   "quote": "While these issues are still being resolved, the use of AI-generated images and videos in publications is generally not permitted unless the images are obtained from agencies with whom we have contractual agreements and are created in a legally acceptable manner.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "microarray",
+   "rule": "Microarray data MIAME compliant and deposited",
+   "quote": "Reports on microarray experiments should follow the MIAME guidelines published by the Functional Genomics Data Society (FGED), and the data from the experiments must be deposited in a publicly accessible database.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "co-authors",
+   "rule": "Names, affiliations and real emails for all co-authors in the submission system",
+   "quote": "In the submission system, please provide names, affiliations, and real emails for ALL co-authors.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for fees and scope",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}
