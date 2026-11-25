@@ -215,3 +215,96 @@ def test_keyword_pairs_are_searched():
     import urllib.parse
     searches = [urllib.parse.unquote(s) for s in searches]
     assert "Breast Cancer DNA Methylation" in searches and "DNA Methylation Machine Learning" in searches
+
+
+# ---- fixes from the first real run (Sisi, 2026-11-25) ----
+
+@pytest.mark.parametrize("title,expected", [
+    ("374P Immunological and clinical aspects determining the risk of recurrence", True),
+    ("1378P Biopsy-based basal-luminal subtyping classifier", True),
+    ("1234PD Survival after surgery", True),
+    ("P1-01-02 Circulating tumour DNA in early breast cancer", True),
+    ("LBA12 A randomised trial", True),
+    ("TPS1101: Trial in progress", True),
+    ("e13001 Real-world outcomes", True),
+    ("Abstract 512: Methylation clocks", True),
+    ("3D genome organization in breast cancer", False),
+    ("S100A4 promotes metastasis", False),
+    ("PD-1 blockade in triple-negative breast cancer", False),
+    ("P21-activated kinase signalling", False),
+    ("2024 update on breast cancer screening", False),
+    ("Multi-omic machine learning predictor of breast cancer therapy response", False),
+])
+def test_meeting_abstracts_are_recognised(title, expected):
+    assert match.meeting_abstract(title) is expected
+
+
+def _source(name, oa, n2y, listed=("medline",)):
+    return {"display_name": name, "issn_l": "", "issn": [], "type": "journal", "is_oa": oa, "is_in_doaj": oa,
+            "apc_usd": 2000, "listed_in": list(listed), "works_count": 5000, "last_publication_year": 2026,
+            "summary_stats": {"2yr_mean_citedness": 2.0}, "host_organization_name": "Pub"}, n2y
+
+
+class WideNet(FakeNet):
+    """40 open-access journals rank first; the only hybrid ones come after them."""
+
+    def __init__(self, extra=None):
+        self.src = {f"O{i}": _source(f"Open {i}", True, 300) for i in range(40)}
+        self.src["H1"] = _source("Hybrid Deep", False, 300)
+        self.src["H2"] = _source("Hybrid Giant", False, 8000)
+        self.src.update(extra or {})
+
+    def json(self, url):
+        if "/works?search=" in url:
+            ws, n = [], 0
+            for i in range(40):
+                for _ in range(3):
+                    ws.append(work(n, f"O{i}", f"Open {i}"))
+                    n += 1
+            ws += [work(1000 + k, "H2", "Hybrid Giant") for k in range(3)]
+            ws += [work(2000 + k, "H1", "Hybrid Deep") for k in range(2)]
+            ws += [work(3000 + k, "H1", "Hybrid Deep", f"{374 + k}P A conference abstract") for k in range(5)]
+            return {"results": ws}
+        if "/sources/" in url:
+            return self.src.get(url.rsplit("/", 1)[-1], (None,))[0]
+        if "group_by=oa_status" in url:
+            sid = url.split("primary_location.source.id:")[1].split(",")[0]
+            oa, n2y = self.src[sid][0]["is_oa"], self.src[sid][1]
+            return {"group_by": [{"key": "gold" if oa else "hybrid", "count": n2y}]}
+        return super().json(url)
+
+
+def test_search_widens_past_open_journals_and_counts_add_up(paper):
+    d = match.find(paper, WideNet(), access="subscription", review_times=False)
+    names = [j["name"] for j in d["journals"]]
+    assert {"Hybrid Deep", "Hybrid Giant"} <= set(names)
+    se = d["searched"]
+    assert se["journals_checked"] > 30
+    assert sum(se["left_out"].values()) == len(d["left_out"]) == 40
+    assert se["left_out"] == {"fully open access": 40}
+    md = match.table(d)
+    assert "Journals checked: 42. Passed your filters: 2. Left out: 40 (40 fully open access)." in md
+    assert "Only 2 journals passed" in md and "and 30 more" in md
+
+
+def test_abstracts_do_not_count_and_big_journals_do_not_win_on_volume(paper):
+    d = match.find(paper, WideNet(), access="subscription", review_times=False)
+    deep = next(j for j in d["journals"] if j["name"] == "Hybrid Deep")
+    assert deep["similar_papers"] == 2                             # the 5 conference abstracts are not counted
+    assert [j["name"] for j in d["journals"]][0] == "Hybrid Deep"  # 2 papers in 300 beat 3 in 8,000
+
+
+def test_quartile_range_and_basis(paper):
+    def j(best, cats):
+        return {"access": "Hybrid", "listed_in": [], "scimago": {"quartile": best, "categories": cats}}
+    bcrt = j("Q1", "Oncology (Q1); Cancer Research (Q2)")
+    only_q1 = j("Q1", "Oncology (Q1)")
+    q3 = j("Q3", "Genetics (Q3)")
+    rng = {"min_quartile": "Q3", "max_quartile": "Q2"}
+    assert "outside your range Q2 to Q3" in match.apply_filters(bcrt, "any", None, False, **rng)
+    assert match.apply_filters(bcrt, "any", None, False, **rng, quartile_basis="any") == ""
+    assert match.apply_filters(only_q1, "any", None, False, **rng, quartile_basis="any") != ""
+    assert match.apply_filters(q3, "any", None, False, **rng) == ""
+    assert match.apply_filters(q3, "any", None, False, min_quartile="Q2") != ""
+    assert match._quartile_text({"min_quartile": "Q3", "max_quartile": "Q2", "quartile_basis": "any"}) == \
+        ", SJR Q2 to Q3 (any subject category)"

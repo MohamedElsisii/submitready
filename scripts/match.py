@@ -37,6 +37,7 @@ import statistics
 import sys
 import time
 import urllib.parse
+from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
 
@@ -53,6 +54,8 @@ STOP = set("""a an and the of in on for to with by from as at or is are was were
 using use based via into their its our we study analysis approach new novel role towards toward between among
 than within without under over through effect effects""".split())
 SHOWN, KEPT = 5, 10
+MAX_CHECKED = 90  # journals looked up before the search stops widening
+SIZE_UNIT = 500  # items in 2 years; journals larger than this get the size correction
 COMPUTATIONAL = ["in silico", "computational", "docking", "molecular dynamics", "simulation", "alphafold",
                  "structure prediction", "modeling", "modelling", "machine learning", "deep learning", "bioinformatic"]
 METHOD_QUERY = '("in silico" OR docking OR "molecular dynamics" OR computational OR simulation)'
@@ -150,6 +153,20 @@ def _terms(text: str, n: int = 12) -> list[str]:
     return out[:n]
 
 
+# Conference abstracts printed in journal supplements carry numbers in front of the title:
+# "374P ...", "1234PD ...", "P1-01-02 ...", "LBA12 ...", "TPS1101 ...", "e13001 ...", "Abstract 512: ...".
+# Gene and protein names ("3D genome", "S100A4", "PD-1", "P21-activated") must not match.
+MEETING_ABSTRACT = re.compile(
+    r"^\s*(?:\d{1,5}(?:P|PD|MO|O|TiP|eP)"
+    r"|(?:P|PS|PD|GS|OT|SS|PO)\d{1,2}-\d{1,3}(?:-\d{1,3})?"
+    r"|(?:LBA|TPS|Abstract)\s?\d{1,5}"
+    r"|e\d{4,6})\s*[:.]?\s+\S")
+
+
+def meeting_abstract(title: str) -> bool:
+    return bool(MEETING_ABSTRACT.match(title))
+
+
 # ---------------------------------------------------------------- candidates
 def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
     """Papers like this one. First the precise searches (title; keywords together; or, without keywords,
@@ -178,7 +195,7 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
 
     def run(qtext, w_query, per_page, field_filter=""):
         url = (f"{OPENALEX}/works?search={urllib.parse.quote(qtext)}"
-               f"&filter=from_publication_date:{since},type:{kind}{field_filter}&per-page={per_page}"
+               f"&filter=from_publication_date:{since},type:{kind},is_paratext:false{field_filter}&per-page={per_page}"
                f"&select=id,title,primary_location,publication_year,primary_topic"
                + (f"&mailto={urllib.parse.quote(net.email)}" if net.email else ""))
         data = net.json(url) or {}
@@ -192,6 +209,8 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
             src = ((w.get("primary_location") or {}).get("source") or {})
             if not (src.get("id") and src.get("type") == "journal"):
                 continue
+            if meeting_abstract(w.get("title") or ""):
+                continue  # a conference abstract in a supplement says little about the journal's papers
             weight = w_query / (1 + rank / 25)
             if not field_filter:
                 f = (((w.get("primary_topic") or {}).get("field") or {}).get("id") or "").rsplit("/", 1)[-1]
@@ -252,6 +271,7 @@ def journal_facts(sid: str, net: Net) -> dict | None:
         "type": s.get("type"), "works_count": s.get("works_count", 0),
         "last_publication_year": s.get("last_publication_year"),
         "access": access, "fee_usd": apc, "open_share_2y": round(open_share, 2),
+        "recent_works_2y": sum(groups.values()),
         "medline": "medline" in listed, "listed_in": sorted(listed),
         "citations_2y_mean": (s.get("summary_stats") or {}).get("2yr_mean_citedness"),
         "h_index": (s.get("summary_stats") or {}).get("h_index"),
@@ -288,8 +308,19 @@ def screen(j: dict) -> str:
     return ""
 
 
+def _quartiles(j: dict, basis: str) -> list[int]:
+    """The journal's SJR quartiles as numbers: its best one, or one per subject category."""
+    sj = j.get("scimago") or {}
+    if basis == "any":
+        found = [int(q) for q in re.findall(r"\(Q([1-4])\)", sj.get("categories") or "")]
+        if found:
+            return found
+    q = sj.get("quartile") or ""
+    return [int(q[1])] if q else []
+
+
 def apply_filters(j: dict, access: str, max_fee: float | None, medline: bool, scopus: bool = False,
-                  min_quartile: str = "") -> str:
+                  min_quartile: str = "", max_quartile: str = "", quartile_basis: str = "best") -> str:
     a = j["access"].lower()
     if access == "open" and not a.startswith("fully open"):
         return "not fully open access"
@@ -303,13 +334,30 @@ def apply_filters(j: dict, access: str, max_fee: float | None, medline: bool, sc
         return "not indexed in MEDLINE"
     if scopus and "scopus" not in j.get("listed_in", []):
         return "not active in Scopus (or the Scopus Source List was not added)"
-    if min_quartile:
-        q = (j.get("scimago") or {}).get("quartile") or ""
-        if not q:
+    if min_quartile or max_quartile:
+        qs = _quartiles(j, quartile_basis)
+        if not qs:
             return "no SJR quartile found (or the SCImago file was not added)"
-        if int(q[1]) > int(min_quartile[1]):
-            return f"SJR best quartile {q} is below {min_quartile}"
+        lo, hi = int((min_quartile or "Q4")[1]), int((max_quartile or "Q1")[1])
+        if not any(hi <= q <= lo for q in qs):
+            what = "best quartile" if quartile_basis == "best" else "quartiles"
+            shown = ", ".join(f"Q{q}" for q in sorted(set(qs)))
+            return f"SJR {what} {shown} outside your range Q{hi} to Q{lo}"
     return ""
+
+
+def reason_group(reason: str) -> str:
+    """A short label for counting why journals were left out."""
+    r = reason.lower()
+    for key, label in (("you asked for subscription", "fully open access"), ("not fully open", "not fully open access"),
+                       ("not a hybrid", "not hybrid"), ("publication fee", "fee over your maximum"),
+                       ("medline", "not in MEDLINE"), ("discontinued", "discontinued by Scopus"),
+                       ("scopus", "not active in Scopus"), ("quartile", "SJR quartile outside your range"),
+                       ("legitimate", "could not be confirmed as legitimate"), ("no longer", "no longer publishing"),
+                       ("too few", "too few papers"), ("not a journal", "not a journal")):
+        if key in r:
+            return label
+    return reason
 
 
 # ---------------------------------------------------------------- review time
@@ -378,7 +426,8 @@ def _parse_date(v) -> date | None:
 
 # ---------------------------------------------------------------- find
 def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None, medline: bool = False,
-         prefer: str = "fit", review_times: bool = True, scopus: bool = False, min_quartile: str = "") -> dict:
+         prefer: str = "fit", review_times: bool = True, scopus: bool = False, min_quartile: str = "",
+         max_quartile: str = "", quartile_basis: str = "best") -> dict:
     p = profile(path)
     works = similar_works(p, net)
     score: dict[str, float] = {}
@@ -389,12 +438,14 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
         count[w["source"]] = count.get(w["source"], 0) + 1
         examples.setdefault(w["source"], []).append(w["title"])
     ranked = sorted(score, key=lambda s: -score[s])
-    # a single similar paper is weak evidence; use those journals only when there are too few others
-    if sum(1 for s in ranked if count[s] >= 2) >= KEPT:
-        ranked = [s for s in ranked if count[s] >= 2]
-    ranked = ranked[:30]
-    kept, left_out = [], []
-    for sid in ranked:
+    # a single similar paper is weak evidence: those journals come last, and only while the list is short
+    strong = [s for s in ranked if count[s] >= 2]
+    weak = [s for s in ranked if count[s] < 2]
+    kept, left_out, checked = [], [], 0
+    for sid in strong + weak:
+        if checked >= MAX_CHECKED or (count[sid] < 2 and len(kept) >= KEPT):
+            break
+        checked += 1
         try:
             j = journal_facts(sid, net)
         except Exception:
@@ -406,13 +457,14 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
             if m is not None:
                 j["medline"] = m
                 j["medline_source"] = "NLM Catalog (currently indexed)"
-        why = screen(j) or apply_filters(j, access, max_fee, medline, scopus, min_quartile)
+        why = screen(j) or apply_filters(j, access, max_fee, medline, scopus, min_quartile, max_quartile, quartile_basis)
         if why:
             left_out.append({"name": j["name"], "reason": why})
             continue
-        # mild size correction: a focused journal with 8 similar papers can outrank a giant with 17
-        size = max(1.0, (j.get("works_count") or 0) / 10000)
-        j["fit_score"] = round(score[sid] / size ** 0.25, 2)
+        # size correction by recent output: a focused journal with 7 similar papers should outrank a
+        # journal that prints thousands of items a year and happened to carry 5 like this one
+        size = max(1.0, (j.get("recent_works_2y") or 0) / SIZE_UNIT)
+        j["fit_score"] = round(score[sid] / size ** 0.5, 2)
         j["similar_papers"] = count[sid]
         j["similar_examples"] = [t for t in examples[sid][:3] if t]
         kept.append(j)
@@ -437,7 +489,10 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
     return {"tool": "SubmitReady journal finder", "manuscript": path.name, "checked": date.today().isoformat(),
             "profile": {k: p.get(k, "") for k in ("title", "keywords", "article_type", "approach", "fields")},
             "filters": {"access": access, "max_fee_usd": max_fee, "medline": medline, "prefer": prefer,
-                        "scopus": scopus, "min_quartile": min_quartile},
+                        "scopus": scopus, "min_quartile": min_quartile, "max_quartile": max_quartile,
+                        "quartile_basis": quartile_basis},
+            "searched": {"journals_checked": checked, "passed": len(kept),
+                         "left_out": dict(Counter(reason_group(x["reason"]) for x in left_out).most_common())},
             "lists": {k: {kk: (journaldata.load(k) or {}).get(kk) for kk in ("file", "year", "edition", "added")}
                       for k in ("scimago", "scopus") if journaldata.load(k)},
             "method": "Journals that published the most similar papers in the last 5 years (OpenAlex), "
@@ -500,6 +555,14 @@ def _fact(j: dict, field: str) -> str:
     return f"{f['value']}" + (f" ({f['year']})" if f.get("year") else "") + f" [source]({f['source']})"
 
 
+def _quartile_text(f: dict) -> str:
+    lo, hi = f.get("min_quartile"), f.get("max_quartile")
+    if not (lo or hi):
+        return ""
+    rng = f"Q{(hi or 'Q1')[1]} to Q{(lo or 'Q4')[1]}"
+    return f", SJR {rng} ({'any subject category' if f.get('quartile_basis') == 'any' else 'best quartile'})"
+
+
 def table(data: dict, show_all: bool = False) -> str:
     p = data["profile"]
     L = [f"# Journals for {data['manuscript']}", "",
@@ -507,7 +570,7 @@ def table(data: dict, show_all: bool = False) -> str:
     f = data["filters"]
     L.append(f"Your filters: access {f['access']}, maximum fee {f['max_fee_usd'] or 'none'}"
              f"{', MEDLINE only' if f['medline'] else ''}{', Scopus only' if f.get('scopus') else ''}"
-             f"{', quartile ' + f['min_quartile'] + ' or better' if f.get('min_quartile') else ''}, sorted by {f['prefer']}.")
+             f"{_quartile_text(f)}, sorted by {f['prefer']}.")
     L.append("")
     rows = [j for j in data["journals"] if show_all or j["status"] in ("suggested", "chosen")]
     L += ["| # | Journal | Fit | Impact factor (as the journal states it) | Mean citations per paper, 2 years (OpenAlex) "
@@ -544,8 +607,19 @@ def table(data: dict, show_all: bool = False) -> str:
     reserve = sum(1 for j in data["journals"] if j["status"] == "reserve")
     if reserve and not show_all:
         L += [f"{reserve} more journals are kept in reserve for after a rejection.", ""]
+    se = data.get("searched")
+    if se:
+        counts = "; ".join(f"{n} {why}" for why, n in se["left_out"].items())
+        L += ["## Search", "",
+              f"- Journals checked: {se['journals_checked']}. Passed your filters: {se['passed']}. "
+              f"Left out: {sum(se['left_out'].values())}" + (f" ({counts})." if counts else "."), ""]
+        if se["passed"] < SHOWN:
+            L += [f"- Only {se['passed']} journal{'s' if se['passed'] != 1 else ''} passed. The filters that removed the most "
+                  "are listed first above; loosening one of them gives a longer list.", ""]
     if data.get("left_out"):
-        L += ["## Left out", ""] + [f"- {x['name']}: {x['reason']}" for x in data["left_out"][:10]] + [""]
+        more = len(data["left_out"]) - 10
+        L += ["## Left out", ""] + [f"- {x['name']}: {x['reason']}" for x in data["left_out"][:10]] + \
+             ([f"- and {more} more (all are in the list file)"] if more > 0 else []) + [""]
     L += ["## Please double-check", "",
           "- The impact factor shown is what the journal's own website states. The official figure is in "
           "Clarivate's Journal Citation Reports (through your library). Mean citations per paper (OpenAlex) "
@@ -578,7 +652,12 @@ def main(argv=None) -> int:
     a.add_argument("--medline", action="store_true")
     a.add_argument("--prefer", choices=["fit", "speed", "impact"], default="fit")
     a.add_argument("--scopus", action="store_true", help="only journals active in Scopus (needs the Scopus Source List)")
-    a.add_argument("--min-quartile", choices=["Q1", "Q2", "Q3", "Q4"], default="", help="needs the SCImago file")
+    a.add_argument("--min-quartile", choices=["Q1", "Q2", "Q3", "Q4"], default="",
+                   help="lowest quartile allowed, e.g. Q3 = Q1 to Q3 (needs the SCImago file)")
+    a.add_argument("--max-quartile", choices=["Q1", "Q2", "Q3", "Q4"], default="",
+                   help="highest quartile allowed, e.g. Q2 = no Q1 journals")
+    a.add_argument("--quartile-basis", choices=["best", "any"], default="best",
+                   help="best = the journal's best quartile; any = a quartile in any of its subject categories")
     a.add_argument("--email", default="")
     b = sub.add_parser("add")
     b.add_argument("list", type=Path)
@@ -599,7 +678,8 @@ def main(argv=None) -> int:
 
     if args.cmd == "find":
         data = find(args.manuscript, Net(args.email), args.access, args.max_fee, args.medline, args.prefer,
-                    scopus=args.scopus, min_quartile=args.min_quartile)
+                    scopus=args.scopus, min_quartile=args.min_quartile, max_quartile=args.max_quartile,
+                    quartile_basis=args.quartile_basis)
         args.out.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         print(table(data))
         return 0

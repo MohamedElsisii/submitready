@@ -21,18 +21,25 @@ Take what the arguments already say. Ask only for the rest, in one multiple-choi
 
 - Access model: any; fully open access (the authors pay a fee); subscription or hybrid (no fee to publish); hybrid only.
 - Maximum publication fee in USD, if open access is allowed (or no limit).
-- Indexing, as one choice: "Scopus, Q1 to Q3" (the most common university rule: `--scopus --min-quartile Q3`), "Scopus, Q1 or Q2", "MEDLINE", or "no rule". The quartile is the SJR quartile from SCImago, which is computed from Scopus data. Scopus and quartile filters need the two lists (step 0); without them, say the filter cannot be applied and offer to run without it.
+- Indexing, as one choice: "Scopus, Q1 to Q3" (the most common university rule: `--scopus --min-quartile Q3`), "Scopus, Q1 or Q2" (`--min-quartile Q2`), "Scopus, Q2 or Q3 only" (`--min-quartile Q3 --max-quartile Q2`), "MEDLINE", or "no rule". The quartile is the SJR quartile from SCImago, which is computed from Scopus data. Scopus and quartile filters need the two lists (step 0); without them, say the filter cannot be applied and offer to run without it.
+- Only when a quartile range is chosen: does the rule go by the journal's best quartile (default), or does a quartile in any of its subject categories count (`--quartile-basis any`)? A journal can be Q1 in Oncology and Q2 in Cancer Research. If the user does not know, use the best quartile and say that the other reading exists.
 - Sort by: best fit (default), fastest review, or highest citation rate.
 
 ## 2. Search
 
-`python "${CLAUDE_PLUGIN_ROOT}/scripts/match.py" find <manuscript> --out <manuscript>.journals.json [--access any|open|subscription|hybrid] [--max-fee N] [--medline] [--scopus] [--min-quartile Q1|Q2|Q3] [--prefer fit|speed|impact]`
+`python "${CLAUDE_PLUGIN_ROOT}/scripts/match.py" find <manuscript> --out <manuscript>.journals.json [--access any|open|subscription|hybrid] [--max-fee N] [--medline] [--scopus] [--min-quartile Q1|Q2|Q3|Q4] [--max-quartile Q1|Q2|Q3|Q4] [--quartile-basis best|any] [--prefer fit|speed|impact]`
 
 Map "subscription or hybrid" to `--access subscription`. If the search fails (no internet), say so and stop.
 
+Every filter is a script option. Never filter, re-rank or count journals yourself. When the user asks for a rule the script has no option for, say so and offer the nearest option. Counts you report (journals checked, passed, left out and why) come only from the "Search" section of the table, word for word.
+
 ## 3. Read each suggested journal live (the 5 marked "suggested")
 
-For each one, read the journal's own pages with the built-in web fetch (for pages that need JavaScript, use Claude in Chrome as step 2 of the prepare skill describes) (the `scope_url_crossref` or `homepage` in the list file is a good start; the publisher's "aims and scope", "about" and "journal metrics" pages). Record every fact with:
+For each one, read the journal's own pages with the built-in web fetch (for pages that need JavaScript, use Claude in Chrome as step 2 of the prepare skill describes) (the `scope_url_crossref` or `homepage` in the list file is a good start; the publisher's "aims and scope", "about" and "journal metrics" pages).
+
+Some publisher sites (Elsevier often) refuse the built-in fetch. Then try, in order: Claude in Chrome, then a connected scraping tool such as Firecrawl (say that it bills per page). If a permission check blocks a tool, never work around it. Tell the user in one line which tool was blocked and give both ways forward: allow it (in Claude Code, `/permissions`) and run `/submitready:find` again, or paste the journal's aims and scope text into the chat. A pasted text is recorded with the journal's page address as its source and `--year` left out. Do all this once for all blocked journals, not once per journal.
+
+Record every fact with:
 
 `python "${CLAUDE_PLUGIN_ROOT}/scripts/match.py" add <manuscript>.journals.json <rank> --field <field> --value "<value>" --source <URL> [--year <year>]`
 
@@ -46,7 +53,9 @@ For each one, read the journal's own pages with the built-in web fetch (for page
 
 `python "${CLAUDE_PLUGIN_ROOT}/scripts/match.py" table <manuscript>.journals.json`
 
-Show the table and the "Why each journal fits" lines as they are, plus the "Please double-check" notes. Then ask once, as a multiple-choice question: which journal to prepare for (the 5 names), or "none, search again" (then ask what to change and go back to step 2).
+Show the table and the "Why each journal fits" lines as they are, plus the "Search" counts and the "Please double-check" notes. If the table says only a few journals passed, name the filter that removed the most and offer to loosen it.
+
+Then ask once which journal to prepare for. Every suggested journal must be a choice, plus "none, search again" (then ask what to change and go back to step 2). If the question tool cannot show that many choices, ask in plain text instead: "Reply with a number (1 to 5), or 'search again'." Never drop a journal to fit the question.
 
 ## 5. Prepare for the chosen journal
 
