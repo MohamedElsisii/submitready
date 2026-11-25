@@ -2,7 +2,7 @@
 """Build a realistic test manuscript (.docx) from an open-access article's JATS XML.
 
 For testing SubmitReady on real-sized papers. Use only openly licensed articles (for example
-CC BY preprints from Europe PMC) and keep the output in tests/private/, which is never committed.
+CC BY preprints from Europe PMC) and never commit the output (keep test files in tests/private/, which git ignores).
 
 Citation modes:
   zotero    live Zotero citations (Word fields with CSL JSON) and a live Zotero bibliography
@@ -10,7 +10,7 @@ Citation modes:
   numbered  typed citations like [1] and a typed numbered reference list
   authoryear typed citations like (Smith et al. 2020) and a typed alphabetical reference list
 
-    python tests/tools/jats_to_docx.py article.xml out.docx --mode zotero
+    python scripts/jats_to_docx.py article.xml out.docx --mode zotero
 """
 from __future__ import annotations
 
