@@ -103,3 +103,21 @@ def test_real_snapshots_have_checkable_sources():
         used = {int(r.get("source", 0)) for r in d["requirements"] if r.get("quote")}
         for i in used:
             assert d["sources"][i].get("url", "").startswith("http"), (f.name, i)
+
+
+def test_autolinks_and_link_text_match():
+    page = "See <https://doi.org/abc> and [https://doi.org/xyz](https://doi.org/xyz) here. After the [References](#s7) section."
+    body = F.norm(page)
+    assert F.quote_key("See https://doi.org/abc and https://doi.org/xyz here.") in body
+    assert F.quote_key("After the References section.") in body
+
+
+def test_a_requirements_file_can_be_checked_directly(tmp_path):
+    rq = tmp_path / "ms_journal.requirements.json"
+    rq.write_text(json.dumps({"journal": "J", "sources": [{"url": "https://example.org/g", "checked": "2026-11-25"}],
+                              "requirements": [{"id": "a", "rule": "r", "quote": "Use 10-point Times Roman.", "source": 0},
+                                               {"id": "b", "rule": "r", "quote": "A rule that is not there.", "source": 0}]}))
+    page = "Text formatting. Use a normal, plain font. Use 10-point Times Roman. " * 60
+    rep = F.run(files=[rq], fetcher=lambda url: F.Page(url, "ok-text", page))
+    r = rep["results"][0]
+    assert r["status"] == "changed" and r["found"] == 1 and r["missing"][0]["id"] == "b"

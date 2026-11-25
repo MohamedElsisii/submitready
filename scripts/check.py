@@ -205,6 +205,50 @@ def _vector_figure(f: Path, n, rule: dict | None, dest: Path, actions: list) -> 
     return row
 
 
+SPREADSHEET = {".csv", ".tsv", ".xls", ".xlsx", ".ods"}
+DOCUMENT = {".doc", ".docx", ".rtf", ".odt", ".ppt", ".pptx", ".pdf"}
+
+
+def supp_file_problems(files: list[Path], rule: dict | None) -> tuple[list[str], list[str]]:
+    """Supplementary file names and formats against the journal's rule.
+
+    rule: {"type": "supp_files", "name_pattern": regex on the file stem, "formats": {"spreadsheet": [...],
+    "text": [...]}}. Code and data files with no stated format are listed to check, never flagged."""
+    if not rule:
+        return [], []
+    probs, notes = [], []
+    pat = re.compile(rule["name_pattern"]) if rule.get("name_pattern") else None
+    fmts = rule.get("formats", {})
+    if pat:
+        bad = [f.name for f in files if not pat.search(f.stem)]
+        if bad:
+            ex = rule.get("name_example", "")
+            probs.append(f"{len(bad)} of {len(files)} supplementary files are not named as the journal asks"
+                         + (f" (for example {ex})" if ex else "") + f": {', '.join(bad[:4])}"
+                         + (f" and {len(bad) - 4} more" if len(bad) > 4 else ""))
+    other: Counter = Counter()
+    for f in files:
+        ext = f.suffix.lower()
+        kind = "spreadsheet" if ext in SPREADSHEET else "text" if ext in DOCUMENT else None
+        if ext == ".txt" and not re.match(r"(?i)(code|script|data)\b", f.stem):
+            kind = "text"
+        if kind and kind in fmts:
+            if ext.lstrip(".") not in fmts[kind]:
+                probs.append(f"{f.name}: {kind} files must be {' or '.join('.' + x for x in fmts[kind])}")
+        else:
+            other[ext or "(no extension)"] += 1
+    if other and fmts:
+        notes.append("Supplementary files with no format rule in the guidelines: "
+                     + ", ".join(f"{n} {e}" for e, n in sorted(other.items())) + ". These are usually accepted as they are")
+    return probs, notes
+
+
+def _rule_counts(res: list[dict], skip: set | None = None) -> str:
+    n = Counter(r["status"] for r in res if not r.get("covered_by") and r["id"] not in (skip or set()))
+    to_fix = n.get("FIX", 0) + n.get("AUTO", 0) + n.get("STYLE", 0)
+    return f"{n.get('PASS', 0)} pass, {to_fix} to fix, {n.get('CHECK', 0)} to check yourself"
+
+
 # ---------------------------------------------------------------- cross-references
 def _supp_labels_in_files(files: list[Path]) -> dict[str, str]:
     """Map 'Table S4' style labels to the file that holds them (by name, or inside .docx files)."""
@@ -295,6 +339,14 @@ def crossrefs(facts: dict, docx: Path, supp_files: list[Path] | None) -> list[di
             issues.append({"severity": "FIX", "item": s, "problem": "cited in the manuscript but no supplementary file contains it"})
         for s in sorted(set(have) - supp_mentioned):
             issues.append({"severity": "CHECK", "item": s, "problem": f"in {have[s]} but never cited in the manuscript"})
+        # Springer style: "Online Resource 3" in the text, a file named ESM_3
+        cited = {int(n) for n in re.findall(r"\bOnline Resources? (\d+)", text)}
+        files = {int(m.group(1)): f.name for f in supp_files for m in [re.match(r"ESM_(\d+)$", f.stem)] if m}
+        for n in sorted(cited - set(files)):
+            issues.append({"severity": "FIX", "item": f"Online Resource {n}",
+                           "problem": "cited in the manuscript but no supplementary file contains it (expected a file named ESM_" + str(n) + ")"})
+        for n in sorted(set(files) - cited):
+            issues.append({"severity": "CHECK", "item": files[n], "problem": f"Online Resource {n} is never cited in the manuscript"})
     return issues
 
 
@@ -422,7 +474,10 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
     facts = prepare.analyze(manuscript)
     res = prepare.check(facts, req)
     (rep / "checklist.md").write_text(prepare.checklist_markdown(facts, req, res), encoding="utf-8")
+    supp_rule = next((x for x in req["requirements"] if x.get("check", {}).get("type") == "supp_files"), None)
     for r in res:
+        if r.get("covered_by") or (supp_rule and r["id"] == supp_rule["id"]):
+            continue  # one fix listed once; supplementary files are checked with the folder below
         if r["status"] in ("FIX", "AUTO"):
             if r["id"] != "figure-files":
                 fix("word", f"{r['rule']} (found: {r['found']})", r.get("location", ""), r.get("quote", ""))
@@ -441,6 +496,8 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         elif r["status"] == "CHECK" and r["id"] != "figure-files":
             extra = f" {steps['plain']}" if r["id"] == "no-fields" and steps["plain"] else ""
             rule = r["rule"].rstrip()
+            if r.get("found") and not r["found"].startswith("could not measure"):
+                rule += f" (found: {r['found']})"
             checks.append((rule if not extra or rule.endswith((".", ":", "!", "?")) else rule + ".") + extra)
 
     # 3. references
@@ -524,7 +581,23 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         if renames:
             done.append(f"Renamed {len(renames)} supplementary file copies to the new labels (your originals keep their names)")
         supp_files = sorted(copied)
+    supp_line = "no supplementary folder given" if supp is None else "none in the folder"
+    if supp_files:
+        probs, notes = supp_file_problems(supp_files, supp_rule["check"] if supp_rule else None)
+        relabel_rule = any(x.get("check", {}).get("type") == "supp_label_style" for x in req["requirements"])
+        probs = [pr + (". SubmitReady renames the copies for you when you approve the supplementary label change"
+                       if relabel_rule and "not named as the journal asks" in pr else "") for pr in probs]
+        for pr in probs:
+            fix("supp", pr, "", supp_rule.get("quote", "") if supp_rule else "")
+        checks.extend(notes)
+        supp_line = f"{len(supp_files)} files" + (f", {len(probs)} problem{'s' if len(probs) != 1 else ''} with the journal's rules"
+                                                   if probs else (", names and formats match the journal's rules" if supp_rule else ""))
+    elif supp_rule and facts["supplementary_items"]:
+        checks.append(supp_rule["rule"])
     xr = crossrefs(facts, manuscript, supp_files)
+    if supp_files:
+        missing = [i for i in xr if "supplementary file" in i["problem"]]
+        supp_line += "; " + (f"{len(missing)} cited but not found" if missing else "all cited items are present")
     (rep / "crossrefs.md").write_text("# Cross-references\n\n" + ("\n".join(
         f"- {i['severity']}: {i['item']}: {i['problem']}" for i in xr) or "All figures, tables and supplementary items are numbered, cited and present.") + "\n", encoding="utf-8")
     for i in xr:
@@ -569,9 +642,10 @@ def run(manuscript: Path, lock_path: Path, req_path: Path, out: Path, figures: P
         "",
         f"- Text lock: **{lv['sentences_unchanged']:,} of {lv['sentences_locked']:,} sentences unchanged**"
         + (f"; the other {lv['sentences_approved']:,} changed only as you approved" if lv.get("sentences_approved") else ""),
-        f"- Journal rules: {Counter(r['status'] for r in res).get('PASS', 0)} of {len(res)} pass",
+        "- Journal rules: " + _rule_counts(res, {supp_rule["id"]} if supp_rule and supp_files else set()),
         f"- References: {len(ms.refs)} checked, {sev.get('error', 0)} errors, {sev.get('warning', 0)} warnings",
         f"- Figures: {len(rows)} files checked",
+        f"- Supplementary files: {supp_line}",
         "",
     ]
     if todo:

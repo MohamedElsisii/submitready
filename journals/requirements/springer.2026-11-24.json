@@ -67,7 +67,13 @@
    "quote": "Use a normal, plain font (e.g., 10-point Times Roman) for text.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "font",
+    "names": [
+     "Times New Roman",
+     "Times",
+     "Times Roman"
+    ],
+    "size": 10
    }
   },
   {
@@ -76,7 +82,8 @@
    "quote": "Please use no more than three levels of displayed headings.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "max_heading_levels",
+    "value": 3
    }
   },
   {
@@ -161,7 +168,8 @@
    "quote": "If available, please always include DOIs as full DOI links in your reference list (e.g. “https://doi.org/abc”).",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "doi_format",
+    "value": "link"
    }
   },
   {
@@ -219,7 +227,11 @@
    "quote": "No punctuation is to be included after the number, nor is any punctuation to be placed at the end of the caption.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "caption_style",
+    "label": "Fig.",
+    "bold": true,
+    "no_punct_after_number": true,
+    "no_end_punct": true
    }
   },
   {
@@ -246,7 +258,9 @@
    "quote": "Name the files consecutively, e.g. “ESM_3.mpg”, “ESM_4.pdf”.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "supp_files",
+    "name_pattern": "^ESM_\\d+$",
+    "name_example": "ESM_1.pdf"
    }
   },
   {

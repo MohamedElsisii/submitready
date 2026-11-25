@@ -61,6 +61,7 @@ def norm(s: str) -> str:
     s = re.sub(r"[“”„″]", '"', s)
     s = re.sub(r"[‐-―−]", "-", s)
     s = s.replace("…", "...")
+    s = re.sub(r"<((?:https?|mailto):[^<>\s]+)>", r"\1", s)  # markdown autolinks: keep the address
     s = re.sub(r"\]\([^)]*\)", "", s)                 # markdown links: keep the words
     s = re.sub(r"</?[a-zA-Z][^<>]{0,40}>", "", s)     # stray tags such as <u> or <br>
     s = re.sub(r"[\\*_]", "", s)                       # markdown emphasis and escapes
@@ -219,7 +220,7 @@ def family_ages() -> list[dict]:
 
 
 def run(only: str = "", cache: Path | None = None, save: Path | None = None,
-        fetcher: Callable[[str], Page] = fetch) -> dict:
+        fetcher: Callable[[str], Page] = fetch, files: list[Path] | None = None) -> dict:
     memo: dict[str, Page] = {}
 
     def get(url: str) -> Page:
@@ -227,7 +228,7 @@ def run(only: str = "", cache: Path | None = None, save: Path | None = None,
             memo[url] = get_page(url, cache, fetcher, save)
         return memo[url]
 
-    results = [r for f in snapshots(only) for r in check_snapshot(f, get)]
+    results = [r for f in (files or snapshots(only)) for r in check_snapshot(f, get)]
     counts: dict[str, int] = {}
     for r in results:
         counts[r.status] = counts.get(r.status, 0) + 1
@@ -291,11 +292,13 @@ def main(argv=None) -> int:
     ap.add_argument("--stale-days", type=int, default=STALE_DAYS)
     ap.add_argument("--fail-on-change", action="store_true", help="exit with 1 when any quote is missing")
     ap.add_argument("--key", metavar="URL", help="print the cache file name for a page and stop")
+    ap.add_argument("--file", type=Path, action="append",
+                    help="check this requirements file (for example the one prepare just wrote) instead of the snapshots")
     a = ap.parse_args(argv)
     if a.key:
         print(f"{key(a.key)}.txt")
         return 0
-    rep = run(a.only, a.cache, a.save)
+    rep = run(a.only, a.cache, a.save, files=a.file)
     md = report_markdown(rep, a.stale_days)
     if a.report:
         a.report.write_text(md, encoding="utf-8")

@@ -126,10 +126,19 @@ def plan(copy: Path, lock_path: Path, req_path: Path, supp: Path | None = None) 
         c = rule.get("check", {})
         if c.get("type") != "supp_label_style" or results.get(rule["id"], {}).get("status") != "FIX":
             continue
-        target = c["value"]  # "S1 Table" or "Table S1"
+        target = c["value"]  # "S1 Table", "Table S1" or "Online Resource 1"
         texts = [t for _, _, t in units]
         pairs = set()
-        if target == "S1 Table":
+        esm: dict[tuple[str, int], int] = {}
+        if target == "Online Resource 1":
+            # one sequence in the order of first mention: Table S1 -> Online Resource 1, Code S1 -> Online Resource 2 ...
+            rx_any = re.compile(rf"(?<![\w-])(?:(?:Supplementary|Additional)\s+)?"
+                                rf"(?:({LABEL_WORDS})\s?S(\d+)|S(\d+)\s({LABEL_WORDS}))(?![\w])")
+            for m in rx_any.finditer("\n".join(texts)):
+                key = (_kind(m.group(1) or m.group(4)), int(m.group(2) or m.group(3)))
+                esm.setdefault(key, len(esm) + 1)
+                pairs.add((m.group(0), f"Online Resource {esm[key]}"))
+        elif target == "S1 Table":
             for m in re.finditer(rf"(?<![\w-])({LABEL_WORDS})\s?S(\d+)(?![\w])", "\n".join(texts)):
                 w = "Fig" if m.group(1) == "Fig." else m.group(1)
                 pairs.add((m.group(0), f"S{m.group(2)} {w}"))
@@ -137,6 +146,8 @@ def plan(copy: Path, lock_path: Path, req_path: Path, supp: Path | None = None) 
             for m in re.finditer(rf"(?<![\w-])S(\d+)\s({LABEL_WORDS})(?![\w])", "\n".join(texts)):
                 pairs.add((m.group(0), f"{m.group(2)} S{m.group(1)}"))
         pairs = sorted(pairs, key=lambda p: (p[0].split()[0], int(re.search(r"\d+", p[0]).group())))
+        if esm:
+            pairs = sorted(pairs, key=lambda p: int(p[1].rsplit(" ", 1)[1]))
         if not pairs:
             continue
         rx = lockmod.relabel_regex([list(p) for p in pairs])
@@ -147,10 +158,17 @@ def plan(copy: Path, lock_path: Path, req_path: Path, supp: Path | None = None) 
         renames = []
         if supp and supp.is_dir():
             for f in sorted(supp.iterdir()):
-                if f.is_file():
-                    new = lockmod.relabel_text(f.stem, [list(p) for p in pairs]) + f.suffix
-                    if new != f.name:
-                        renames.append([f.name, new])
+                if not f.is_file():
+                    continue
+                if esm:
+                    m = re.search(rf"(?:({LABEL_WORDS})[\s_]?S(\d+)|S(\d+)[\s_]({LABEL_WORDS}))", f.stem)
+                    key = (_kind(m.group(1) or m.group(4)), int(m.group(2) or m.group(3))) if m else None
+                    if key in esm:
+                        renames.append([f.name, f"ESM_{esm[key]}{f.suffix.lower()}"])
+                    continue
+                new = lockmod.relabel_text(f.stem, [list(p) for p in pairs]) + f.suffix
+                if new != f.name:
+                    renames.append([f.name, new])
         changes.append({"id": "relabel-supp", "kind": "relabel",
                         "title": f"Change supplementary labels to the \"{target}\" style",
                         "reason": rule["rule"], "quote": rule.get("quote", ""),
@@ -158,6 +176,11 @@ def plan(copy: Path, lock_path: Path, req_path: Path, supp: Path | None = None) 
                         "file_renames": renames, "approved": False})
     return {"tool": "SubmitReady changes", "version": lockmod.VERSION, "copy": copy.name,
             "lock": lock_path.name, "journal": req["journal"], "changes": changes}
+
+
+def _kind(word: str) -> str:
+    w = word.rstrip(".").title()
+    return {"Fig": "Figure"}.get(w, w)
 
 
 def plan_markdown(pl: dict) -> str:

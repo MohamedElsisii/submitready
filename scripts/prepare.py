@@ -68,6 +68,13 @@ END_OF_MAIN = {"abbreviations", "acknowledgements", "funding", "competing", "dat
                "ai", "declarations", "references", "figure_legends", "supplementary", "highlights"}
 ABSTRACT_RUNAWAY = 600  # no journal allows an abstract this long
 CITE_IN_TEXT = re.compile(r"\[\d{1,3}(?:\s*[-\u2013,]\s*\d{1,3})*\]|\([A-Z][^()]{0,80}?\b(?:19|20)\d{2}[a-z]?\)")
+ABSTRACT_LABEL = re.compile(
+    r"(background|purpose|aims?|objectives?|introduction|context|methods?|materials and methods|design|setting|"
+    r"patients( and methods)?|participants|results|findings|conclusions?|interpretation|significance|"
+    r"trial registration|implications)", re.I)
+DOI_LINK = re.compile(r"https?://(?:dx\.)?doi\.org/10\.\d{4,9}/", re.I)
+DOI_ANY = re.compile(r"\b10\.\d{4,9}/[^\s]+")
+ONLINE_RESOURCE = re.compile(r"\bOnline Resources? \d+")
 CAPTION_RE = re.compile(r"^(Figure|Fig\.?|Table)\s*(S?)(\d+)\b", re.I)
 SUPP_RE = re.compile(r"\b(?:(Table|Figure|Fig\.?|Code|Data|File|Appendix|Video|Dataset)\s*S(\d+)|S(\d+)\s+(Table|Fig|Figure|File|Appendix|Data|Code))\b")
 
@@ -344,8 +351,10 @@ def read_paragraphs(path: Path):
         sec = _section_of(text) if len(text) < 120 else None
         is_heading = False
         if not in_table and not in_bib and not in_box and len(text) < 150 and not CAPTION_RE.match(text):
-            if style.lower().startswith(("heading", "title")) or sec:
+            if style.lower().startswith(("heading", "title")):
                 is_heading = True
+            elif sec and not re.match(r"^[A-Za-z][\w ]{0,40}:\s+\S.*[.!?]$", text):
+                is_heading = True  # "Background: Breast cancer is common." is a labelled sentence, not a heading
             elif _is_bold(el, styles_bold) and not text.endswith((".", ";", ",")) and words(text) <= 15:
                 is_heading = True
         paras.append({"i": len(paras), "text": text, "heading": is_heading, "section": sec if is_heading else None,
@@ -370,6 +379,7 @@ def analyze(path: Path) -> dict:
     current = "front"
     order, seen = [], set()
     abstract_parts, kw_text = [], ""
+    abstract_labels: list[str] = []
     main_words, main_started, main_ended = 0, False, False
     captions = []
     where: dict[str, list[str]] = {}
@@ -379,6 +389,12 @@ def analyze(path: Path) -> dict:
         if p["heading"] and not p["section"] and current in ("abstract", "keywords") and \
                 str(p.get("style", "")).lower().startswith("heading"):
             current = "other"  # an unnamed Word heading ends the abstract
+            continue
+        bare = t.rstrip(" :.")
+        if current == "abstract" and p["heading"] and "introduction" not in seen and ABSTRACT_LABEL.fullmatch(bare) \
+                and not str(p.get("style", "")).lower().startswith("heading") \
+                and (not abstract_parts or abstract_labels) and _short_uncited_block(paras, p["i"]):
+            abstract_labels.append(bare)  # a bold "Methods" inside a structured abstract, not the Methods section
             continue
         if p["heading"] and p["section"]:
             current = p["section"]
@@ -415,13 +431,15 @@ def analyze(path: Path) -> dict:
             continue
         m = CAPTION_RE.match(t)
         if m and not p["table"]:
-            captions.append({"i": p["i"], "kind": "table" if m.group(1).lower().startswith("t") else "figure",
+            captions.append({"i": p["i"], "text": t, "el": p["el"], "label_end": m.end(),
+                             "kind": "table" if m.group(1).lower().startswith("t") else "figure",
                              "supp": bool(m.group(2)), "n": int(m.group(3)), "section": current})
             continue
         if p["heading"] or p["table"] or p["bib"]:
             continue
         if current == "abstract":
             abstract_parts.append(t)
+            abstract_labels += [m.group(1) for m in re.finditer(r"(?:^|(?<=[.!?]\s))(" + ABSTRACT_LABEL.pattern + r")\s*:", t, re.I)]
         elif current == "keywords" and not kw_text:
             kw_text = t
         elif main_started and not main_ended:
@@ -465,6 +483,8 @@ def analyze(path: Path) -> dict:
     caption_duplicates = [f"{k.title()} {n}" for (k, n), v in sorted(seen_caps.items()) if v > 1]
     supp = sorted({(m[0] or m[3] or "").title() + " S" + (m[1] or m[2]) for m in SUPP_RE.findall(" ".join(p["text"] for p in paras))})
     supp_style = Counter("S1 Table" if m[2] else "Table S1" for m in SUPP_RE.findall(" ".join(p["text"] for p in paras)))
+    supp_style["Online Resource 1"] += len(ONLINE_RESOURCE.findall(" ".join(p["text"] for p in paras)))
+    supp_style += Counter()  # drop zero counts
 
     sect_prs = list(root.iter(q("sectPr")))
     line_numbers = any(s.find(q("lnNumType")) is not None for s in sect_prs)
@@ -488,15 +508,21 @@ def analyze(path: Path) -> dict:
     footnotes = len(re.findall(r"<w:footnoteReference ", xml))
     images = len(re.findall(r"<w:drawing>|<w:pict>", xml))
     cite_fmt, cite_samples = _citation_format(root)
-    refs = sum(1 for p in paras if p["bib"])
-    if not refs and "references" in seen:
+    ref_texts = [p["text"] for p in paras if p["bib"]]
+    if not ref_texts and "references" in seen:
         in_refs = False
         for p in paras:
             if p["heading"]:
                 in_refs = p["section"] == "references"
                 continue
             if in_refs:
-                refs += 1
+                ref_texts.append(p["text"])
+    refs = len(ref_texts)
+    doi_links = sum(len(DOI_LINK.findall(r)) for r in ref_texts)
+    doi_all = sum(len(DOI_ANY.findall(r)) for r in ref_texts)
+    levels = [int(m.group(1)) for p in paras if p["heading"]
+              for m in [re.match(r"heading\s*(\d)", str(p.get("style", "")), re.I)] if m]
+    _, styles_bold = _style_name_map(z)
 
     return {
         "file": path.name,
@@ -527,6 +553,11 @@ def analyze(path: Path) -> dict:
         "citation_format": cite_fmt,
         "citation_samples": cite_samples,
         "references": refs,
+        "abstract_labels": abstract_labels,
+        "heading_levels": max(levels) if levels else None,
+        "figure_captions": _caption_facts([c for c in captions if c["kind"] == "figure" and not c["supp"]], styles_bold),
+        "body_font": _body_font(z, paras),
+        "doi_in_references": {"links": doi_links, "other": max(0, doi_all - doi_links)},
         **text_style_facts(" ".join(p["text"] for p in paras if not p["bib"]), [p["text"] for p in paras if not p["bib"]]),
     }
 
@@ -562,6 +593,113 @@ def text_style_facts(text: str, paragraphs: list[str]) -> dict:
     }
 
 
+def _short_uncited_block(paras: list[dict], i: int) -> bool:
+    """The text under a heading at paras[i] is short and cites nothing, like one part of a structured abstract."""
+    n = 0
+    for p in paras[i + 1:]:
+        if p["heading"]:
+            break
+        if CITE_IN_TEXT.search(p["text"]):
+            return False
+        n += words(p["text"])
+        if n > 200:
+            return False
+    return n > 0
+
+
+def _caption_facts(caps: list[dict], styles_bold: set) -> dict:
+    """How figure captions are written: the label word, bold label, punctuation after the number and at the end."""
+    out = {"count": len(caps), "label_words": dict(Counter(re.match(r"\w+\.?", c["text"]).group(0) for c in caps)),
+           "label_not_bold": [], "punct_after_number": [], "punct_at_end": []}
+    for c in caps:
+        label = c["text"][:c["label_end"]]
+        short = " ".join(label.split())
+        after = c["text"][c["label_end"]:c["label_end"] + 1]
+        if after in ".:|\u2013\u2014-":
+            out["punct_after_number"].append(short)
+        if c["text"].rstrip()[-1:] in ".:;!":
+            out["punct_at_end"].append(short)
+        if not _starts_bold(c["el"], len(label.strip()), styles_bold):
+            out["label_not_bold"].append(short)
+    return out
+
+
+def _starts_bold(p, n_chars: int, styles_bold: set) -> bool:
+    """True when the first n_chars of visible text in paragraph p are bold."""
+    ps = p.find(f"{q('pPr')}/{q('pStyle')}")
+    pstyle_bold = ps is not None and ps.get(q("val")) in styles_bold
+    seen = 0
+    for r in _own(p, q("r")):
+        t = _text(r)
+        if not t:
+            continue
+        lead = len(t) - len(t.lstrip()) if seen == 0 else 0
+        b = r.find(f"{q('rPr')}/{q('b')}")
+        bold = pstyle_bold if b is None else b.get(q("val"), "true") not in ("0", "false")
+        if t.strip() and not bold:
+            return False
+        seen += len(t) - lead
+        if seen >= n_chars:
+            return True
+    return seen > 0
+
+
+def _theme_fonts(z) -> dict:
+    names = [n for n in z.namelist() if re.match(r"word/theme/theme\d*\.xml$", n)]
+    if not names:
+        return {}
+    th = etree.fromstring(z.read(names[0]))
+    A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+    out = {}
+    for kind in ("minor", "major"):
+        lat = th.find(f".//{A}{kind}Font/{A}latin")
+        if lat is not None and lat.get("typeface"):
+            out[kind] = lat.get("typeface")
+    return out
+
+
+def _font_of(rpr, theme: dict) -> tuple[str | None, float | None]:
+    if rpr is None:
+        return None, None
+    f = rpr.find(q("rFonts"))
+    name = None
+    if f is not None:
+        name = f.get(q("ascii")) or f.get(q("hAnsi"))
+        th = f.get(q("asciiTheme")) or f.get(q("hAnsiTheme"))
+        if not name and th:
+            name = theme.get("major" if th.startswith("major") else "minor")
+    sz = rpr.find(q("sz"))
+    size = int(sz.get(q("val"))) / 2 if sz is not None and (sz.get(q("val")) or "").isdigit() else None
+    return name, size
+
+
+def _body_font(z, paras: list[dict]) -> dict:
+    """The font and size most of the body text is set in (weighted by characters)."""
+    theme = _theme_fonts(z)
+    name, size = None, None
+    if "word/styles.xml" in z.namelist():
+        st = etree.fromstring(z.read("word/styles.xml"))
+        name, size = _font_of(st.find(f"{q('docDefaults')}/{q('rPrDefault')}/{q('rPr')}"), theme)
+        for sdef in st.iter(q("style")):
+            if sdef.get(q("styleId")) == "Normal":
+                n2, s2 = _font_of(sdef.find(q("rPr")), theme)
+                name, size = n2 or name, s2 or size
+    name, size = name or theme.get("minor"), size or 10.0  # Word's built-in default size is 10 pt
+    count: Counter = Counter()
+    for p in paras:
+        if p["heading"] or p["table"] or p["bib"]:
+            continue
+        for r in _own(p["el"], q("r")):
+            t = _text(r)
+            if t.strip():
+                n2, s2 = _font_of(r.find(q("rPr")), theme)
+                count[(n2 or name, s2 or size)] += len(t)
+    if not count:
+        return {"name": name, "size": size}
+    (n, sz), _ = count.most_common(1)[0]
+    return {"name": n, "size": sz}
+
+
 def _default_line_spacing(z) -> float | None:
     if "word/styles.xml" not in z.namelist():
         return None
@@ -584,12 +722,15 @@ def check(facts: dict, req: dict) -> list[dict]:
     line_numbers, page_numbers, line_spacing, footnotes, figures_embedded,
     captions_placement (value "in_text" or "end"; optional kind "figure" or "table", default both),
     citation_format, supp_label_style, max_count, min_count, p_leading_zero,
-    citation_punctuation (value "before" or "after"), figure_files, manual."""
+    citation_punctuation (value "before" or "after"), figure_files, manual,
+    abstract_structure (headings), max_heading_levels, caption_style (label, bold, no_punct_after_number,
+    no_end_punct), font (names, size, strict), doi_format (value "link"), supp_files (checked by check.py)."""
     out = []
     for r in req["requirements"]:
         c = r.get("check", {"type": "manual"})
         t = c["type"]
         status, found = "CHECK", ""
+        order_info = None
         try:
             if t == "max_chars":
                 v = facts[f"{c['target']}_chars"]
@@ -619,6 +760,7 @@ def check(facts: dict, req: dict) -> list[dict]:
                 ok = seq == expected and not missing
                 status = "PASS" if ok else "FIX"
                 found = " > ".join(seq) + (f"; missing: {', '.join(missing)}" if missing else "")
+                order_info = {"order_ok": seq == expected, "missing": missing, "order": c["order"], "seq": seq}
             elif t == "line_numbers":
                 ok = facts["line_numbers"] == c.get("value", True)
                 status, found = ("PASS" if ok else "AUTO"), "on" if facts["line_numbers"] else "off"
@@ -685,6 +827,62 @@ def check(facts: dict, req: dict) -> list[dict]:
                 found = (f"{wrong} citation{'s' if wrong != 1 else ''} on the other side of the punctuation"
                          + (f", e.g. {', '.join(facts['citation_punctuation_samples'])}"
                             if want == "before" and facts["citation_punctuation_samples"] else ""))
+            elif t == "abstract_structure":
+                want = c["headings"]
+                have = [x.lower().rstrip("s") for x in facts["abstract_labels"]]
+                missing = [h for h in want if h.lower().rstrip("s") not in have]
+                pos = [have.index(h.lower().rstrip("s")) for h in want if h.lower().rstrip("s") in have]
+                ok = not missing and pos == sorted(pos)
+                status = "PASS" if ok else "FIX"
+                found = ("labels: " + ", ".join(facts["abstract_labels"]) if facts["abstract_labels"]
+                         else "no section labels (one unstructured abstract)")
+                if missing:
+                    found += f"; missing: {', '.join(missing)}"
+                elif not ok:
+                    found += "; not in the required order"
+            elif t == "max_heading_levels":
+                lv = facts["heading_levels"]
+                if lv is None:
+                    status, found = "CHECK", "headings are typed as bold text, not Word heading styles, so levels could not be counted"
+                else:
+                    status, found = ("PASS" if lv <= c["value"] else "FIX"), f"{lv} heading level{'s' if lv != 1 else ''} (Word styles)"
+            elif t == "caption_style":
+                fc = facts["figure_captions"]
+                if not fc["count"]:
+                    status, found = "CHECK", "no figure captions found"
+                else:
+                    want = c.get("label", "Fig.")
+                    wrong_word = sum(v for k, v in fc["label_words"].items() if k != want)
+                    probs = []
+                    if wrong_word:
+                        probs.append(f"{wrong_word} start with \"{', '.join(k for k in fc['label_words'] if k != want)}\" "
+                                     f"instead of \"{want}\"")
+                    if c.get("bold") and fc["label_not_bold"]:
+                        probs.append(f"{len(fc['label_not_bold'])} with the label not bold")
+                    if c.get("no_punct_after_number") and fc["punct_after_number"]:
+                        probs.append(f"{len(fc['punct_after_number'])} with punctuation after the number")
+                    if c.get("no_end_punct") and fc["punct_at_end"]:
+                        probs.append(f"{len(fc['punct_at_end'])} ending with punctuation")
+                    status = "FIX" if probs else "PASS"
+                    found = f"{fc['count']} figure captions" + (": " + "; ".join(probs) if probs else ", all in this style")
+            elif t == "font":
+                bf = facts["body_font"]
+                found = f"body text in {bf.get('name') or 'an unknown font'}, {bf.get('size'):g} pt"
+                match_ = (not c.get("names") or (bf.get("name") or "").lower() in [n.lower() for n in c["names"]]) and \
+                    (not c.get("size") or bf.get("size") == c["size"])
+                status = "PASS" if match_ else ("FIX" if c.get("strict") else "CHECK")
+                if not match_ and not c.get("strict"):
+                    found += " (the guideline gives this font as an example, not a rule)"
+            elif t == "doi_format":
+                d = facts["doi_in_references"]
+                if d["other"]:
+                    status, found = "STYLE", f"{d['other']} DOIs not written as links, {d['links']} as links"
+                elif d["links"]:
+                    status, found = "PASS", f"{d['links']} DOIs, all as links"
+                else:
+                    status, found = "CHECK", "the reference list shows no DOIs yet; the journal's reference style may add them"
+            elif t == "supp_files":
+                status, found = "CHECK", "checked with the supplementary folder"
             elif t == "manual":
                 status = "CHECK"
         except KeyError as e:
@@ -692,7 +890,39 @@ def check(facts: dict, req: dict) -> list[dict]:
         out.append({"id": r["id"], "rule": r["rule"], "status": status, "found": found,
                     "quote": r.get("quote", ""), "source": req["sources"][r.get("source", 0)],
                     "location": _location(c, facts) if status in ("FIX", "AUTO") else ""})
+        if order_info and status == "FIX":
+            out[-1]["_order"] = order_info
+    _merge_missing_and_order(out, req)
+    for x in out:
+        x.pop("_order", None)
     return out
+
+
+SECTION_NAMES = {"references": "References", "acknowledgements": "Acknowledgments", "abstract": "Abstract",
+                 "discussion": "Discussion", "conclusion": "Conclusion", "methods": "Methods", "results": "Results",
+                 "introduction": "Introduction", "keywords": "Keywords", "declarations": "Statements and Declarations"}
+
+
+def _merge_missing_and_order(out: list[dict], req: dict) -> None:
+    """A missing section that is also missing from the required order is one fix, not two.
+
+    The order rule is kept in the checklist but marked as covered, and the missing-section item
+    says where to add the section."""
+    present = {}
+    for r, x in zip(req["requirements"], out):
+        c = r.get("check", {})
+        if c.get("type") == "section_present" and x["status"] == "FIX":
+            present[c["section"]] = x
+    for x in out:
+        info = x.get("_order")
+        if not info or not info["order_ok"] or not info["missing"] or not all(m in present for m in info["missing"]):
+            continue
+        for m in info["missing"]:
+            before = [s for s in info["order"][:info["order"].index(m)] if s in info["seq"]]
+            if before:
+                present[m]["location"] = f"No such section was found; add it after {SECTION_NAMES.get(before[-1], before[-1])}"
+        x["covered_by"] = present[info["missing"][0]]["id"]
+        x["found"] += " (the same fix as the missing section above)"
 
 
 def _location(c: dict, facts: dict) -> str:

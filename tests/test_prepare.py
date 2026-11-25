@@ -205,7 +205,8 @@ def test_reference_annotations_are_counted(tmp_path):
 KNOWN_CHECKS = {"max_chars", "max_words", "keywords", "section_present", "section_absent", "sections_order",
                 "line_numbers", "page_numbers", "line_spacing", "footnotes", "figures_embedded", "captions_placement",
                 "citation_format", "supp_label_style", "max_count", "min_count", "p_leading_zero",
-                "citation_punctuation", "figure_files", "manual"}
+                "citation_punctuation", "figure_files", "manual", "abstract_structure", "max_heading_levels",
+                "caption_style", "font", "doi_format", "supp_files"}
 
 
 def test_snapshot_checks_are_known_types():

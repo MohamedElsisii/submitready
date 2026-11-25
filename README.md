@@ -104,7 +104,7 @@ Then try your own manuscript the same way. Your original file is never changed: 
 
 `/prepare` works with any journal: it reads the live author guidelines each time. These journals also have a checked starting profile, with a source link and date for every rule:
 
-PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review), Epigenomics, Journal of Biomolecular Structure and Dynamics, PNAS, eLife, Genome Research.
+PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review), Epigenomics, Journal of Biomolecular Structure and Dynamics, PNAS, eLife, Genome Research, Breast Cancer Research and Treatment.
 
 **Families** give a checked starting point to many journals at once, when they share one guidelines document or template. Each family says which rules are shared and which must still be read from the journal's own page:
 

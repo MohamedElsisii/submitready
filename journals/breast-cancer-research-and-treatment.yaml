@@ -1,0 +1,29 @@
+name: "Breast Cancer Research and Treatment"
+slug: breast-cancer-research-and-treatment
+publisher: "Springer"
+issn_print: "0167-6806"
+issn_online: "1573-7217"
+issn_source: "https://api.crossref.org/journals/1573-7217"
+issn_checked: "2026-11-25"
+
+guidelines:
+  url: "https://link.springer.com/journal/10549/submission-guidelines"
+  checked: "2026-11-25"
+
+reference_style:
+  csl_style_id: "breast-cancer-research-and-treatment"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/breast-cancer-research-and-treatment.csl"
+  checked: "2026-11-25"
+
+requirements_snapshot: "journals/requirements/breast-cancer-research-and-treatment.2026-11-25.json"
+
+known_quirks:
+  - text: "Its own rules differ from the general Springer template: a 3,500-word limit, a structured abstract (Purpose, Methods, Results, Conclusion), and Statements and Declarations after the References."
+    source: "https://link.springer.com/journal/10549/submission-guidelines"
+    checked: "2026-11-25"
+  - text: "The page says \"Save your file in doc format. Do not submit docx files.\" in its note on Word 2007 equations, and names .docx as accepted in its source files rule."
+    source: "https://link.springer.com/journal/10549/submission-guidelines"
+    checked: "2026-11-25"
+  - text: "Supplementary files are cited as Online Resource 1, 2, ... and named ESM_1, ESM_2, ..."
+    source: "https://link.springer.com/journal/10549/submission-guidelines"
+    checked: "2026-11-25"

@@ -1,0 +1,343 @@
+{
+  "journal": "Breast Cancer Research and Treatment",
+  "article_type": "Original article",
+  "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+  "sources": [
+    {
+      "name": "Breast Cancer Research and Treatment: Submission guidelines",
+      "url": "https://link.springer.com/journal/10549/submission-guidelines",
+      "checked": "2026-11-25"
+    }
+  ],
+  "csl_style": {
+    "id": "breast-cancer-research-and-treatment",
+    "title": "Breast Cancer Research and Treatment",
+    "source": "https://github.com/citation-style-language/styles/blob/master/dependent/breast-cancer-research-and-treatment.csl",
+    "note": "Dependent style; its parent is springer-basic-brackets (numbers in square brackets)."
+  },
+  "requirements": [
+    {
+      "id": "main-words",
+      "rule": "Main text at most 3,500 words (not counting abstract, title page, tables, figures, references)",
+      "quote": "The length of submitted papers should not exceed 3500 words.",
+      "source": 0,
+      "check": {
+        "type": "max_words",
+        "target": "main",
+        "value": 3500
+      }
+    },
+    {
+      "id": "reviewers",
+      "rule": "Suggest at least three reviewers without conflict of interest in the cover letter, with academic e-mail addresses",
+      "quote": "Note: Authors must suggest at least three possible reviewers without conflict of interest in the Cover Letter upon submission.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "remark",
+      "rule": "Tumor marker studies must follow the REMARK reporting recommendations, or the paper is returned without review",
+      "quote": "Failure to do so will result in the manuscript being returned to the author without peer review",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "cell-lines",
+      "rule": "Papers whose data all come from a single cell line are generally not accepted",
+      "quote": "In general, Breast Cancer Research and Treatment will not accept for publication papers in which all of the data shown in the paper were obtained using a single cell line.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "editable-files",
+      "rule": "Upload editable source files (.docx or LaTeX) at every submission and revision",
+      "quote": "For your manuscript text please always submit in common word processing formats such as .docx or LaTeX.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "orcid",
+      "rule": "Corresponding author must give an ORCID before submission",
+      "quote": "This publication requires that the corresponding author provides his/her ORCiD ID before proceeding with submission.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "abstract-words",
+      "rule": "Abstract of 150 to 250 words",
+      "quote": "Please provide a structured abstract of 150 to 250 words which should be divided into the following sections:",
+      "source": 0,
+      "check": {
+        "type": "max_words",
+        "target": "abstract",
+        "value": 250
+      }
+    },
+    {
+      "id": "abstract-structure",
+      "rule": "Structured abstract headed Purpose, Methods, Results, Conclusion",
+      "quote": "Purpose (stating the main purposes and research question)",
+      "source": 0,
+      "check": {
+        "type": "abstract_structure",
+        "headings": [
+          "Purpose",
+          "Methods",
+          "Results",
+          "Conclusion"
+        ]
+      }
+    },
+    {
+      "id": "keywords",
+      "rule": "4 to 6 keywords",
+      "quote": "Please provide 4 to 6 keywords which can be used for indexing purposes.",
+      "source": 0,
+      "check": {
+        "type": "keywords",
+        "min": 4,
+        "max": 6
+      }
+    },
+    {
+      "id": "word-format",
+      "rule": "Manuscript in Word. The page also says \"Save your file in doc format. Do not submit docx files.\" That line sits in the note on Word 2007 equations; the source files rule names .docx as accepted",
+      "quote": "Manuscripts should be submitted in Word.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "font",
+      "rule": "Normal, plain font such as 10-point Times Roman (an example, not a rule)",
+      "quote": "Use a normal, plain font (e.g., 10-point Times Roman) for text.",
+      "source": 0,
+      "check": {
+        "type": "font",
+        "names": [
+          "Times New Roman",
+          "Times",
+          "Times Roman"
+        ],
+        "size": 10
+      }
+    },
+    {
+      "id": "page-numbers",
+      "rule": "Number the pages with the automatic page numbering function",
+      "quote": "Use the automatic page numbering function to number the pages.",
+      "source": 0,
+      "check": {
+        "type": "page_numbers",
+        "value": true
+      }
+    },
+    {
+      "id": "no-fields",
+      "rule": "No field functions. Live reference-manager citations are field codes: convert them to plain text only in the final copy you upload",
+      "quote": "Do not use field functions.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "headings",
+      "rule": "No more than three levels of headings",
+      "quote": "Please use no more than three levels of displayed headings.",
+      "source": 0,
+      "check": {
+        "type": "max_heading_levels",
+        "value": 3
+      }
+    },
+    {
+      "id": "acknowledgements",
+      "rule": "Acknowledgments in a separate section before the reference list",
+      "quote": "Acknowledgments of people, grants, funds, etc. should be placed in a separate section before the reference list.",
+      "source": 0,
+      "check": {
+        "type": "sections_order",
+        "order": [
+          "acknowledgements",
+          "references"
+        ],
+        "optional": [
+          "acknowledgements"
+        ]
+      }
+    },
+    {
+      "id": "doi-links",
+      "rule": "DOIs as full links in the reference list",
+      "quote": "If available, please always include DOIs as full DOI links in your reference list (e.g. “https://doi.org/abc”).",
+      "source": 0,
+      "check": {
+        "type": "doi_format",
+        "value": "link"
+      }
+    },
+    {
+      "id": "declarations",
+      "rule": "A 'Statements and Declarations' section",
+      "quote": "The following statements must be included in your submitted manuscript under the heading 'Statements and Declarations'.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "declarations"
+      }
+    },
+    {
+      "id": "declarations-place",
+      "rule": "'Statements and Declarations' placed after the References",
+      "quote": "This should be placed after the References section.",
+      "source": 0,
+      "check": {
+        "type": "sections_order",
+        "order": [
+          "references",
+          "declarations"
+        ]
+      }
+    },
+    {
+      "id": "data-availability",
+      "rule": "A Data Availability Statement (under Statements and Declarations)",
+      "quote": "All original research must include a Data Availability Statement.",
+      "source": 0,
+      "check": {
+        "type": "section_present",
+        "section": "data"
+      }
+    },
+    {
+      "id": "author-contributions",
+      "rule": "Author contributions statement (encouraged)",
+      "quote": "Authors are encouraged to include a statement that specifies the contribution of every author to the research and preparation of the manuscript.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "llm",
+      "rule": "Document any LLM use in the Methods section",
+      "quote": "Use of an LLM should be properly documented in the Methods section",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "tables",
+      "rule": "Tables made with the table function, not spreadsheets",
+      "quote": "Use the table function, not spreadsheets, to make tables.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "figure-files",
+      "rule": "Figure files: EPS for vector, TIFF for halftones (MS Office also accepted); halftones at least 300 dpi, combination art 600 dpi, line art 1200 dpi; named Fig1, Fig2",
+      "quote": "Halftones should have a minimum resolution of 300 dpi.",
+      "source": 0,
+      "check": {
+        "type": "figure_files",
+        "formats": [
+          "eps",
+          "tif",
+          "tiff"
+        ],
+        "dpi_min": 300,
+        "color_modes": [
+          "RGB",
+          "L",
+          "CMYK"
+        ],
+        "name_pattern": "Fig{n}"
+      }
+    },
+    {
+      "id": "figure-captions",
+      "rule": "Figure captions start with bold 'Fig.' and the number, with no punctuation after the number or at the end",
+      "quote": "Figure captions begin with the term Fig. in bold type, followed by the figure number, also in bold type.",
+      "source": 0,
+      "check": {
+        "type": "caption_style",
+        "label": "Fig.",
+        "bold": true,
+        "no_punct_after_number": true,
+        "no_end_punct": true
+      }
+    },
+    {
+      "id": "figure-captions-punct",
+      "rule": "No punctuation after the figure number or at the end of the caption",
+      "quote": "No punctuation is to be included after the number, nor is any punctuation to be placed at the end of the caption.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "figure-lettering",
+      "rule": "Figure lettering in Helvetica or Arial, 8 to 12 pt; no titles or captions inside figures",
+      "quote": "To add lettering, it is best to use Helvetica or Arial (sans serif fonts).",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    },
+    {
+      "id": "supp-label",
+      "rule": "Cite supplementary files as 'Online Resource' (Online Resource 1, 2, ...)",
+      "quote": "Refer to the supplementary files as “Online Resource”, e.g., \"... as shown in the animation (Online Resource 3)\", “... additional data are given in Online Resource 4”.",
+      "source": 0,
+      "check": {
+        "type": "supp_label_style",
+        "value": "Online Resource 1"
+      }
+    },
+    {
+      "id": "supp-files",
+      "rule": "Supplementary files named ESM_1, ESM_2, ...; text as PDF; spreadsheets as .csv or .xlsx",
+      "quote": "Name the files consecutively, e.g. “ESM_3.mpg”, “ESM_4.pdf”.",
+      "source": 0,
+      "check": {
+        "type": "supp_files",
+        "name_pattern": "^ESM_\\d+$",
+        "name_example": "ESM_1.pdf",
+        "formats": {
+          "spreadsheet": [
+            "csv",
+            "xlsx"
+          ],
+          "text": [
+            "pdf"
+          ]
+        }
+      }
+    },
+    {
+      "id": "supp-content",
+      "rule": "Each supplementary file holds the article title, journal name, author names and the corresponding author's affiliation and e-mail",
+      "quote": "Please include in each file the following information: article title, journal name, author names; affiliation and e-mail address of the corresponding author.",
+      "source": 0,
+      "check": {
+        "type": "manual"
+      }
+    }
+  ]
+}
