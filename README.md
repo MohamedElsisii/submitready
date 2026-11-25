@@ -104,7 +104,7 @@ Then try your own manuscript the same way. Your original file is never changed: 
 
 `/prepare` works with any journal: it reads the live author guidelines each time. These journals also have a checked starting profile, with a source link and date for every rule:
 
-PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review), Epigenomics, Journal of Biomolecular Structure and Dynamics.
+PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Molecular Sciences, PeerJ, Bioinformatics, Heliyon, BMC Genomics, Stress Biology (Original Paper and Review), Epigenomics, Journal of Biomolecular Structure and Dynamics, PNAS, eLife, Genome Research.
 
 **Families** give a checked starting point to many journals at once, when they share one guidelines document or template. Each family says which rules are shared and which must still be read from the journal's own page:
 
@@ -130,6 +130,7 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 | Royal Society of Chemistry | RSC journals | RSC Advances and RSC Medicinal Chemistry compared |
 | Ivyspring | Theranostics, International Journal of Biological Sciences, International Journal of Medical Sciences, Journal of Cancer, Nanotheranostics | Theranostics and International Journal of Biological Sciences compared |
 | Impact Journals | Oncotarget, Aging, Oncoscience, Genes & Cancer | Oncotarget and Aging compared |
+| EMBO Press | The EMBO Journal, EMBO Reports, EMBO Molecular Medicine, Molecular Systems Biology | The EMBO Journal and EMBO Reports compared |
 | EKB (Egyptian Knowledge Bank) | journals on *.journals.ekb.eg | No shared rules: each EKB journal writes its own guide, so SubmitReady reads it every time and flags fees, Arabic abstracts and similarity limits |
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.

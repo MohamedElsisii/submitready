@@ -1,0 +1,28 @@
+# A family: EMBO Press journals (now on Springer Nature Link) share one guidelines template.
+name: "EMBO Press journals"
+publisher: "EMBO Press (Springer Nature)"
+journals:
+  - "The EMBO Journal"
+  - "EMBO Journal"
+  - "EMBO Reports"
+  - "EMBO Molecular Medicine"
+  - "Molecular Systems Biology"
+match:
+  publisher: ["EMBO Press", "European Molecular Biology Organization"]
+  journal_name_pattern: "^(The )?EMBO\\s"
+  parent_publishers: ["Springer Nature", "Springer Science and Business Media", "Wiley"]
+  journal_page: "https://link.springer.com/journal/<id>/submission-guidelines"
+guidelines:
+  url: "https://link.springer.com/journal/44318/submission-guidelines"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://link.springer.com/journal/44319/submission-guidelines"
+requirements_snapshot: "journals/requirements/embo-press.2026-11-25.json (Article, first submission and revision)"
+journal_specific:
+  - "Article types and their limits (EMBO Journal articles usually up to 10 main figures, unlimited references)"
+  - "Expanded View rules"
+  - "Publication fees, on the journal's 'How to publish with us' page"
+known_quirks:
+  - text: "At first submission any format is accepted. Invited revisions must follow all journal rules, including structured methods and source data."
+    source: "https://link.springer.com/journal/44318/submission-guidelines"
+    checked: "2026-11-25"

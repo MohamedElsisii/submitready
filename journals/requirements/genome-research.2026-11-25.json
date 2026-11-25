@@ -1,0 +1,146 @@
+{
+ "journal": "Genome Research",
+ "article_type": "Research, Methods or Resource",
+ "snapshot_note": "Snapshot for tests and as a starting point. SubmitReady re-reads the live guidelines on every run.",
+ "sources": [
+  {
+   "name": "Genome Research: Manuscript preparation",
+   "url": "https://genome.cshlp.org/site/misc/ifora_mspreparation.xhtml",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "genome-research",
+  "title": "Genome Research",
+  "source": "https://github.com/citation-style-language/styles/blob/master/dependent/genome-research.csl",
+  "note": "Dependent style; its parent is cold-spring-harbor-laboratory-press. Author-date citations (name date), alphabetical reference list, up to 10 authors before et al."
+ },
+ "requirements": [
+  {
+   "id": "page-numbers",
+   "rule": "Number all pages",
+   "quote": "Please number all pages for review purposes and ensure in-text references are set in journal format (see below).",
+   "source": 0,
+   "check": {
+    "type": "page_numbers",
+    "value": true
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Abstract of at most 250 words",
+   "quote": "the abstract cannot exceed 250 words",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 250
+   }
+  },
+  {
+   "id": "order",
+   "rule": "Order: Title page, Abstract, Introduction, Results, Discussion, Methods, Data access, Competing interest statement, Acknowledgments, References",
+   "quote": "Manuscript sections should be presented in the following order:",
+   "source": 0,
+   "check": {
+    "type": "sections_order",
+    "order": [
+     "abstract",
+     "introduction",
+     "results",
+     "discussion",
+     "methods",
+     "data",
+     "competing",
+     "acknowledgements",
+     "references"
+    ]
+   }
+  },
+  {
+   "id": "data-access",
+   "rule": "Data access section after Methods with accession numbers or reviewer links",
+   "quote": "Please use the following examples of our boilerplate language to be used in the Data access section, located after Methods and before Acknowledgments:",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "competing",
+   "rule": "Competing interest statement",
+   "quote": "COMPETING INTEREST STATEMENT, ACKNOWLEDGMENTS, and REFERENCES.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author contributions at the end of the Acknowledgments",
+   "quote": "Author Contributions should appear at the end of ACKNOWLEDGMENTS.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-embedded",
+   "rule": "First submission: figures and tables embedded near their first citation, legends next to them",
+   "quote": "First version submissions are required to include all FIGURES and TABLES embedded near the place of first citation within the text of the main document file (.pdf).",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "citations",
+   "rule": "Author-date citations (name date), not numbers",
+   "quote": "Cite as (name date) in text, not by number.",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "author-date"
+   }
+  },
+  {
+   "id": "reference-list",
+   "rule": "Alphabetical reference list; all authors if 10 or fewer, else first 10 and et al.",
+   "quote": "The reference list should be presented in alphabetical order.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "running-title",
+   "rule": "Running title of at most 50 characters",
+   "quote": "a running title (50 characters or less, including spaces)",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "nomenclature",
+   "rule": "Approved gene and protein nomenclature, gene symbols in italics",
+   "quote": "You MUST use approved nomenclature for gene and protein names and symbols, including appropriate use of italics (format ALL gene symbols and loci in italics) and capitalization as it applies for each organism's standard nomenclature.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figure-files",
+   "rule": "Figure files named by first author and number (Smith_Fig1)",
+   "quote": "Electronic files for figures should be named with the first author's name and the figure number; for example, Smith_Fig1.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

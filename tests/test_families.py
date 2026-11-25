@@ -89,3 +89,9 @@ def test_open_access_families():
     assert families.find("Oncotarget")["file"].endswith("impact-journals.yaml")
     assert families.find("PNAS")["file"] == "journals/pnas.yaml"
     assert families.find("eLife")["file"] == "journals/elife.yaml"
+
+
+def test_embo_and_genome_research():
+    assert families.find("EMBO Reports", "Springer Nature")["file"].endswith("embo-press.yaml")
+    assert families.find("Molecular Systems Biology")["file"].endswith("embo-press.yaml")
+    assert families.find("Genome Research")["file"] == "journals/genome-research.yaml"

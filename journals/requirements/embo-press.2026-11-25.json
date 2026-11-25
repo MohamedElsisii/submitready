@@ -1,0 +1,142 @@
+{
+ "journal": "EMBO Press journals (shared submission guidelines)",
+ "article_type": "Article",
+ "snapshot_note": "Rules that The EMBO Journal and EMBO Reports guidelines state word for word. EMBO Press takes any format at first submission; most format rules apply to invited revisions and are marked so. SubmitReady reads the journal's own page on every run.",
+ "sources": [
+  {
+   "name": "The EMBO Journal: Submission guidelines",
+   "url": "https://link.springer.com/journal/44318/submission-guidelines",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "EMBO Reports: Submission guidelines",
+   "url": "https://link.springer.com/journal/44319/submission-guidelines",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "EMBO Press reference guidelines apply at revision."
+ },
+ "requirements": [
+  {
+   "id": "any-format",
+   "rule": "Any format at first submission (one PDF or LaTeX file, or a DOCX with separate figures)",
+   "quote": "You do not need to follow journal formatting guidelines for your initial submission.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-page",
+   "rule": "Title and abstract, and a title page with all authors and affiliations",
+   "quote": "Provide a title and abstract, and ensure the title page includes all authors and affiliations.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cover-letter",
+   "rule": "Cover letter on significance, related papers and any pre-discussion with an editor",
+   "quote": "Authors should provide a cover letter describing the significance of their work, related or competing papers in press or under consideration elsewhere, and whether submission is in response to pre-discussion with an editor.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "statements-in-system",
+   "rule": "Authorship, competing interests, dual publication and funding entered in eJP",
+   "quote": "When submitting a manuscript via eJP, authors are required to provide information about the following topics: authorship, competing interests, dual publication, and funding sources.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "revision-format",
+   "rule": "At revision: all journal formatting rules apply",
+   "quote": "Manuscripts invited to resubmit must be formatted according to all journal guidelines.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title",
+   "rule": "At revision: title of at most 100 characters, no abbreviations",
+   "quote": "The total length of the title should not exceed 100 characters (including spaces).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "At revision: one-paragraph abstract of at most 175 words, no citations",
+   "quote": "This should be a single paragraph not exceeding 175 words.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "no-data-not-shown",
+   "rule": "'Data not shown' is not allowed",
+   "quote": "‘Data not shown’ is not permitted; all significant data should be displayed in the main figures or Expanded View information.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "structured-methods",
+   "rule": "At revision: structured methods with a Reagents and Tools Table",
+   "quote": "All research articles (Article, Report, Method, Resource) submitted as revised versions must include a structured methods section that includes a Reagents and Tools Table followed by a Methods and Protocols section.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data-availability",
+   "rule": "Data availability section right after the Methods",
+   "quote": "Datasets and computer code that were generated in the reported study should be listed in a structured manner in the “Data availability” section immediately after the Methods section.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "disclosure",
+   "rule": "Disclosure and competing interests statement",
+   "quote": "The journal requires a statement specifying whether or not authors have competing interests – defined as all potential or actual interests that could be perceived to influence the presentation or interpretation of an article.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "credit",
+   "rule": "Author contributions entered as CRediT roles in the submission system",
+   "quote": "CRediT replaces the 'Author Contributions' section.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for article types and limits, Expanded View rules and fees",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

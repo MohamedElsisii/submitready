@@ -1,0 +1,24 @@
+name: "Genome Research"
+slug: genome-research
+publisher: "Cold Spring Harbor Laboratory Press"
+issn_print: ""
+issn_online: ""
+
+guidelines:
+  url: "https://genome.cshlp.org/site/misc/ifora_mspreparation.xhtml"
+  checked: "2026-11-25"
+
+reference_style:
+  csl_style_id: "genome-research"
+  source: "https://github.com/citation-style-language/styles/blob/master/dependent/genome-research.csl"
+  checked: "2026-11-25"
+
+requirements_snapshot: "journals/requirements/genome-research.2026-11-25.json"
+
+known_quirks:
+  - text: "Author-date citations (name date) and an alphabetical reference list, unlike most life-science journals."
+    source: "https://genome.cshlp.org/site/misc/ifora_mspreparation.xhtml"
+    checked: "2026-11-25"
+  - text: "A manuscript of about 50,000 characters with four to six figures fills about 12 journal pages, the maximum."
+    source: "https://genome.cshlp.org/site/misc/ifora_mspreparation.xhtml"
+    checked: "2026-11-25"
