@@ -123,6 +123,8 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 | Dove Medical Press | every Dove journal | Dove's shared author guidelines (preparation, structure, figures, references) |
 | Oxford University Press | OUP journals | OUP's publisher-wide preparation checklist |
 | Sage | Sage journals | Sage's publisher-wide manuscript preparation page |
+| Nature Portfolio | Nature, Nature Communications, the Communications and npj journals | Nature Portfolio editorial policies, plus Nature Communications and Communications Biology compared |
+| Cell Press | Cell, Cell Reports, iScience and 23 more Cell Press journals | iScience and Cell Reports compared (first submission and revision pages) |
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 
