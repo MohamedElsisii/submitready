@@ -1,0 +1,47 @@
+name: guidelines freshness
+
+# Once a month, re-read every saved guideline page and check that each quoted rule is still there.
+# Opens (or updates) one issue when a rule may have changed or a page could not be checked.
+# Some publishers block GitHub's servers; those pages are listed as "not checked", not as changed.
+on:
+  schedule:
+    - cron: "17 6 3 * *"   # 06:17 UTC on the 3rd of each month
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install -r requirements.txt pypdf
+          sudo apt-get install -y poppler-utils >/dev/null
+      - name: Check guideline pages
+        run: python scripts/freshness.py --report freshness.md --json freshness.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: freshness-report
+          path: |
+            freshness.md
+            freshness.json
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          changed=$(python -c "import json;print(json.load(open('freshness.json'))['counts'].get('changed',0))")
+          if [ "$changed" = "0" ]; then echo "No rule changes found."; exit 0; fi
+          gh label create freshness --color FBCA04 --description "Saved journal guidelines may be out of date" --force
+          num=$(gh issue list --label freshness --state open --json number -q '.[0].number')
+          if [ -n "$num" ]; then
+            gh issue comment "$num" --body-file freshness.md
+          else
+            gh issue create --title "Journal guidelines may have changed" --label freshness --body-file freshness.md
+          fi

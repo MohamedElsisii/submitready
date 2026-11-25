@@ -111,6 +111,10 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 
+### Keeping the guidelines current
+
+Journals change their rules. Every saved rule quotes its guideline page and says when it was checked. `python scripts/freshness.py` reads each page again and lists any quoted rule that is no longer there. A GitHub check runs it once a month and opens an issue when a rule may have changed. Some publishers block automated visits; those pages are listed as "not checked", never as changed. The script only reads: a person checks the page and writes a new dated snapshot.
+
 Adding a journal or a family is a good first contribution. Copy `journals/_TEMPLATE.yaml` and quote the guidelines page for each rule.
 
 ## Supported inputs (v1)
