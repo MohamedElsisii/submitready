@@ -1,0 +1,160 @@
+{
+ "journal": "Nature Portfolio journals (shared policies, with Nature Communications and Communications journal formatting)",
+ "article_type": "Article",
+ "snapshot_note": "Nature Portfolio editorial policies apply to every Nature Portfolio journal. The formatting rules kept here are the ones Nature Communications and Communications Biology both state. Abstract length, the order of sections, footnotes and the reference limit differ by journal: SubmitReady reads the journal's own page on every run. Scientific Reports has its own profile.",
+ "sources": [
+  {
+   "name": "Nature Portfolio: Reporting standards and availability of data, materials, code and protocols",
+   "url": "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "Nature Communications: Article",
+   "url": "https://www.nature.com/ncomms/submit/article",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "Communications Biology: Formatting Guidelines",
+   "url": "https://www.nature.com/commsbio/submit/formatting-guidelines",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "nature",
+  "title": "Nature",
+  "source": "https://github.com/citation-style-language/styles/blob/master/nature.csl",
+  "note": "Numbered references in order of appearance (Communications Biology states this). Nature Communications takes any format at first submission."
+ },
+ "requirements": [
+  {
+   "id": "data-availability",
+   "rule": "Data availability statement for all original research",
+   "quote": "All published manuscripts reporting original research in Nature Portfolio journals must include a data availability statement.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "code-availability",
+   "rule": "'Code availability' section after the data availability statement and before the references, when custom code is central to the results",
+   "quote": "Code availability statements should be provided as a separate section after the data availability statement but before the references.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "reporting-summary",
+   "rule": "Completed reporting summary for life sciences research",
+   "quote": "Where relevant, manuscripts sent for review must include completed reporting summary documents.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "mandatory-deposition",
+   "rule": "Sequences, sequencing data, expression data, structures and proteomics data deposited in public repositories, with accession numbers in the paper",
+   "quote": "For the following types of data set, submission to a community-endorsed, public repository is mandatory.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data-citation",
+   "rule": "Deposited datasets cited in the reference list",
+   "quote": "Datasets that have been deposited in repositories should be included as formal citations in the article reference list.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cell-lines",
+   "rule": "Cell line source, authentication and mycoplasma testing reported",
+   "quote": "Mycoplasma contamination testing status must also be reported.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title-length",
+   "rule": "Title of 15 words or fewer",
+   "quote": "The maximum title length should be 15 words.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract-no-refs",
+   "rule": "Abstract with no references",
+   "quote": "The abstract — which should be no more than 200 words long and contain no references — should serve both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "main-text",
+   "rule": "Main text of about 5,000 words, not counting abstract, Methods, references and legends",
+   "quote": "Ideally, the main text (not including Abstract, Methods, References and Figure legends)  should be limited to 5,000 words.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "display-items",
+   "rule": "At most 10 display items (figures and tables)",
+   "quote": "Depending on the word count, Articles may have up to 10 display items (figures and/or tables).",
+   "source": 1,
+   "check": {
+    "type": "max_count",
+    "target": "display_items",
+    "value": 10
+   }
+  },
+  {
+   "id": "legend-length",
+   "rule": "Figure legends of at most 350 words each",
+   "quote": "Figure legends are limited to 350 words each.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references-guide",
+   "rule": "About 70 references as a guide",
+   "quote": "As a guide, references should not exceed 70.",
+   "source": 1,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "statements",
+   "rule": "Competing interests and author contributions statements",
+   "quote": "Authors must provide competing interests and author contributions statements before publication.",
+   "source": 1,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for abstract length, section order, footnotes and figure placement",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

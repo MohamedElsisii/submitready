@@ -1,0 +1,31 @@
+# A family: Nature Portfolio journals (Nature, the Nature research journals, Nature Communications,
+# the Communications journals, npj journals). Editorial policies are shared; formatting differs by journal.
+# Scientific Reports has its own profile.
+name: "Nature Portfolio journals"
+publisher: "Springer Nature (Nature Portfolio)"
+match:
+  publisher: ["Nature Portfolio", "Nature Publishing Group"]
+  parent_publishers: ["Springer Nature", "Springer Science and Business Media"]
+  journal_name_pattern: "^(Nature(?! and Science of Sleep)(?! Environment)\\b|npj\\s|Communications (Biology|Chemistry|Medicine|Physics|Materials|Engineering|Psychology|Health|Sustainability|Earth))"
+  journal_page: "https://www.nature.com/<journal-code>/submit"
+guidelines:
+  url: "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://www.nature.com/ncomms/submit/article"
+    - "https://www.nature.com/commsbio/submit/formatting-guidelines"
+requirements_snapshot: "journals/requirements/nature-portfolio.2026-11-25.json (Article, shared policies and shared formatting)"
+journal_specific:
+  - "Abstract length (Nature Communications: at most 200 words; Communications Biology: 150 to 250)"
+  - "Section order (Communications journals differ: some require Methods last, others Methods after the Introduction)"
+  - "Figure placement (Communications Biology: in the text and also as separate files)"
+  - "Footnotes (Nature Communications: not used)"
+  - "Legends position (Communications Biology: at the end, after the references)"
+  - "The article processing charge, on the journal's open access page"
+known_quirks:
+  - text: "Nature Communications does not require a particular structure or format at first submission; the editor sends formatting instructions at revision."
+    source: "https://www.nature.com/ncomms/submit/article"
+    checked: "2026-11-25"
+  - text: "Communications Biology does not allow 'data not shown' statements."
+    source: "https://www.nature.com/commsbio/submit/formatting-guidelines"
+    checked: "2026-11-25"

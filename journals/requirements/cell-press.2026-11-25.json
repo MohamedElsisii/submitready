@@ -1,0 +1,224 @@
+{
+ "journal": "Cell Press journals (shared Information for authors template)",
+ "article_type": "Research article",
+ "snapshot_note": "Rules that the iScience and Cell Reports author pages state word for word. Cell Press asks for no particular format at first submission, so most format rules here apply at revision and are marked so; SubmitReady checks them as reminders, not as blockers. Article types, length limits and fees differ by journal: SubmitReady reads the journal's own page on every run. Heliyon has its own profile.",
+ "sources": [
+  {
+   "name": "iScience: Submit your manuscript",
+   "url": "https://www.cell.com/iscience/information-for-authors/submit-manuscript",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "Cell Reports: Submit your manuscript",
+   "url": "https://www.cell.com/cell-reports/information-for-authors/submit-manuscript",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "iScience: Revise your manuscript",
+   "url": "https://www.cell.com/iscience/information-for-authors/revise-manuscript",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "Cell Reports: Revise your manuscript",
+   "url": "https://www.cell.com/cell-reports/information-for-authors/revise-manuscript",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "cell",
+  "title": "Cell",
+  "source": "https://github.com/citation-style-language/styles/blob/master/cell.csl",
+  "note": "The guidelines ask for numbered superscript citations in order of first citation, with et al. only after 10 authors. Check that the CSL style you use produces this before relying on it."
+ },
+ "requirements": [
+  {
+   "id": "format-free",
+   "rule": "No set format at first submission",
+   "quote": "For initial submissions, your manuscript does not need to follow a specific format.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "file-type",
+   "rule": "PDF with everything, or Word with figures as separate files; LaTeX papers also upload a PDF",
+   "quote": "For initial submission, you can upload your manuscript either as a PDF (containing the text and all related material) or as a Word file (with the related material uploaded as separate files).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "interests-form",
+   "rule": "Completed declaration of interests form (PDF) at submission",
+   "quote": "A completed declaration of interests form (PDF)   is required.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "small-files",
+   "rule": "Keep figure and other files small (1 to 2 MB) at first submission",
+   "quote": "For initial submission, please keep figures and other files small (1–2 MB) so that editors and reviewers can more easily work with them.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "cover-letter",
+   "rule": "Cover letter for the editors only",
+   "quote": "The cover letter is only available to the editors and will not be seen by reviewers.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "title",
+   "rule": "At revision: title of about 10 to 12 words, at most 145 characters",
+   "quote": "Be concise, around 10–12 words (no more than 145 characters total, including spaces)",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "summary",
+   "rule": "At revision: one-paragraph summary of at most 150 words, no citations",
+   "quote": "The summary is a single paragraph of no more than 150 words, which should include:",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "limitations",
+   "rule": "At revision: a 'limitations of the study' subsection in the Discussion",
+   "quote": "Please include a \"limitations of the study\" subsection within the discussion, highlighting potential caveats of the work.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "resource-availability",
+   "rule": "At revision: Resource availability section with lead contact, materials availability, and data and code availability",
+   "quote": "This section must contain the following required subsections under the resource availability heading: \"lead contact,\" \"materials availability,\" and \"data and code availability.\"",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "lead-contact",
+   "rule": "Exactly one lead contact, who is a corresponding author",
+   "quote": "There can be no more than one lead contact.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "interests-wording",
+   "rule": "Declaration of interests matching the form, or 'The authors declare no competing interests.'",
+   "quote": "If you have no interests to disclose, please note that with the following wording: \"The authors declare no competing interests.\"",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai-declaration",
+   "rule": "Declaration of generative AI use when AI helped write the paper (not for grammar or reference tools)",
+   "quote": "This section is required for any papers in which generative AI and AI-assisted technologies were used in preparing the manuscript.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "footnotes",
+   "rule": "Footnotes only in the author list and in tables",
+   "quote": "Footnotes are used only in the author list to indicate affiliations and special author notes, and in tables; please do not use footnotes otherwise.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "novelty",
+   "rule": "Avoid novelty claims such as 'novel' and 'first'",
+   "quote": "We discourage the use of novelty claims (e.g., use of the words \"novel\" and \"first\") because they are overused and tend not to add meaning.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "legends-stats",
+   "rule": "Legends state the statistical tests, what the asterisks mean, and the number of replicates",
+   "quote": "The legends, main and supplemental, should state the number of biological and technical replicates for each result.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures-separate-final",
+   "rule": "After acceptance: figures as separate high-resolution files, legends in one 'figures' section",
+   "quote": "However, once your article has been accepted for publication, the main-text figures/schemes must be uploaded as separate high-resolution image files, rather than embedded in the manuscript.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "tables-end",
+   "rule": "At revision: main-text tables at the end, after the figure legends, made with the Word table tool",
+   "quote": "Main-text tables should appear at the end of the manuscript, in a separate section after the figure/scheme legends.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "supplemental-list",
+   "rule": "At revision: a 'Supplemental information' list in the main text, Document S1 first",
+   "quote": "A brief list of all supplemental files should appear in the main-text manuscript under the heading \"Supplemental information.\" The primary PDF, called \"Document S1,\" should be listed first, followed by any standalone files.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "references",
+   "rule": "Numbered superscript citations in order of first citation; et al. only after 10 authors",
+   "quote": "In-text citations should be written in numbered superscript style (e.g., \"Multiple reports support this observation1,2\" or \"This observation is supported by Smith et al.1\").",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "final-editable",
+   "rule": "Final files editable, preferably Word",
+   "quote": "Please note that your final submission must be in an editable format, preferably Microsoft Word.",
+   "source": 2,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for article types, length limits, highlights and graphical abstract rules, and the fee",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

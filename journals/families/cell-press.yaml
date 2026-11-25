@@ -1,0 +1,57 @@
+# A family: Cell Press journals use one "Information for authors" template
+# (Submit your manuscript, Revise your manuscript, Final submission).
+# Crossref lists them under Elsevier, so they are matched by name or by "Cell Press".
+# Trends review journals and society journals published by Cell Press may differ.
+# Heliyon has its own profile. The journal's own page is always read.
+name: "Cell Press journals"
+publisher: "Cell Press (Elsevier)"
+journals:
+  - "Cell"
+  - "Cell Reports"
+  - "Cancer Cell"
+  - "iScience"
+  - "Molecular Cell"
+  - "Immunity"
+  - "Neuron"
+  - "Structure"
+  - "Chem"
+  - "Joule"
+  - "Matter"
+  - "One Earth"
+  - "Patterns"
+  - "Med"
+  - "Cell Systems"
+  - "Cell Metabolism"
+  - "Cell Stem Cell"
+  - "Cell Host & Microbe"
+  - "Cell Chemical Biology"
+  - "Cell Genomics"
+  - "Cell Reports Medicine"
+  - "Cell Reports Methods"
+  - "Cell Reports Physical Science"
+  - "Current Biology"
+  - "Developmental Cell"
+  - "STAR Protocols"
+match:
+  publisher: ["Cell Press"]
+  journal_page: "https://www.cell.com/<journal-slug>/information-for-authors"
+guidelines:
+  url: "https://www.cell.com/iscience/information-for-authors/submit-manuscript"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://www.cell.com/cell-reports/information-for-authors/submit-manuscript"
+    - "https://www.cell.com/iscience/information-for-authors/revise-manuscript"
+    - "https://www.cell.com/cell-reports/information-for-authors/revise-manuscript"
+requirements_snapshot: "journals/requirements/cell-press.2026-11-25.json (Research article, first submission and revision)"
+journal_specific:
+  - "Article types and length limits"
+  - "Highlights, eTOC blurb and graphical abstract rules at revision"
+  - "The publishing fee and open access options"
+  - "Extra rules in some journals (for example Med asks for individual data points where possible)"
+known_quirks:
+  - text: "At first submission no format is required. Most format rules apply when the editor invites a revision, so SubmitReady lists them as reminders."
+    source: "https://www.cell.com/iscience/information-for-authors/submit-manuscript"
+    checked: "2026-11-25"
+  - text: "Cell Press discourages the words 'novel' and 'first'."
+    source: "https://www.cell.com/iscience/information-for-authors/revise-manuscript"
+    checked: "2026-11-25"

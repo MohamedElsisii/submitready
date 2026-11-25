@@ -58,17 +58,24 @@ def find(journal: str, publisher: str = "") -> dict:
         if any(_norm(x) == j for x in f.get("journals", [])):
             return {"kind": "family", "how": "listed by name", "file": f["_file"], "name": f["name"],
                     "snapshot": f["requirements_snapshot"], "journal_specific": f.get("journal_specific", [])}
+    pub = _norm(publisher)
+
+    def pub_fits(f, with_parents: bool = False) -> bool:
+        m = f.get("match") or {}
+        names = m.get("publisher", []) + (m.get("parent_publishers", []) if with_parents else [])
+        return any(n and re.search(rf"\b{re.escape(n)}\b", pub) for n in map(_norm, names))
+
     for f in fams:
         pat = (f.get("match") or {}).get("journal_name_pattern", "")
-        if pat and re.search(pat, journal.strip(), re.I):
+        # A name pattern counts only if the publisher, when given, also fits the family or its
+        # parent company (listed in parent_publishers, which never select a family on their own).
+        if pat and re.search(pat, journal.strip(), re.I) and (not pub or pub_fits(f, with_parents=True)):
             return {"kind": "family", "how": "matched by journal name", "file": f["_file"], "name": f["name"],
                     "snapshot": f["requirements_snapshot"], "journal_specific": f.get("journal_specific", []),
                     "journal_page": (f.get("match") or {}).get("journal_page", "")}
-    pub = _norm(publisher)
     if pub:
         for f in fams:
-            names = [_norm(x) for x in (f.get("match") or {}).get("publisher", [])]
-            if any(n and re.search(rf"\b{re.escape(n)}\b", pub) for n in names):
+            if pub_fits(f):
                 excluded = (f.get("match") or {}).get("not_in_family", "")
                 if excluded:
                     other = yaml.safe_load((ROOT / excluded).read_text(encoding="utf-8")) or {}
