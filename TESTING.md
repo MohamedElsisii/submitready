@@ -51,3 +51,26 @@ For every run, note in a GitHub issue (no manuscript attached):
 - the command, the journal, and how long it took;
 - anything wrong: a missed problem, a false alarm, a crash, a confusing message;
 - whether the online reference check ran.
+
+## The big automated test (no testers needed)
+
+`tests/matrix.py` builds Word files from openly licensed articles and runs each one through the whole pipeline.
+Each article gets 4 citation modes (Zotero, EndNote, numbered, author-date) and Word quirks:
+text boxes, equations, footnotes, a landscape section, bold-text headings, Unicode, merged table cells,
+tracked changes, comments, and a LibreOffice round trip.
+
+```
+python tests/matrix.py <folder of JATS .xml> <work folder> --jobs 2 --libreoffice
+```
+
+It reports crashes, any change to locked text, tracked changes or comments that were not refused,
+and facts that differ from the article's own XML. The files it makes come from real papers, so they stay
+in the work folder and are never committed.
+
+Last full run (2026-11-25): 36 CC BY articles, 1,512 files, no crashes, no locked-text changes,
+no missed refusals. It found 5 real bugs, all fixed with tests:
+- live Zotero and EndNote field citations were called "typed";
+- a text box anchored in a heading hid that heading, so the abstract read 0 words;
+- text after the Keywords line was counted as abstract;
+- an abstract with no heading after it ran into the whole paper (now guessed, with a note);
+- the sample converter put graphical abstracts and highlights under the Abstract heading.

@@ -48,3 +48,15 @@ def test_non_cc_by_is_refused(tmp_path):
 def test_bad_download_is_refused(tmp_path):
     with pytest.raises(SystemExit):
         sample.make("PPR0", tmp_path / "s", fetch=lambda u: _Resp("Not found", 404))
+
+
+def test_converter_keeps_only_the_main_abstract():
+    from lxml import etree
+    import jats_to_docx as jd
+    root = etree.fromstring(
+        b"<article><front><article-meta>"
+        b"<abstract abstract-type='graphical'><p>Picture words.</p></abstract>"
+        b"<abstract><p>The main abstract.</p></abstract>"
+        b"<abstract abstract-type='highlights'><p>Point one.</p></abstract>"
+        b"</article-meta></front></article>")
+    assert jd.text(jd.main_abstract(root)) == "The main abstract."

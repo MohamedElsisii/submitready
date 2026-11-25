@@ -28,6 +28,15 @@ from lxml import etree
 XLINK = "{http://www.w3.org/1999/xlink}"
 
 
+def main_abstract(root):
+    """The article's main abstract. Graphical abstracts, highlights and key points are left out."""
+    abstracts = root.findall(".//article-meta/abstract") or root.findall(".//abstract")
+    for a in abstracts:
+        if not a.get("abstract-type") or a.get("abstract-type").lower() in ("abstract", "structured", "summary"):
+            return a
+    return abstracts[0] if abstracts else None
+
+
 def text(el) -> str:
     return re.sub(r"\s+", " ", "".join(el.itertext())).strip() if el is not None else ""
 
@@ -158,7 +167,8 @@ def build(xml: Path, out: Path, mode: str) -> dict:
     for aff in root.findall(".//aff")[:6]:
         d.add_paragraph(text(aff))
     d.add_heading("Abstract", 1)
-    for ap in root.findall(".//abstract//p") or [root.find(".//abstract")]:
+    main_abs = main_abstract(root)
+    for ap in (main_abs.findall(".//p") if main_abs is not None else []) or [main_abs]:
         if ap is not None and text(ap):
             d.add_paragraph(text(ap))
     kw = [text(k) for k in root.findall(".//kwd")]

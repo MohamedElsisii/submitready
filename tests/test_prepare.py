@@ -267,3 +267,78 @@ def test_line_numbers_turned_off_when_journal_says_no(tmp_path):
     done = prepare.format_tex(tex, req, tout)
     assert any("Turned off line numbers" in x for x in done)
     assert "% \\linenumbers" in tout.read_text()
+
+
+def test_live_citations_in_word_fields_are_not_called_typed(tmp_path):
+    # Zotero and EndNote keep citations in Word fields, not content controls (found by tests/matrix.py)
+    import docx_tools
+    f = docx_tools.make_zotero_sample(tmp_path / "z.docx")
+    fmt = prepare.analyze(f)["citation_format"]
+    assert "typed" not in fmt and not fmt.startswith("unknown")
+
+
+def _docx(path, paras, heading=None):
+    """A small docx: paras is a list of text; names in `heading` get Heading 1."""
+    import docx
+    d = docx.Document()
+    for t in paras:
+        if heading and t in heading:
+            d.add_heading(t, 1)
+        else:
+            d.add_paragraph(t)
+    d.save(path)
+    return path
+
+
+def test_text_box_in_abstract_heading_does_not_hide_the_abstract(tmp_path):
+    from lxml import etree
+    import zipfile
+    W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    abstract = "We measured things carefully and found results. " * 5
+    src = _docx(tmp_path / "a.docx", ["A title", "Abstract", abstract, "Introduction", "Some text here."],
+                heading={"Abstract", "Introduction"})
+    with zipfile.ZipFile(src) as z:
+        files = {n: z.read(n) for n in z.namelist()}
+    root = etree.fromstring(files["word/document.xml"])
+    head = [p for p in root.iter(f"{{{W}}}p") if "".join(p.itertext()) == "Abstract"][0]
+    box = (f'<w:r xmlns:w="{W}" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
+           '<mc:AlternateContent><mc:Choice Requires="wps"><w:drawing><w:txbxContent><w:p><w:r><w:t>Note in a box.</w:t>'
+           '</w:r></w:p></w:txbxContent></w:drawing></mc:Choice><mc:Fallback><w:pict><w:txbxContent><w:p><w:r>'
+           '<w:t>Note in a box.</w:t></w:r></w:p></w:txbxContent></w:pict></mc:Fallback></mc:AlternateContent></w:r>')
+    head.append(etree.fromstring(box))
+    files["word/document.xml"] = etree.tostring(root)
+    dst = tmp_path / "b.docx"
+    with zipfile.ZipFile(dst, "w") as z:
+        for n, b in files.items():
+            z.writestr(n, b)
+    f = prepare.analyze(dst)
+    assert "abstract" in f["sections_found"]
+    assert f["abstract_words"] == len(abstract.split()) + 4  # the box sits in the abstract, so it counts once
+    _, _, paras = prepare.read_paragraphs(dst)
+    assert sum(p["text"] == "Note in a box." for p in paras) == 1  # the fallback copy is not read twice
+
+
+def test_keywords_line_closes_the_abstract(tmp_path):
+    src = _docx(tmp_path / "k.docx", ["A title", "Abstract", "One two three four five six.",
+                                      "Keywords: alpha; beta; gamma",
+                                      "Impact statement. This sentence is not part of the abstract.",
+                                      "Introduction", "Body text."], heading={"Abstract", "Introduction"})
+    f = prepare.analyze(src)
+    assert f["abstract_words"] == 6
+    assert f["keywords"] == ["alpha", "beta", "gamma"]
+
+
+def test_abstract_without_a_heading_after_it_stops_before_cited_text(tmp_path):
+    abstract = "Plain summary words without any citation at all here. " * 20
+    body = ["Courts rely on experts in many cases [1]. " * 60, "More body text follows here [2]. " * 60]
+    src = _docx(tmp_path / "apa.docx", ["A title", "Abstract", abstract, *body, "References", "1. A ref."],
+                heading={"Abstract", "References"})
+    f = prepare.analyze(src)
+    assert f["abstract_words"] == len(abstract.split())
+    assert "guessed" in f["abstract_note"]
+    assert f["main_text_words"] >= sum(len(b.split()) for b in body)
+
+
+def test_normal_abstract_has_no_guess_note(tmp_path):
+    f = prepare.analyze(make_sample(tmp_path / "s.docx"))
+    assert "abstract_note" not in f

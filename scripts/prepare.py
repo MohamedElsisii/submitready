@@ -66,14 +66,36 @@ LEADING_SECTION = re.compile(r"^(?:[\dIVX]+(?:\.\d+)*\.?\s*)?(introduction|backg
 SECTION_RE = [(k, re.compile(rf"^(?:[\dIVX]+(?:\.\d+)*\.?\s*)?(?:{p})\s*:?$", re.I)) for k, p in SECTIONS]
 END_OF_MAIN = {"abbreviations", "acknowledgements", "funding", "competing", "data", "ethics", "contributions",
                "ai", "declarations", "references", "figure_legends", "supplementary", "highlights"}
+ABSTRACT_RUNAWAY = 600  # no journal allows an abstract this long
+CITE_IN_TEXT = re.compile(r"\[\d{1,3}(?:\s*[-\u2013,]\s*\d{1,3})*\]|\([A-Z][^()]{0,80}?\b(?:19|20)\d{2}[a-z]?\)")
 CAPTION_RE = re.compile(r"^(Figure|Fig\.?|Table)\s*(S?)(\d+)\b", re.I)
 SUPP_RE = re.compile(r"\b(?:(Table|Figure|Fig\.?|Code|Data|File|Appendix|Video|Dataset)\s*S(\d+)|S(\d+)\s+(Table|Fig|Figure|File|Appendix|Data|Code))\b")
 
 
 # ---------------------------------------------------------------- reading
+MC_FALLBACK = "{http://schemas.openxmlformats.org/markup-compatibility/2006}Fallback"
+
+
+def _nested(n, el) -> bool:
+    """True when n sits inside a text box (or a compatibility fallback copy) within el.
+
+    A text box anchored in a paragraph holds paragraphs of its own. Their text belongs to
+    those inner paragraphs, not to the paragraph the box is anchored in."""
+    for a in n.iterancestors():
+        if a is el:
+            return False
+        if a.tag in (q("txbxContent"), MC_FALLBACK):
+            return True
+    return False
+
+
+def _own(el, *tags):
+    return (n for n in el.iter(*tags) if not _nested(n, el))
+
+
 def _text(el) -> str:
     out = []
-    for n in el.iter(q("t"), q("tab"), q("br")):
+    for n in _own(el, q("t"), q("tab"), q("br")):
         if n.tag == q("t"):
             out.append(n.text or "")
         else:
@@ -82,7 +104,7 @@ def _text(el) -> str:
 
 
 def _is_bold(p, styles_bold: set[str]) -> bool:
-    runs = [r for r in p.iter(q("r")) if (_text(r) or "").strip()]
+    runs = [r for r in _own(p, q("r")) if (_text(r) or "").strip()]
     if not runs:
         return False
     ps = p.find(f"{q('pPr')}/{q('pStyle')}")
@@ -163,6 +185,17 @@ def _citation_format(root) -> tuple[str, list[str]]:
             samples.append(text)
         if len(samples) >= 20:
             break
+    if not samples:
+        # Zotero, EndNote and Mendeley Desktop keep live citations in Word fields, not content controls
+        try:
+            import refs as _refs
+            for instr, shown in _refs._fields(etree.tostring(root)):
+                if re.search(r"ADDIN\s+(ZOTERO_ITEM|EN\.CITE|CSL_CITATION|Mendeley Citation)", instr, re.I) and shown.strip():
+                    samples.append(shown.strip())
+                    if len(samples) >= 20:
+                        break
+        except Exception:
+            pass
     s = " ".join(samples)
     if not samples:
         # typed citations (no reference manager): look at the plain text
@@ -292,6 +325,9 @@ def read_paragraphs(path: Path):
     body = root.find(q("body"))
     paras = []
     for el in body.iter(q("p")):
+        if any(a.tag == MC_FALLBACK for a in el.iterancestors()):
+            continue  # Word stores a second copy of each text box for old readers
+        in_box = any(a.tag == q("txbxContent") for a in el.iterancestors())
         in_table = any(a.tag == q("tbl") for a in el.iterancestors())
         in_bib = any(a.tag == q("sdt") and "BIBLIOGRAPHY" in (a.findtext(f"{q('sdtPr')}/{q('tag')}") or "" or "")
                      for a in el.iterancestors())
@@ -307,7 +343,7 @@ def read_paragraphs(path: Path):
         style = names.get(ps.get(q("val")), ps.get(q("val"))) if ps is not None else "Normal"
         sec = _section_of(text) if len(text) < 120 else None
         is_heading = False
-        if not in_table and not in_bib and len(text) < 150 and not CAPTION_RE.match(text):
+        if not in_table and not in_bib and not in_box and len(text) < 150 and not CAPTION_RE.match(text):
             if style.lower().startswith(("heading", "title")) or sec:
                 is_heading = True
             elif _is_bold(el, styles_bold) and not text.endswith((".", ";", ",")) and words(text) <= 15:
@@ -364,6 +400,8 @@ def analyze(path: Path) -> dict:
                 abstract_parts.append(inline.group(2))
             else:
                 kw_text = inline.group(2)
+                if current == "abstract":
+                    current = "keywords"  # the keywords line closes the abstract
             continue
         st = inline_statement(t) if not p["heading"] and not p["table"] and not p["bib"] else None
         if st:
@@ -389,6 +427,21 @@ def analyze(path: Path) -> dict:
         elif main_started and not main_ended:
             main_words += words(t)
 
+    abstract_note = ""
+    if words(" ".join(abstract_parts)) > ABSTRACT_RUNAWAY and len(abstract_parts) > 1:
+        # No heading closed the abstract (APA-style papers often start the introduction
+        # without one). Abstracts rarely cite, so stop at the first paragraph with a citation.
+        keep = [abstract_parts[0]]
+        for part in abstract_parts[1:]:
+            if CITE_IN_TEXT.search(part):
+                break
+            keep.append(part)
+        if words(" ".join(keep)) > ABSTRACT_RUNAWAY:
+            keep = abstract_parts[:1]
+        main_words += words(" ".join(abstract_parts[len(keep):]))
+        abstract_parts = keep
+        abstract_note = ("No heading follows the abstract, so its end was guessed "
+                         f"({len(keep)} paragraph{'s' if len(keep) > 1 else ''}). Add an Introduction heading to be sure.")
     keywords = [k.strip(" .") for k in re.split(r"[;,\u2022|]", kw_text) if k.strip(" .")]
     figs = sorted({c["n"] for c in captions if c["kind"] == "figure" and not c["supp"]})
     tabs = sorted({c["n"] for c in captions if c["kind"] == "table" and not c["supp"]})
@@ -451,6 +504,7 @@ def analyze(path: Path) -> dict:
         "title_chars": len(title),
         "title_words": words(title),
         "abstract_words": words(" ".join(abstract_parts)),
+        **({"abstract_note": abstract_note} if abstract_note else {}),
         "keywords": keywords,
         "main_text_words": main_words,
         "sections_found": order,
@@ -698,7 +752,8 @@ def checklist_markdown(facts: dict, req: dict, results: list[dict]) -> str:
         lines.append(f"| {i} | {esc(r['rule'])} | {STATUS_TEXT[r['status']]} | {esc(r['found'])} | {said} |")
     lines += ["", "## Manuscript facts", "",
               f"- Title: {facts['title_chars']} characters, {facts.get('title_words', 0)} words",
-              f"- Abstract: {facts['abstract_words']} words; keywords: {len(facts['keywords'])}",
+              f"- Abstract: {facts['abstract_words']} words; keywords: {len(facts['keywords'])}"
+              + (f" ({facts['abstract_note']})" if facts.get("abstract_note") else ""),
               f"- Main text (Introduction to end of Discussion/Conclusion, without headings, captions and tables): {facts['main_text_words']:,} words",
               f"- Sections in order: {' > '.join(facts['sections_found'])}",
               f"- Figures: {len(facts['figures'])}, tables: {len(facts['tables'])}, images inside the file: {facts['figures_embedded']}",
