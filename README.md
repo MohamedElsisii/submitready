@@ -37,7 +37,7 @@ Nothing was changed in the references. Every finding is a suggestion for the aut
 2. **Suggest, never apply.** Typos, word-limit overruns and guideline conflicts are listed for you to fix. Only two kinds of change can be made for you, and only after you say yes to each: moving a whole section (like Funding) out of the submission copy word for word, and swapping supplementary labels exactly (like "Table S1" to "S1 Table"). The lock then proves those were the only changes.
 3. **No number without a source.** Every metric, date or guideline comes with its source link and the date it was checked. If something can't be verified, SubmitReady says "not found". It never guesses.
 4. **Flag, don't fix, references.** If a reference disagrees with Crossref or PubMed, you see both versions and decide. Nothing is invented or silently corrected.
-5. **New text is a separate draft.** Cover letters, statements and reviewer responses are separate files, marked as drafts, never mixed into your manuscript.
+5. **New text is a separate draft.** Cover letters, statements and reviewer responses are separate files, marked as drafts, never mixed into your manuscript. Your answers to reviewers are always your own words: SubmitReady only lays out the comments.
 
 ## Find the right journal
 
@@ -83,7 +83,7 @@ To try it from a local copy instead, see [TESTING.md](TESTING.md).
 | `/submitready:check` | Final pre-submission audit | v1 |
 | `/supp` | Numbers, checks and packages supplementary material | v2 |
 | `/cover` | Drafts a cover letter for your approval | v2 |
-| `/respond` | Organizes reviewer comments and drafts replies for your approval | v3 |
+| `/submitready:revise <letter>` | After a revise decision: splits the decision letter into numbered comments, word for word, and makes a response table with empty Response and Where changed columns for you to fill. Shows which paragraphs you changed and which comments still need an answer. It never writes a response for you | v1 |
 
 ## Journals
 

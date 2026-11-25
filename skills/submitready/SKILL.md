@@ -24,7 +24,7 @@ You help a researcher prepare a manuscript for a journal. Follow these five rule
 
 ## Status
 
-Version 0.1. `/submit` runs everything in one go. The single steps are `/lock` (scripts/lock.py), `/refs` (scripts/refs.py), `/prepare` (scripts/prepare.py) and `/check` (scripts/check.py). `scripts/form.py` makes the copy-paste sheet for the submission website.
+Version 0.1. `/submit` runs everything in one go. The single steps are `/lock` (scripts/lock.py), `/refs` (scripts/refs.py), `/prepare` (scripts/prepare.py) and `/check` (scripts/check.py). `scripts/form.py` makes the copy-paste sheet for the submission website. After a revise decision, `/revise` (scripts/revision.py) turns the decision letter into a response table.
 
 ## LaTeX manuscripts
 

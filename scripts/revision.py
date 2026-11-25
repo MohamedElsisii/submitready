@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+"""SubmitReady revision helper: from a decision letter to a response table.
+
+It splits the letter into numbered comments, word for word, and builds a Word table with
+an empty "Response" column and an empty "Where changed" column for you to fill in.
+It never writes a response for you, and it never changes the manuscript.
+
+    python revision.py split letter.docx --out comments.json
+    python revision.py table comments.json --out response.docx
+    python revision.py changes original.docx revised.docx --comments comments.json --out changes.md
+    python revision.py status response.docx
+
+split    Finds the reviewer and editor sections and their comments (numbered, lettered or
+         bulleted). Lines the journal leaves for your answer ("Author response:") are dropped.
+         Instructions about how to answer (tracked changes, page and line numbers) are kept.
+table    One table per reviewer: comment ID, the comment as written, Response, Where changed.
+changes  Lists the paragraphs you changed, added or removed in the revised manuscript, and for
+         each comment the changed paragraphs that share its key terms (a hint, not a decision).
+status   Reads the filled-in response table back and lists comments still without a response
+         or without a place where you changed the text.
+"""
+from __future__ import annotations
+
+import argparse
+import difflib
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+PLACEHOLDER = re.compile(r"^\s*(author'?s?'? response( and action taken)?|response to reviewer|"
+                         r"page and line number\(?s?\)? for changes made|reply)\s*:?\s*$", re.I)
+REVIEWER = re.compile(r"^\s*(?:reviewer|referee)\s*(?:#|no\.?|:)?\s*(\d+)\s*:?\s*$", re.I)
+EDITOR = re.compile(r"^\s*(?:(?:associate|academic|handling|managing|section|guest)\s+)?editor(?:'s)?"
+                    r"(?:\s+comments?(?:\s+to\s+(?:the\s+)?authors?)?)?\s*:?\s*(\d+)?\s*:?\s*$", re.I)
+BLOCK_START = re.compile(r"^\s*(?:referee\(s\)'?\s+comments|comments to (?:the )?authors?|reviewers?'? comments)\b.*:?\s*$", re.I)
+LABEL = re.compile(r"^\s*(general|specific|minor|major|additional)\s+comments?\s*:?\s*$", re.I)
+NUM = re.compile(r"^\s*(\d{1,2})[.)]\s+(.*)$")
+LETTER = re.compile(r"^\s*([A-H])[.)]\s+(.*)$")
+BULLET = re.compile(r"^\s*(?:[-•–*]|\(\w\))\s*(\S.*)$")
+CITED_REF = re.compile(r"^\s*[A-Z][\w'\-]+,\s+(?:[A-Z]\.\s*)+,.*\((?:19|20)\d{2}[a-z]?\)")   # "Saxena, N., ... (2013)."
+SECTION_LABEL = re.compile(r"^\s*(\d+(?:\.\d+)*)\.?\s*$")          # "2.9" or "4." on its own line
+STOP = re.compile(r"(post-acceptance services|scientific editing service|if you are considering reworking|"
+                  r"look forward to receiving your revision|^\s*sincerely,?\s*$)", re.I)
+HOW_TO = re.compile(r"(track(ed)? changes|highlight the changes|page and line|line numbers?|point[- ]by[- ]point|"
+                    r"two versions|response (letter|document)|reply to the (referee|reviewer)|"
+                    r"explain(ing)? the changes|marked[- ]up|clean (copy|version))", re.I)
+SENT = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
+
+
+# ---------------------------------------------------------------- reading
+def read_lines(path: Path) -> list[str]:
+    if path.suffix.lower() == ".docx":
+        from docx import Document
+        d = Document(str(path))
+        lines: list[str] = []
+        for p in d.paragraphs:
+            lines += p.text.split("\n")
+        for t in d.tables:                                  # some letters put comments in a table
+            for row in t.rows:
+                for cell in row.cells:
+                    lines += cell.text.split("\n")
+        return lines
+    return path.read_text(encoding="utf-8", errors="replace").splitlines()
+
+
+# ---------------------------------------------------------------- splitting
+def _blocks(lines: list[str]) -> tuple[list[str], list[dict]]:
+    """Cut the letter into a preamble and reviewer/editor blocks."""
+    pre: list[str] = []
+    blocks: list[dict] = []
+    cur = None
+    for raw in lines:
+        line = raw.rstrip()
+        if not line.strip():
+            continue
+        m = REVIEWER.match(line)
+        e = EDITOR.match(line) if not m else None
+        if m:
+            cur = {"who": f"Reviewer {m.group(1)}", "lines": []}
+            blocks.append(cur)
+            continue
+        if e and len(line) < 70:
+            n = e.group(1)
+            if cur is not None and cur["who"].startswith("Editor") and not cur["lines"]:
+                cur["who"] = f"Editor {n}" if n else cur["who"]   # "Editor Comments to Author:" then "Associate Editor: 1"
+            else:
+                cur = {"who": f"Editor {n}" if n else "Editor", "lines": []}
+                blocks.append(cur)
+            continue
+        if cur is None:
+            if BLOCK_START.match(line):
+                continue
+            pre.append(line)
+            continue
+        if STOP.search(line):
+            cur = None
+            continue
+        if BLOCK_START.match(line) and not cur["lines"]:
+            continue
+        cur["lines"].append(line)
+    return pre, blocks
+
+
+def _comments_in_block(block: dict) -> list[dict]:
+    lines = [ln for ln in block["lines"] if not PLACEHOLDER.match(ln)]
+    has_num = any(NUM.match(ln) or LETTER.match(ln) for ln in lines)
+    has_bullet = any(BULLET.match(ln) for ln in lines)
+    out: list[dict] = []
+    general: list[str] = []
+    group = ""                      # "General", "Specific", ...
+    num = ""                        # current number, for lettered sub-items
+    heading = ""                    # "Results 3.1" or "2.9": where the comment points
+    cur = None
+
+    def start(cid: str, text: str, where: str = "") -> dict:
+        c = {"id": cid, "group": group, "where_in_paper": where, "lines": [text]}
+        out.append(c)
+        return c
+
+    for i, ln in enumerate(lines):
+        lab = LABEL.match(ln)
+        if lab:
+            group = lab.group(1).capitalize()
+            cur = None
+            continue
+        s = SECTION_LABEL.match(ln)
+        if s and not has_num:
+            heading, cur = s.group(1), None
+            continue
+        if has_num:
+            m = NUM.match(ln)
+            if m:
+                num, text = m.group(1), m.group(2).strip()
+                nxt = next((x for x in lines[i + 1:] if x.strip()), "")
+                if len(text) < 45 and not re.search(r"[.?!:]$", text) and LETTER.match(nxt):
+                    heading, cur = text, None          # "1. Results 3.1" heads lettered items
+                    continue
+                heading = ""
+                cur = start(num, text)
+                continue
+            m = LETTER.match(ln)
+            if m and num:
+                cur = start(f"{num}{m.group(1)}", m.group(2).strip(), heading)
+                continue
+        elif has_bullet:
+            m = BULLET.match(ln)
+            if m:
+                cur = start(str(len([c for c in out if c["id"] != "G"]) + 1), m.group(1).strip(), heading)
+                continue
+        elif not has_num and not has_bullet and heading:
+            if cur is not None and CITED_REF.match(ln):   # a paper the reviewer cites belongs to their comment
+                cur["lines"].append(ln.strip())
+                continue
+            cur = start(str(len(out) + 1), ln.strip(), heading)
+            continue
+        if cur is None:
+            if group == "General" or not out:
+                general.append(ln.strip())
+                continue
+            cur = start(str(len(out) + 1), ln.strip(), heading)
+            continue
+        cur["lines"].append(ln.strip())
+
+    if general:
+        text = "\n".join(general)
+        if not re.fullmatch(r"\(?\s*there are no comments\.?\s*\)?", text.strip(), re.I):
+            out.insert(0, {"id": "G", "group": "General", "where_in_paper": "", "lines": general})
+    prefix = "R" + block["who"].split()[-1] if block["who"].startswith("Reviewer") else (
+        "E" + (block["who"].split()[-1] if block["who"] != "Editor" else ""))
+    return [{"id": f"{prefix}.{c['id']}", "who": block["who"], "group": c["group"],
+             "where_in_paper": c["where_in_paper"], "comment": "\n".join(c["lines"]).strip(),
+             "response": "", "where_changed": ""} for c in out if "\n".join(c["lines"]).strip()]
+
+
+def split(path: Path) -> dict:
+    lines = read_lines(path)
+    pre, blocks = _blocks(lines)
+    comments = [c for b in blocks for c in _comments_in_block(b)]
+    how = []
+    for ln in pre:                       # the letter and any "Comments to Authors" notes before Reviewer 1
+        for s in SENT.split(ln):
+            if HOW_TO.search(s) and s.strip() not in how:
+                how.append(s.strip())
+    return {"letter": path.name, "how_to_answer": how,
+            "reviewers": sorted({c["who"] for c in comments}, key=lambda w: (w.startswith("Editor"), w)),
+            "comments": comments}
+
+
+# ---------------------------------------------------------------- response table
+def table(data: dict, out: Path) -> None:
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.shared import Pt, Cm
+
+    doc = Document()
+    sec = doc.sections[0]
+    sec.left_margin = sec.right_margin = Cm(2)
+    st = doc.styles["Normal"]
+    st.font.name, st.font.size = "Arial", Pt(10)
+    doc.add_heading("Response to reviewers", level=1)
+    doc.add_paragraph(f"Comments copied word for word from {data['letter']}. "
+                      "Write your answer in the Response column and say where the manuscript changed "
+                      "(page and line, or the changed sentence) in the last column.")
+    if data.get("how_to_answer"):
+        doc.add_heading("What the editor asks for", level=2)
+        for s in data["how_to_answer"]:
+            doc.add_paragraph(s, style="List Bullet")
+
+    def shade(cell, hex_fill):
+        tc = cell._tc.get_or_add_tcPr()
+        sh = OxmlElement("w:shd")
+        sh.set(qn("w:val"), "clear")
+        sh.set(qn("w:color"), "auto")
+        sh.set(qn("w:fill"), hex_fill)
+        tc.append(sh)
+
+    for who in data["reviewers"]:
+        rows = [c for c in data["comments"] if c["who"] == who]
+        doc.add_heading(who, level=2)
+        t = doc.add_table(rows=1, cols=4)
+        t.style = "Table Grid"
+        widths = (Cm(1.6), Cm(7.0), Cm(6.0), Cm(3.0))
+        for cell, txt, w in zip(t.rows[0].cells, ("ID", "Comment", "Response", "Where changed"), widths):
+            cell.text = ""
+            r = cell.paragraphs[0].add_run(txt)
+            r.bold = True
+            cell.width = w
+            shade(cell, "D9E2F3")
+        for c in rows:
+            cells = t.add_row().cells
+            cells[0].text = c["id"]
+            text = c["comment"] if not c["where_in_paper"] else f"[{c['where_in_paper']}] {c['comment']}"
+            cells[1].text = text
+            cells[2].text = c.get("response", "")
+            cells[3].text = c.get("where_changed", "")
+            for cell, w in zip(cells, widths):
+                cell.width = w
+        doc.add_paragraph()
+    doc.save(str(out))
+
+
+# ---------------------------------------------------------------- reading the table back
+def status(response_docx: Path) -> dict:
+    from docx import Document
+    d = Document(str(response_docx))
+    rows = []
+    for t in d.tables:
+        head = [c.text.strip().lower() for c in t.rows[0].cells]
+        if head[:2] != ["id", "comment"]:
+            continue
+        for r in t.rows[1:]:
+            cells = [c.text.strip() for c in r.cells]
+            rows.append({"id": cells[0], "has_response": bool(cells[2]), "has_where": bool(cells[3])})
+    return {"comments": len(rows),
+            "no_response": [r["id"] for r in rows if not r["has_response"]],
+            "no_where": [r["id"] for r in rows if r["has_response"] and not r["has_where"]]}
+
+
+# ---------------------------------------------------------------- what changed
+TERM = re.compile(r"\b(?:(?:Table|Figure|Fig\.?|Section|Supplementary (?:Table|Figure))\s*S?\d+[A-Za-z]?|"
+                  r"[A-Z][A-Za-z0-9-]*[A-Z0-9][A-Za-z0-9-]*|\d+(?:\.\d+)+|PMID\s*\d+)\b")
+COMMON = {"I", "A", "AI", "OK", "PDF", "DOI", "URL", "NB", "PLEASE", "NOTE", "ID"}
+
+
+def _terms(text: str) -> set[str]:
+    return {t.lower().replace("fig.", "figure").replace(" ", "") for t in TERM.findall(text)
+            if t.upper() not in COMMON and len(t) > 1}
+
+
+def changes(original: Path, revised: Path, comments: dict | None = None) -> dict:
+    import lock
+    old = [u.text for u in lock.extract(original)["units"]]
+    new = [u.text for u in lock.extract(revised)["units"]]
+    sm = difflib.SequenceMatcher(None, old, new, autojunk=False)
+    rows = []
+    for op, a1, a2, b1, b2 in sm.get_opcodes():
+        if op == "equal":
+            continue
+        if op == "replace":
+            for k in range(max(a2 - a1, b2 - b1)):
+                o = old[a1 + k] if a1 + k < a2 else ""
+                n = new[b1 + k] if b1 + k < b2 else ""
+                kind = "changed" if o and n else ("removed" if o else "added")
+                rows.append({"kind": kind, "paragraph": b1 + k + 1 if n else None, "old": o, "new": n})
+        elif op == "insert":
+            rows += [{"kind": "added", "paragraph": j + 1, "old": "", "new": new[j]} for j in range(b1, b2)]
+        elif op == "delete":
+            rows += [{"kind": "removed", "paragraph": None, "old": old[i], "new": ""} for i in range(a1, a2)]
+    hints = {}
+    if comments:
+        # Terms found in many paragraphs (the paper's own topic words) say nothing about one change.
+        df: dict[str, int] = {}
+        for p in new:
+            for t in _terms(p):
+                df[t] = df.get(t, 0) + 1
+        common = {t for t, n in df.items() if n > max(3, len(new) // 15)}
+        for c in comments["comments"]:
+            ct = _terms(c["comment"] + " " + c.get("where_in_paper", "")) - common
+            if not ct:
+                continue
+            hit = [i for i, r in enumerate(rows) if ct & _terms(r["new"] or r["old"])]
+            if hit:
+                hints[c["id"]] = hit[:5]
+    return {"original": original.name, "revised": revised.name, "rows": rows, "hints": hints}
+
+
+def changes_markdown(ch: dict, comments: dict | None = None) -> str:
+    def short(s, n=160):
+        s = s.replace("\n", " ")
+        return s if len(s) <= n else s[:n] + "..."
+    lines = [f"# What changed: {ch['original']} to {ch['revised']}", "",
+             f"{sum(r['kind'] == 'changed' for r in ch['rows'])} paragraphs changed, "
+             f"{sum(r['kind'] == 'added' for r in ch['rows'])} added, "
+             f"{sum(r['kind'] == 'removed' for r in ch['rows'])} removed. "
+             "Paragraph numbers count non-empty paragraphs in the revised file.", "",
+             "| # | Kind | Paragraph | Text now |", "| --- | --- | --- | --- |"]
+    for i, r in enumerate(ch["rows"], 1):
+        lines.append(f"| {i} | {r['kind']} | {r['paragraph'] or '-'} | {short(r['new'] or r['old']).replace('|', '/')} |")
+    if comments:
+        lines += ["", "## Comments and changes that share key terms", "",
+                  "A hint for filling the 'Where changed' column, not a decision. "
+                  "A comment with no match may still be answered elsewhere, or not yet.", ""]
+        for c in comments["comments"]:
+            hit = ch["hints"].get(c["id"])
+            lines.append(f"- {c['id']}: " + (", ".join(f"change #{h + 1}" for h in hit) if hit else "no matching change found"))
+    return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------- CLI
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="Turn a decision letter into a response table")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("split")
+    s.add_argument("letter", type=Path)
+    s.add_argument("--out", type=Path, required=True)
+    t = sub.add_parser("table")
+    t.add_argument("comments", type=Path)
+    t.add_argument("--out", type=Path, required=True)
+    c = sub.add_parser("changes")
+    c.add_argument("original", type=Path)
+    c.add_argument("revised", type=Path)
+    c.add_argument("--comments", type=Path)
+    c.add_argument("--out", type=Path)
+    st = sub.add_parser("status")
+    st.add_argument("response", type=Path)
+    a = ap.parse_args(argv)
+
+    if a.cmd == "split":
+        data = split(a.letter)
+        a.out.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+        per = {w: sum(c["who"] == w for c in data["comments"]) for w in data["reviewers"]}
+        print(f"{len(data['comments'])} comments: " + ", ".join(f"{w} {n}" for w, n in per.items()))
+        return 0
+    if a.cmd == "table":
+        table(json.loads(a.comments.read_text(encoding="utf-8")), a.out)
+        print(f"Response table: {a.out}")
+        return 0
+    if a.cmd == "changes":
+        com = json.loads(a.comments.read_text(encoding="utf-8")) if a.comments else None
+        ch = changes(a.original, a.revised, com)
+        md = changes_markdown(ch, com)
+        if a.out:
+            a.out.write_text(md, encoding="utf-8")
+            print(f"{len(ch['rows'])} changes. Report: {a.out}")
+        else:
+            sys.stdout.write(md)
+        return 0
+    if a.cmd == "status":
+        r = status(a.response)
+        print(f"{r['comments']} comments. Without a response: {', '.join(r['no_response']) or 'none'}. "
+              f"Answered but no place given: {', '.join(r['no_where']) or 'none'}.")
+        return 0 if not r["no_response"] else 1
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
