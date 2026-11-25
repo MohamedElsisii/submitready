@@ -1,0 +1,32 @@
+# A family: journals hosted on the Egyptian Knowledge Bank (EKB) platform.
+# The platform is shared (the same Guide for Authors page, submission system and similarity check),
+# but each journal writes its own rules, so nothing below is a rule for every EKB journal.
+# The journal's own Guide for Authors is always read.
+name: "EKB journals (Egyptian Knowledge Bank)"
+publisher: "Egyptian Knowledge Bank (EKB); each journal's university or society"
+match:
+  publisher: ["Egyptian Knowledge Bank", "EKB"]
+  url_pattern: "^https?://[a-z0-9-]+\\.journals\\.ekb\\.eg(/|$)"
+  journal_page: "https://<journal-code>.journals.ekb.eg/journal/authors.note"
+guidelines:
+  url: "https://ejn.journals.ekb.eg/journal/authors.note"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://zjps.journals.ekb.eg/journal/authors.note"
+    - "https://esjp.journals.ekb.eg/journal/authors.note"
+    - "https://muj.journals.ekb.eg/journal/authors.note"
+    - "https://micc.journals.ekb.eg/journal/authors.note"
+requirements_snapshot: "journals/requirements/ekb.2026-11-25.json (platform notes only, no shared rules)"
+journal_specific:
+  - "Line spacing (Egyptian Journal of Nutrition: double-spaced throughout; another EKB journal asks for 1.5 lines in Times New Roman 12 pt)"
+  - "Arabic abstract (Egyptian Journal of Nutrition: authors from Arabic countries may add one)"
+  - "Fees: some EKB journals charge review or publication fees, sometimes different for Egyptian and foreign authors and for students"
+  - "Similarity limits, where the journal sets one"
+  - "Anonymized review: some journals ask for the manuscript without author names, in a separate file from the title page"
+known_quirks:
+  - text: "Egyptian Journal of Nutrition asks for double spacing including the abstract, the references, and table and figure captions."
+    source: "https://ejn.journals.ekb.eg/journal/authors.note"
+    checked: "2026-11-25"
+  - text: "The EKB journals checked keep their Guide for Authors at /journal/authors.note on the journal's own EKB address."
+    source: "https://zjps.journals.ekb.eg/journal/authors.note"
+    checked: "2026-11-25"

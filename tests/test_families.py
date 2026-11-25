@@ -68,3 +68,11 @@ def test_openalex_publisher_names():
     assert families.find("Molecular Biology Reports", "Springer Nature")["file"].endswith("springer.yaml")
     assert families.find("Current Molecular Biology Reports", "Springer Science+Business Media")["file"].endswith("springer.yaml")
     assert families.find("BioMed Research International", "Hindawi Publishing Corporation")["file"].endswith("hindawi.yaml")
+
+
+def test_match_by_web_address():
+    r = families.find("Egyptian Journal of Nutrition", "Zagazig University", url="https://ejn.journals.ekb.eg/journal/authors.note")
+    assert r["file"].endswith("ekb.yaml") and r["how"] == "matched by the journal's web address"
+    assert families.find("Cancer Management and Research", "Informa UK Limited",
+                         url="https://www.dovepress.com/cancer-management-and-research-journal")["file"].endswith("dove.yaml")
+    assert families.find("Some Journal", "", url="https://example.journals.ekb.eg.evil.com/")["kind"] == "none"

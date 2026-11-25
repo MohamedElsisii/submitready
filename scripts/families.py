@@ -3,6 +3,7 @@
 
     python families.py find "Future Oncology"
     python families.py find "Cancers" --publisher MDPI
+    python families.py find "Egyptian Journal of Nutrition" --url https://ejn.journals.ekb.eg
 
 A journal profile (journals/<slug>.yaml) wins. Then a family that lists the journal by name, then one whose name pattern fits (e.g. "BMC ...").
 Then a family that matches the publisher. Every journal still works without any of these:
@@ -47,7 +48,7 @@ def families() -> list[dict]:
     return out
 
 
-def find(journal: str, publisher: str = "") -> dict:
+def find(journal: str, publisher: str = "", url: str = "") -> dict:
     j = _norm(journal)
     for p in profiles():
         if _norm(p.get("name", "")) == j:
@@ -58,6 +59,14 @@ def find(journal: str, publisher: str = "") -> dict:
         if any(_norm(x) == j for x in f.get("journals", [])):
             return {"kind": "family", "how": "listed by name", "file": f["_file"], "name": f["name"],
                     "snapshot": f["requirements_snapshot"], "journal_specific": f.get("journal_specific", [])}
+    if url:
+        for f in fams:
+            pat = (f.get("match") or {}).get("url_pattern", "")
+            if pat and re.search(pat, url.strip(), re.I):
+                return {"kind": "family", "how": "matched by the journal's web address", "file": f["_file"],
+                        "name": f["name"], "snapshot": f["requirements_snapshot"],
+                        "journal_specific": f.get("journal_specific", []),
+                        "journal_page": (f.get("match") or {}).get("journal_page", "")}
     pub = _norm(publisher)
 
     def pub_fits(f, with_parents: bool = False) -> bool:
@@ -93,8 +102,9 @@ def main(argv=None) -> int:
     f = sub.add_parser("find")
     f.add_argument("journal")
     f.add_argument("--publisher", default="")
+    f.add_argument("--url", default="", help="the journal's home or guidelines page, if known")
     args = ap.parse_args(argv)
-    print(json.dumps(find(args.journal, args.publisher), indent=2, ensure_ascii=False))
+    print(json.dumps(find(args.journal, args.publisher, args.url), indent=2, ensure_ascii=False))
     return 0
 
 

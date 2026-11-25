@@ -1,0 +1,61 @@
+{
+ "journal": "Egyptian Knowledge Bank (EKB) journals (platform rules only)",
+ "article_type": "Research article",
+ "snapshot_note": "EKB hosts hundreds of Egyptian journals on one platform, but each journal writes its own Guide for Authors, and they differ (line spacing, fonts, abstract limits, Arabic abstracts, fees). No rule is shared word for word, so this snapshot holds no journal rules: SubmitReady reads the journal's own Guide for Authors on every run and builds the checks from it.",
+ "sources": [
+  {
+   "name": "Egyptian Journal of Nutrition: Guide for Authors",
+   "url": "https://ejn.journals.ekb.eg/journal/authors.note",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "Zagazig Journal of Pharmaceutical Sciences: Guide for Authors",
+   "url": "https://zjps.journals.ekb.eg/journal/authors.note",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "",
+  "title": "",
+  "source": "",
+  "note": "Set by each journal's Guide for Authors."
+ },
+ "requirements": [
+  {
+   "id": "journal-guide",
+   "rule": "Read the journal's own Guide for Authors at <journal>.journals.ekb.eg/journal/authors.note and build every check from it",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "fees",
+   "rule": "Check the guide for submission, review or publication fees, and whether they differ for Egyptian and foreign authors or for students",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "arabic-abstract",
+   "rule": "Check whether the journal asks for, or allows, an Arabic abstract as well as the English one",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "similarity",
+   "rule": "Check the guide for a similarity (plagiarism) limit",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

@@ -125,6 +125,7 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 | Sage | Sage journals | Sage's publisher-wide manuscript preparation page |
 | Nature Portfolio | Nature, Nature Communications, the Communications and npj journals | Nature Portfolio editorial policies, plus Nature Communications and Communications Biology compared |
 | Cell Press | Cell, Cell Reports, iScience and 23 more Cell Press journals | iScience and Cell Reports compared (first submission and revision pages) |
+| EKB (Egyptian Knowledge Bank) | journals on *.journals.ekb.eg | No shared rules: each EKB journal writes its own guide, so SubmitReady reads it every time and flags fees, Arabic abstracts and similarity limits |
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 

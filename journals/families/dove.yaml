@@ -5,6 +5,7 @@ name: "Dove Medical Press journals"
 publisher: "Dove Medical Press (Taylor & Francis)"
 match:
   publisher: ["Dove Medical Press", "Dove Press"]
+  url_pattern: "^https?://(www\\.)?dovepress\\.com/"
   journal_page: "https://www.dovepress.com/author-guidelines"
 journals_list:
   url: "https://www.dovepress.com/browse_journals.php"
