@@ -1,0 +1,145 @@
+{
+ "journal": "Royal Society of Chemistry (RSC) journals (shared author guidelines)",
+ "article_type": "Research article (full paper)",
+ "snapshot_note": "Rules that the RSC Advances and RSC Medicinal Chemistry author guidelines state word for word. Article types, page limits, fees and journal-specific reporting rules differ: SubmitReady reads the journal's own page on every run.",
+ "sources": [
+  {
+   "name": "RSC Advances: Author guidelines",
+   "url": "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/rsc-advances",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "RSC Medicinal Chemistry: Author guidelines",
+   "url": "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/rsc-medicinal-chemistry",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "royal-society-of-chemistry",
+  "title": "Royal Society of Chemistry",
+  "source": "https://github.com/citation-style-language/styles/blob/master/royal-society-of-chemistry.csl",
+  "note": "Vancouver-type numbered style with superscript citation numbers, usually after the punctuation."
+ },
+ "requirements": [
+  {
+   "id": "template-optional",
+   "rule": "The RSC template is optional",
+   "quote": "Use of the template is optional for our journals.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "abstract",
+   "rule": "Single-paragraph abstract of about 50 to 250 words",
+   "quote": "be around 50 to 250 words",
+   "source": 0,
+   "check": {
+    "type": "max_words",
+    "target": "abstract",
+    "value": 250
+   }
+  },
+  {
+   "id": "coi",
+   "rule": "Conflicts of interest statement in the manuscript; 'There are no conflicts to declare' if none",
+   "quote": "This statement is required for all submitted manuscripts.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "competing"
+   }
+  },
+  {
+   "id": "das",
+   "rule": "Data availability statement with every article",
+   "quote": "A data availability statement (DAS) is required to be submitted alongside all articles.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "data"
+   }
+  },
+  {
+   "id": "acknowledgements",
+   "rule": "Funding sources and any AI tool use declared in the Acknowledgements",
+   "quote": "You should also declare all sources of funding and any use of artificial intelligence (AI) tools at this point.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "contributions",
+   "rule": "Author contributions section, preferably in CRediT terms",
+   "quote": "In the interests of transparency, we strongly encourage authors of research articles to include an \"Author contributions\" section in their manuscript, for publication in the final article.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "vancouver",
+   "rule": "Numbered (Vancouver) references, not Harvard",
+   "quote": "It’s important you use Vancouver style (not Harvard style).",
+   "source": 0,
+   "check": {
+    "type": "citation_format",
+    "value": "numeric"
+   }
+  },
+  {
+   "id": "superscript",
+   "rule": "Superscript citation numbers, usually after the punctuation, in order of appearance",
+   "quote": "Use superscript numbers to show the reference source of statements in the text – for example, reactive small molecule species.3",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "figures",
+   "rule": "Figures, schemes and charts as TIFF at 600 dpi or more (EPS or PDF accepted), 8.3 or 17.1 cm wide",
+   "quote": "Figures, Schemes and Charts should be supplied as TIFF files, with a resolution of 600 dpi or greater.",
+   "source": 0,
+   "check": {
+    "type": "figure_files",
+    "formats": [
+     "tif",
+     "tiff",
+     "eps",
+     "pdf"
+    ],
+    "dpi_min": 600
+   }
+  },
+  {
+   "id": "conclusions",
+   "rule": "Conclusions that interpret the key results, not a summary of the abstract",
+   "quote": "The conclusions should not summarise information already present in the article or abstract.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "characterisation",
+   "rule": "Characterisation data for new compounds",
+   "quote": "Suitable characterisations of compounds must be included",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own page for article types, length, the table of contents graphic and fees",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

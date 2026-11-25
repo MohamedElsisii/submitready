@@ -1,0 +1,24 @@
+# A family: American Chemical Society (ACS) journals. Every ACS journal uses the same "Fast Format"
+# rules for a first submission and the same policies; lengths and article types differ by journal.
+name: "ACS Publications journals"
+publisher: "American Chemical Society"
+match:
+  publisher: ["American Chemical Society", "ACS Publications", "ACS"]
+  url_pattern: "^https?://(pubs|researcher-resources)\\.acs\\.org/"
+  journal_page: "https://researcher-resources.acs.org/publish/author_guidelines?coden=<coden>"
+guidelines:
+  url: "https://researcher-resources.acs.org/publish/author_guidelines?coden=jcisd8"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://researcher-resources.acs.org/publish/author_guidelines?coden=jmcmar"
+requirements_snapshot: "journals/requirements/acs.2026-11-25.json (Article, initial submission)"
+journal_specific:
+  - "Title and abstract length (Journal of Chemical Information and Modeling: title preferably 12 words or fewer, abstract of 3 to 4 sentences; Journal of Medicinal Chemistry: about 150 words for Articles)"
+  - "Table of contents graphic (Journal of Medicinal Chemistry: on the last page, labelled 'Table of Contents graphic')"
+  - "Article types and word limits (Journal of Chemical Information and Modeling Letters: at most 4000 words)"
+  - "Cover letter rules"
+  - "Data and software rules for computational papers"
+known_quirks:
+  - text: "If no conflict of interest is declared, ACS prints 'The authors declare no competing financial interest.' The statement is given in the submission system."
+    source: "https://researcher-resources.acs.org/publish/author_guidelines?coden=jcisd8"
+    checked: "2026-11-25"

@@ -76,3 +76,9 @@ def test_match_by_web_address():
     assert families.find("Cancer Management and Research", "Informa UK Limited",
                          url="https://www.dovepress.com/cancer-management-and-research-journal")["file"].endswith("dove.yaml")
     assert families.find("Some Journal", "", url="https://example.journals.ekb.eg.evil.com/")["kind"] == "none"
+
+
+def test_chemistry_and_spandidos_families():
+    assert families.find("Journal of Chemical Information and Modeling", "American Chemical Society")["file"].endswith("acs.yaml")
+    assert families.find("RSC Advances", "Royal Society of Chemistry (RSC)")["file"].endswith("rsc.yaml")
+    assert families.find("Oncology Letters")["file"].endswith("spandidos.yaml")

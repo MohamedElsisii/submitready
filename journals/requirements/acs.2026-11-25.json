@@ -1,0 +1,126 @@
+{
+ "journal": "ACS Publications journals (shared Fast Format and policy rules)",
+ "article_type": "Article, initial submission",
+ "snapshot_note": "Rules that the Journal of Chemical Information and Modeling and the Journal of Medicinal Chemistry author guidelines state word for word: the ACS-wide 'Fast Format' rules for a first submission, plus shared policies on conflicts of interest, safety, AI tools and ORCID. Title and abstract lengths, article types, word limits and the table of contents graphic differ by journal: SubmitReady reads the journal's own guidelines on every run.",
+ "sources": [
+  {
+   "name": "ACS: Journal of Chemical Information and Modeling author guidelines",
+   "url": "https://researcher-resources.acs.org/publish/author_guidelines?coden=jcisd8",
+   "checked": "2026-11-25"
+  },
+  {
+   "name": "ACS: Journal of Medicinal Chemistry author guidelines",
+   "url": "https://researcher-resources.acs.org/publish/author_guidelines?coden=jmcmar",
+   "checked": "2026-11-25"
+  }
+ ],
+ "csl_style": {
+  "id": "american-chemical-society",
+  "title": "American Chemical Society",
+  "source": "https://github.com/citation-style-language/styles/blob/master/american-chemical-society.csl",
+  "note": "Any style is accepted at first submission if references are complete with titles; ACS style applies after acceptance."
+ },
+ "requirements": [
+  {
+   "id": "complete",
+   "rule": "Complete manuscript with the standard sections, no annotations or highlights",
+   "quote": "Submissions must be complete with clearly identified standard sections used to report original research, free of annotations or highlights, and include all numbered and labeled components.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "graphics-in-text",
+   "rule": "Figures, tables, schemes and equations embedded in the text where they are discussed",
+   "quote": "Figures, charts, tables, schemes, and equations should be embedded in the text at the point of relevance.",
+   "source": 0,
+   "check": {
+    "type": "figures_embedded",
+    "allowed": true
+   }
+  },
+  {
+   "id": "references-any-style",
+   "rule": "References in any style, but complete with titles",
+   "quote": "References can be provided in any style, but they must be complete, including titles.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "si-separate",
+   "rule": "Supporting Information in separate files, submitted with the manuscript",
+   "quote": "Supporting Information must be submitted as a separate file(s).",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "si-description",
+   "rule": "A 'Supporting Information' paragraph before the Acknowledgement and References, describing each file",
+   "quote": "This description should be labeled Supporting Information and should appear before the Acknowledgement and Reference sections.",
+   "source": 0,
+   "check": {
+    "type": "section_present",
+    "section": "supplementary"
+   }
+  },
+  {
+   "id": "coi",
+   "rule": "Conflict of interest statement given in the submission system for all authors",
+   "quote": "During the submission process, the Corresponding Author must provide a statement on behalf of all authors of the manuscript, describing all potential sources of bias, including affiliations, funding sources, and financial or management relationships, that may constitute conflicts of interest.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "safety",
+   "rule": "Unexpected or significant hazards stated in the Experimental section",
+   "quote": "Authors must emphasize any unexpected, new, and/or significant hazards or risks associated with the reported work.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "ai",
+   "rule": "AI tools used for text or images disclosed in the Acknowledgments",
+   "quote": "The use of AI tools for text or image generation should be disclosed in the manuscript within the Acknowledgments section with a description of when and how the tools were used.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "orcid",
+   "rule": "ORCID iD linked in the submission system at revision, not typed into the manuscript",
+   "quote": "ORCID iDs should not be typed into the manuscript.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "data",
+   "rule": "Research data made publicly available is strongly encouraged",
+   "quote": "All ACS journals strongly encourage authors to make the research data underlying their articles publicly available at the time of publication.",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "journal-specific",
+   "rule": "Check the journal's own guidelines for title and abstract length, word limits, the TOC graphic and article types",
+   "quote": "",
+   "source": 0,
+   "check": {
+    "type": "manual"
+   }
+  }
+ ]
+}

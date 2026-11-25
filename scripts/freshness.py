@@ -81,6 +81,9 @@ def html_text(raw: str) -> str:
         doc = lxml.html.fromstring(raw)
         for bad in doc.xpath("//script|//style|//noscript"):
             bad.drop_tree()
+        for el in doc.iter("p", "li", "div", "br", "tr", "td", "th", "h1", "h2", "h3", "h4", "h5", "h6",
+                           "section", "article", "dt", "dd", "blockquote", "pre", "table", "ul", "ol"):
+            el.tail = "\n" + (el.tail or "")              # keep block boundaries as line breaks
         return doc.text_content()
     except Exception:
         return re.sub(r"<[^>]+>", " ", raw)

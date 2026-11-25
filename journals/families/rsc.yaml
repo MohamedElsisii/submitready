@@ -1,0 +1,26 @@
+# A family: Royal Society of Chemistry (RSC) journals share one author guidelines template.
+name: "Royal Society of Chemistry journals"
+publisher: "Royal Society of Chemistry"
+match:
+  publisher: ["Royal Society of Chemistry", "Royal Society of Chemistry (RSC)", "RSC"]
+  url_pattern: "^https?://(www\\.|pubs\\.)?rsc\\.org/"
+  journal_page: "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/<journal-slug>"
+guidelines:
+  url: "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/rsc-advances"
+  checked: "2026-11-25"
+  compared_with:
+    - "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/rsc-medicinal-chemistry"
+requirements_snapshot: "journals/requirements/rsc.2026-11-25.json (Research article)"
+journal_specific:
+  - "Article types and lengths (RSC Medicinal Chemistry research articles: no page limit, most 4 to 10 journal pages)"
+  - "Whether article titles are required in references (required for Food & Function and the Frontiers journals, optional for most)"
+  - "Double-anonymised review, offered by some RSC journals as an opt-in"
+  - "Table of contents graphic and text"
+  - "Article processing charges"
+known_quirks:
+  - text: "RSC asks for TIFF figures at 600 dpi or more, higher than most publishers."
+    source: "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/rsc-advances"
+    checked: "2026-11-25"
+  - text: "If no conflicts exist, RSC asks for the exact words 'There are no conflicts to declare'."
+    source: "https://www.rsc.org/publishing/publish-with-us/publish-a-journal-article/rsc-advances"
+    checked: "2026-11-25"
