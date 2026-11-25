@@ -215,7 +215,7 @@ def unlink_citations(src: Path, dst: Path) -> None:
 def make_zotero_sample(path: Path) -> Path:
     """A small manuscript with live Zotero citation fields and a Zotero bibliography field."""
     import sys as _sys
-    _sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+    _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
     import docx
     import jats_to_docx as jd
     items = [{"_n": 1, "id": "r1", "title": "A made-up paper", "author": [{"family": "Doe", "given": "Jane"}],

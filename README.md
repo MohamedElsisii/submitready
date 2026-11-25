@@ -70,6 +70,21 @@ SubmitReady's scripts need Python 3.10+ and a few packages. On first use, Claude
 
 To try it from a local copy instead, see [TESTING.md](TESTING.md).
 
+## Try it in 5 minutes
+
+No need to risk your own paper. After installing:
+
+1. **Get a sample manuscript.** In Claude Code, type:
+   `make me a SubmitReady sample manuscript`
+   Claude runs `scripts/sample.py`, which downloads a free CC BY preprint from Europe PMC and turns it into a Word file with live citations, in a new folder called `submitready_sample`. (Or run it yourself: `python scripts/sample.py`.)
+2. **Lock it.** `/submitready:lock submitready_sample/sample_manuscript.docx`
+   You see how many sentences are now fingerprinted.
+3. **Prepare it for a journal.** `/submitready:submit submitready_sample/sample_manuscript.docx PLOS ONE`
+   You get the formatted copy, a to-do list, a reference report and a copy-paste sheet for the journal website.
+4. **Open the change report.** It says how many sentences were checked and that none changed.
+
+Then try your own manuscript the same way. Your original file is never changed: SubmitReady works on copies.
+
 ## Commands
 
 | Command | What it does | Version |
