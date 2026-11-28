@@ -152,3 +152,17 @@ def test_table_with_empty_first_cells_is_flagged(tmp_path):
     d.save(p)
     gaps = check.table_gaps(p)
     assert len(gaps) == 1 and gaps[0]["item"].startswith("Table 1") and "rows 3" in gaps[0]["problem"]
+
+
+def test_low_dpi_says_how_wide_it_prints(tmp_path):
+    ms, lk = setup(tmp_path)
+    figs = tmp_path / "figs"
+    figs.mkdir()
+    Image.new("RGB", (1280, 720)).save(figs / "Figure_1.png", dpi=(96, 96))     # a screen export
+    Image.new("RGB", (4000, 2000)).save(figs / "Figure_2.png", dpi=(96, 96))    # enough pixels, wrong label
+    req = write_req(tmp_path, {"id": "figure-files", "type": "figure_files", "formats": ["tif", "png"], "dpi_min": 300})
+    r = check.run(ms, lk, req, tmp_path / "pkg", figures=figs)
+    small = next(b for b in r["blocking"] if "Figure_1" in b)
+    assert "print sharp only up to 108 mm wide at 300 dpi" in small and "needs 2055 px" in small
+    big = next(b for b in r["blocking"] if "Figure_2" in b)
+    assert "enough for 339 mm at 300 dpi" in big and "without resampling" in big

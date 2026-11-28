@@ -967,7 +967,10 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
                 fam = (a.get("family") or "").strip()
                 if not g:
                     return fam
-                return f"{g[0]}, {' '.join(g[1:] + [fam]).strip()}"
+                k = 0  # "van der Drift Koen M G" + "M": the particles belong to the family name
+                while k < len(g) - 1 and g[k].lower() in PARTICLES:
+                    k += 1
+                return f"{' '.join(g[:k + 1])}, {' '.join(g[k + 1:] + [fam]).strip()}"
 
             fixed = "; ".join(swap(a) for a in authors[:3])
             add(Finding(L, "author-swapped", "error",
@@ -1047,9 +1050,34 @@ def http_fetch(email: str = "") -> Fetch:
     return fetch
 
 
+MOJIBAKE = re.compile("[\u00c2\u00c3\u00c5][\u0080-\u00bf]")
+
+
+def unmangle(s: str) -> str:
+    """Some publishers deposit UTF-8 read as Latin-1 ("Herrera-V\u00c3\u00a1squez" for "Herrera-V\u00e1squez"). Undo that."""
+    if not s or not MOJIBAKE.search(s):
+        return s
+    try:
+        return s.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+
+
+PARTICLES = {"van", "von", "de", "der", "den", "da", "di", "du", "dos", "das", "del", "della", "le", "la",
+             "el", "al", "ten", "ter", "bin", "ibn", "st", "st."}
+
+
+def family_core(name: str) -> str:
+    """A family name without its particles: "van Verk" and "Verk", "EL Sabagh" and "Sabagh" are the same person."""
+    words = [w for w in re.split(r"[\s]+", norm_text(name)) if w]
+    while len(words) > 1 and words[0].lower() in PARTICLES:
+        words = words[1:]
+    return " ".join(words)
+
+
 def _crossref_fields(m: dict) -> dict:
     def first(x):
-        return (x or [""])[0]
+        return unmangle((x or [""])[0])
 
     years = []
     for k in ("issued", "published-print", "published-online", "published", "journal-issue"):
@@ -1064,12 +1092,12 @@ def _crossref_fields(m: dict) -> dict:
         "title": first(m.get("title")),
         "year": years[0] if years else "",
         "years": sorted(set(years)),
-        "authors": [norm_text(a.get("family") or a.get("name") or "") for a in authors[:5]],
+        "authors": [norm_text(unmangle(a.get("family") or a.get("name") or "")) for a in authors[:5]],
         "volume": m.get("volume", ""),
         "issue": m.get("issue", ""),
         "page": m.get("page", "") or m.get("article-number", ""),
         "journal": first(m.get("container-title")),
-        "first_author": (m.get("author") or [{}])[0].get("family", "") or (m.get("author") or [{}])[0].get("name", ""),
+        "first_author": unmangle((m.get("author") or [{}])[0].get("family", "") or (m.get("author") or [{}])[0].get("name", "")),
         "type": m.get("type", ""),
     }
 
@@ -1180,7 +1208,7 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                                        "which is normal for a later version; cite the version you used", year(d), "/".join(cr["years"])))
                 else:
                     out.append(Finding(L, "mismatch-year", "warning", "Year differs from Crossref", year(d), "/".join(cr["years"])))
-            if cr["authors"] and cr["authors"][0] and not any(a and a in raw for a in cr["authors"][:3]):
+            if cr["authors"] and cr["authors"][0] and not any(a and (a in raw or family_core(a) in raw) for a in cr["authors"][:3]):
                 out.append(Finding(L, "mismatch-first-author", "warning", "First author differs from Crossref",
                                    ((d.get("author") or [{}])[0].get("family") or ""), cr["first_author"]))
             _notices(msg, L, doi, out)
@@ -1208,7 +1236,8 @@ def verify(ms: ManuscriptRefs, fetch: Fetch, pause: float = 0.2) -> tuple[list[F
                  lambda a, b: not a or not b or a == b or _first_page(d.get("page", "")) != _first_page(cr["page"])),
                 # consortia are often listed first in Crossref; accept a match among the first authors
                 ("first author", ((d.get("author") or [{}])[0].get("family") or ""), cr["first_author"],
-                 lambda a, b, au=cr["authors"]: not a or not b or norm_text(a) == norm_text(b) or norm_text(a) in au),
+                 lambda a, b, au=cr["authors"]: not a or not b or norm_text(a) == norm_text(b) or norm_text(a) in au
+                 or family_core(a) in {family_core(x) for x in au if x}),
             ]
             for name, mine, theirs, ok in checks:
                 if not ok(mine, theirs):
@@ -1232,10 +1261,13 @@ def dedupe(findings: list[Finding]) -> list[Finding]:
     fill_of = {"missing-page": "fill-first-page", "missing-issue": "fill-issue", "missing-volume": "fill-volume"}
     fills = {(f.ref, f.code): f for f in findings if f.code.startswith("fill-")}
     rank = {"error": 0, "warning": 1, "info": 2}
+    swapped = {f.ref for f in findings if f.code == "author-swapped"}
     seen, out = set(), []
     for f in findings:
         if f.code.startswith("mismatch-") and (f.ref, f.code[9:], f.found) in odd:
             continue
+        if f.code == "mismatch-first-author" and f.ref in swapped:
+            continue  # the swapped names are the reason the first author differs
         fill = fills.get((f.ref, fill_of.get(f.code, "")))
         if fill:
             if rank.get(f.severity, 2) < rank.get(fill.severity, 2):

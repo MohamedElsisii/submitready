@@ -175,3 +175,24 @@ def test_offers_without_answer_lines_are_left_out(tmp_path):
                             "Open access publication: have you considered it?\n")
     d = _split(tmp_path, text)
     assert not any(c.get("optional") for c in d["comments"])
+
+
+def test_status_reads_a_response_letter_in_your_own_layout(tmp_path):
+    d = _split(tmp_path, LETTER_A)
+    cj = tmp_path / "comments.json"
+    cj.write_text(json.dumps(d), encoding="utf-8")
+    letter = _docx(tmp_path / "my_letter.docx", [
+        "Response to reviewers", "Reviewer 1", "We thank the reviewer.",
+        "Comment 1", "Abstract: please list all the thirty genes.", "Our response:",
+        "We now list all thirty genes in the abstract.", "Location: Page 2, lines 20-25",
+        "Comment 2", "Methods: justify the R2 threshold of 0.6.", "Our response:",
+        "We explain the threshold choice in more detail now.",
+        "Reviewer 2", "Report AUC values for the classifier.", "Our response:", "Location:",
+    ])
+    assert R.status(letter)["comments"] == 0                         # not a SubmitReady table
+    r = R.status_letter(letter, d)
+    assert "R1.1" not in r["not_in_letter"] and "R1.2" not in r["not_in_letter"]   # small wording changes are fine
+    assert "R2.2" in r["not_in_letter"]                               # METABRIC was never answered
+    assert r["no_where"] == ["R1.2"] and r["no_response"] == ["R2.1A"]
+    assert "R1.G" in r["general_not_quoted"] and "R1.G" not in r["not_in_letter"]
+    assert R.main(["status", str(letter)]) == 2                       # asks for --comments instead of saying "none"

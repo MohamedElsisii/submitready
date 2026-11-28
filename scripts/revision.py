@@ -270,6 +270,56 @@ def table(data: dict, out: Path) -> None:
 
 
 # ---------------------------------------------------------------- reading the table back
+WORD = re.compile(r"[a-z0-9]+")
+STOPWORDS = set("the a an and or of to in on for with by is are was were be been it this that these those as at from "
+                "please also which why how what can could would should their there here its into than then".split())
+WHERE_GIVEN = re.compile(r"\b(?:page|line|lines|section|figure|fig|table|paragraph|location)s?\b\.?\s*[:\[]?\s*\d|location\s*:", re.I)
+LABEL_ONLY = re.compile(r"^\s*(our |author'?s? )?(response|reply|answer|comment|location|changes?)\s*:?\s*$", re.I)
+
+
+def _words(t: str) -> set[str]:
+    return {w for w in WORD.findall(t.lower()) if w not in STOPWORDS and len(w) > 2}
+
+
+def status_letter(response: Path, comments: dict) -> dict:
+    """A response letter in your own layout: find each comment in it (the wording may differ a little),
+    then check that an answer follows it and says where the text changed."""
+    paras = [ln.strip() for ln in read_lines(response) if ln.strip()]
+    sets = [_words(t) for t in paras]
+    found: dict[str, int] = {}
+    for c in comments["comments"]:
+        cw = _words(c["comment"])
+        if len(cw) < 2:
+            continue
+        need = 0.6 if len(cw) >= 5 else 1.0  # a short comment must be there word for word
+        best, at = 0.0, -1
+        for i, pw in enumerate(sets):
+            if not pw:
+                continue
+            score = len(cw & pw) / min(len(cw), max(len(pw), 1))
+            if score > best:
+                best, at = score, i
+        if best >= need:
+            found[c["id"]] = at
+    order = sorted(found.items(), key=lambda x: x[1])
+    no_resp, no_where = [], []
+    for k, (cid, i) in enumerate(order):
+        end = order[k + 1][1] if k + 1 < len(order) else len(paras)
+        after = [t for t in paras[i + 1:end] if not LABEL_ONLY.match(t)]
+        answer = [t for t in after if len(t.split()) >= 4]
+        if not answer:
+            no_resp.append(cid)
+        elif not any(WHERE_GIVEN.search(t) for t in paras[i + 1:end]) and not cid.endswith(".G") \
+                and not re.search(r"\.S\d+$", cid):
+            no_where.append(cid)
+    missing = [c["id"] for c in comments["comments"] if c["id"] not in found and not c.get("optional")]
+    # a reviewer's opening summary is often thanked rather than quoted: list it apart
+    general = [m for m in missing if m.endswith(".G")]
+    missing = [m for m in missing if not m.endswith(".G")]
+    return {"format": "letter", "comments": len(comments["comments"]), "found": len(found),
+            "not_in_letter": missing, "general_not_quoted": general, "no_response": no_resp, "no_where": no_where}
+
+
 def status(response_docx: Path) -> dict:
     from docx import Document
     d = Document(str(response_docx))
@@ -374,6 +424,7 @@ def main(argv=None) -> int:
     c.add_argument("--out", type=Path)
     st = sub.add_parser("status")
     st.add_argument("response", type=Path)
+    st.add_argument("--comments", type=Path, help="comments.json from split: needed for a response letter in your own layout")
     a = ap.parse_args(argv)
 
     if a.cmd == "split":
@@ -398,6 +449,19 @@ def main(argv=None) -> int:
         return 0
     if a.cmd == "status":
         r = status(a.response)
+        if not r["comments"]:
+            if not a.comments:
+                print("This file has no SubmitReady response table. For a response letter in your own layout, "
+                      "run again with --comments <comments.json> (made by split) and it is checked comment by comment.")
+                return 2
+            r = status_letter(a.response, json.loads(a.comments.read_text(encoding="utf-8")))
+            print(f"{r['found']} of {r['comments']} comments found in your letter. "
+                  f"Not in the letter: {', '.join(r['not_in_letter']) or 'none'}. "
+                  f"Without a response: {', '.join(r['no_response']) or 'none'}. "
+                  f"Answered but no page, line or section given: {', '.join(r['no_where']) or 'none'}."
+                  + (f" General comments not quoted (usually fine if you thank the reviewer): {', '.join(r['general_not_quoted'])}."
+                     if r["general_not_quoted"] else ""))
+            return 0 if not (r["not_in_letter"] or r["no_response"]) else 1
         print(f"{r['comments']} comments. Without a response: {', '.join(r['no_response']) or 'none'}. "
               f"Answered but no place given: {', '.join(r['no_where']) or 'none'}.")
         return 0 if not r["no_response"] else 1

@@ -748,6 +748,10 @@ def check(facts: dict, req: dict) -> list[dict]:
             elif t == "section_present":
                 ok = c["section"] in facts["sections_found"]
                 status, found = ("PASS" if ok else "FIX"), "found" if ok else "not found"
+                parts = [SECTION_NAMES.get(x, x) for x in facts["sections_found"] if x in DECLARATION_PARTS]
+                if not ok and c["section"] == "declarations" and len(parts) >= 2:
+                    found = (f"the statements are there ({', '.join(parts)}) but not under one heading; "
+                             "put them under a 'Statements and Declarations' heading")
                 if not ok and c["section"] == "supplementary" and not facts.get("supplementary_items"):
                     status, found = "PASS", "no supplementary items are cited, so none is needed"
             elif t == "section_absent":
@@ -898,7 +902,9 @@ def check(facts: dict, req: dict) -> list[dict]:
     return out
 
 
-SECTION_NAMES = {"references": "References", "acknowledgements": "Acknowledgments", "abstract": "Abstract",
+DECLARATION_PARTS = ("funding", "competing", "ethics", "data", "contributions", "ai", "consent")
+SECTION_NAMES = {"funding": "Funding", "competing": "Competing interests", "ethics": "Ethics", "data": "Data availability",
+                 "contributions": "Author contributions", "ai": "AI use", "consent": "Consent", "references": "References", "acknowledgements": "Acknowledgments", "abstract": "Abstract",
                  "discussion": "Discussion", "conclusion": "Conclusion", "methods": "Methods", "results": "Results",
                  "introduction": "Introduction", "keywords": "Keywords", "declarations": "Statements and Declarations"}
 

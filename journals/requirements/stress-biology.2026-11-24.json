@@ -179,7 +179,8 @@
    "quote": "Please use no more than three levels of displayed headings.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "max_heading_levels",
+    "value": 3
    }
   },
   {
@@ -197,7 +198,13 @@
    "quote": "Use a normal, plain font (e.g., 10-point Times Roman) for text.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "font",
+    "names": [
+     "Times New Roman",
+     "Times",
+     "Times Roman"
+    ],
+    "size": 10
    }
   },
   {
@@ -233,7 +240,8 @@
    "quote": "Refer to the supplementary files as “Online Resource”",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "supp_label_style",
+    "value": "Online Resource 1"
    }
   },
   {

@@ -128,7 +128,17 @@ def check_figures(files: list[Path], rule: dict | None, dest: Path) -> tuple[lis
                 row["problems"].append("no resolution (dpi) stored in the file")
             else:
                 if rule.get("dpi_min") and dpi < rule["dpi_min"]:
-                    row["problems"].append(f"{dpi} dpi is below {rule['dpi_min']}")
+                    lo = rule["dpi_min"]
+                    mm = round(w / lo * 25.4)
+                    full = max(rule.get("column_widths_mm") or [FULL_WIDTH_MM])
+                    if mm >= full:
+                        row["problems"].append(
+                            f"the file says {dpi} dpi, but its {w} px are enough for {mm} mm at {lo} dpi: set the resolution "
+                            f"to {lo} dpi without resampling (in an image editor, or when you export it)")
+                    else:
+                        row["problems"].append(
+                            f"{dpi} dpi is below {lo}: its {w} px print sharp only up to {mm} mm wide at {lo} dpi "
+                            f"(a full-width figure of {full} mm needs {round(full / 25.4 * lo)} px). Export it again at {lo} dpi")
                 if rule.get("dpi_max") and dpi > rule["dpi_max"]:
                     row["problems"].append(f"{dpi} dpi is above {rule['dpi_max']}")
             if rule.get("min_width_px") and w < rule["min_width_px"]:
@@ -205,6 +215,7 @@ def _vector_figure(f: Path, n, rule: dict | None, dest: Path, actions: list) -> 
     return row
 
 
+FULL_WIDTH_MM = 174  # a common full page width for figures
 SPREADSHEET = {".csv", ".tsv", ".xls", ".xlsx", ".ods"}
 DOCUMENT = {".doc", ".docx", ".rtf", ".odt", ".ppt", ".pptx", ".pdf"}
 

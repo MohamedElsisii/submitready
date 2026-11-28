@@ -54,6 +54,7 @@ STOP = set("""a an and the of in on for to with by from as at or is are was were
 using use based via into their its our we study analysis approach new novel role towards toward between among
 than within without under over through effect effects""".split())
 SHOWN, KEPT = 5, 10
+MIN_CHECKED = 40  # journals looked up at least, so focused journals are not crowded out by big ones
 MAX_CHECKED = 90  # journals looked up before the search stops widening
 OFF_TOPIC = 0.2  # topic overlap below this, with 2 similar papers or fewer: left out
 SIZE_UNIT = 500  # items in 2 years; journals larger than this get the size correction
@@ -193,8 +194,10 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
     seen: dict[str, int] = {}
     works: list[dict] = []
     fields: dict[str, float] = {}
-    topics: dict[str, float] = {}       # the paper's topics, from the papers most like it
+    topics_precise: dict[str, float] = {}   # the paper's topics, from the papers most like it
+    topics_all: dict[str, float] = {}       # from every search, used when the precise ones found little
     subfields: dict[str, str] = {}
+    phase = {"precise": True}
 
     def run(qtext, w_query, per_page, field_filter=""):
         url = (f"{OPENALEX}/works?search={urllib.parse.quote(qtext)}"
@@ -219,12 +222,13 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
                 f = (((w.get("primary_topic") or {}).get("field") or {}).get("id") or "").rsplit("/", 1)[-1]
                 if f:
                     fields[f] = fields.get(f, 0) + weight
-                pt = w.get("primary_topic") or {}
-                tid = (pt.get("id") or "").rsplit("/", 1)[-1]
-                sub = ((pt.get("subfield") or {}).get("id") or "").rsplit("/", 1)[-1]
-                if tid:
-                    topics[tid] = topics.get(tid, 0) + weight
-                    subfields[tid] = sub
+            pt = w.get("primary_topic") or {}
+            tid = (pt.get("id") or "").rsplit("/", 1)[-1]
+            sub = ((pt.get("subfield") or {}).get("id") or "").rsplit("/", 1)[-1]
+            if tid:
+                (topics_precise if not field_filter and phase["precise"] else topics_all)[tid] = \
+                    (topics_precise if not field_filter and phase["precise"] else topics_all).get(tid, 0) + weight
+                subfields[tid] = sub
             if w["id"] in seen:  # found again by another search: more weight, counted once
                 works[seen[w["id"]]]["weight"] += weight
                 continue
@@ -244,14 +248,17 @@ def similar_works(p: dict, net: Net, years: int = 5) -> list[dict]:
         acc += w
     ff = f",primary_topic.field.id:{'|'.join(keep)}" if keep and total >= 5 else ""
     p["fields"] = keep
-    tsum = sum(topics.values()) or 1.0
-    top = sorted(topics.items(), key=lambda x: -x[1])[:15]
-    p["topics"] = {t: round(w / tsum, 4) for t, w in top}
-    p["topic_subfields"] = {t: subfields.get(t, "") for t, _ in top}
+    phase["precise"] = False
     for q in broad:
         run(*q, field_filter=ff)
     if len(wide) >= 3:
         run(" OR ".join(wide), 0.5 if len(works) < 60 else 0.35, 100, field_filter=ff)
+    topics = topics_precise if sum(topics_precise.values()) >= 5 else {
+        t: topics_precise.get(t, 0) + w for t, w in topics_all.items()}
+    tsum = sum(topics.values()) or 1.0
+    top = sorted(topics.items(), key=lambda x: -x[1])[:15]
+    p["topics"] = {t: round(w / tsum, 4) for t, w in top}
+    p["topic_subfields"] = {t: subfields.get(t, "") for t, _ in top}
     return works
 
 
@@ -508,7 +515,9 @@ def find(path: Path, net: Net, access: str = "any", max_fee: float | None = None
         j["similar_papers"] = count[sid]
         j["similar_examples"] = [t for t in examples[sid][:3] if t]
         kept.append(j)
-        if len(kept) >= 2 * KEPT:
+        # the first candidates are ranked by raw volume, which favours the biggest journals; keep looking
+        # until enough focused journals had their chance after the size correction
+        if len(kept) >= 2 * KEPT and checked >= MIN_CHECKED:
             break
     kept = sorted(kept, key=lambda j: -j["fit_score"])[:KEPT]
     if review_times:

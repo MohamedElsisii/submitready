@@ -613,3 +613,48 @@ def test_website_without_access_date(tmp_path):
     assert "no-access-date" in codes_
     codes_ = {x.code for x in refs.audit(refs.load(_ris(tmp_path, body.replace("ER  -", "Y2  - 2026/11/24\nER  -"), "b.ris")))}
     assert "no-access-date" not in codes_
+
+
+def test_garbled_letters_and_name_particles_are_not_mismatches(tmp_path):
+    ms = refs.ManuscriptRefs(refs=[
+        refs.Ref("a", {"type": "article-journal", "title": "Salicylic acid and reactive oxygen species", "DOI": "10.1234/ta",
+                       "issued": {"date-parts": [[2015]]}, "author": [{"family": "Herrera-Vásquez", "given": "Ariel"}]}, "x"),
+        refs.Ref("b", {"type": "article-journal", "title": "WRKY transcription factors", "DOI": "10.1234/tb",
+                       "issued": {"date-parts": [[2011]]}, "author": [{"family": "Verk", "given": "Marcel C van"}]}, "x"),
+        refs.Ref("c", {"type": "article-journal", "title": "Phytohormones as growth regulators", "DOI": "10.1234/tc",
+                       "issued": {"date-parts": [[2022]]}, "author": [{"family": "Sabagh", "given": "Ayman EL"}]}, "x"),
+        refs.Ref("d", {"type": "article-journal", "title": "A real mismatch", "DOI": "10.1234/td",
+                       "issued": {"date-parts": [[2020]]}, "author": [{"family": "Smith", "given": "A"}]}, "x"),
+    ])
+    fetch = fake_crossref({
+        "10.1234/ta": {"message": {"title": ["Salicylic acid and reactive oxygen species"], "issued": {"date-parts": [[2015]]},
+                               "author": [{"family": "Herrera-VÃ¡squez", "given": "Ariel"}]}},
+        "10.1234/tb": {"message": {"title": ["WRKY transcription factors"], "issued": {"date-parts": [[2011]]},
+                               "author": [{"family": "van Verk", "given": "Marcel C"}]}},
+        "10.1234/tc": {"message": {"title": ["Phytohormones as growth regulators"], "issued": {"date-parts": [[2022]]},
+                               "author": [{"family": "EL Sabagh", "given": "Ayman"}]}},
+        "10.1234/td": {"message": {"title": ["A real mismatch"], "issued": {"date-parts": [[2020]]},
+                               "author": [{"family": "Jones", "given": "B"}]}},
+    })
+    f, _ = refs.verify(ms, fetch, pause=0)
+    assert not [x for x in f if x.code == "not-found"]
+    firsts = [x.ref for x in f if x.code == "mismatch-first-author"]
+    assert len(firsts) == 1 and "Smith" in firsts[0]
+    assert refs.unmangle("MÃ¼ller-Xing") == "Müller-Xing" and refs.unmangle("Plain") == "Plain"
+
+
+def test_swapped_names_with_particles_and_one_line_per_problem():
+    ms = refs.ManuscriptRefs(refs=[refs.Ref("j", {
+        "type": "article-journal", "title": "Analysis of the pmsCEAB gene cluster", "DOI": "10.1234/tj",
+        "issued": {"date-parts": [[2001]]},
+        "author": [{"family": "J", "given": "Mercado-Blanco"}, {"family": "M", "given": "van der Drift Koen M G"},
+                   {"family": "E", "given": "Olsson Per"}]}, "x")])
+    f = refs.audit(ms, None)
+    sw = next(x for x in f if x.code == "author-swapped")
+    assert sw.suggested.startswith("Mercado-Blanco, J; van der Drift, Koen M G M; Olsson, Per E")
+    fetch = fake_crossref({"10.1234/tj": {"message": {"title": ["Analysis of the pmsCEAB gene cluster"],
+                                                  "issued": {"date-parts": [[2001]]},
+                                                  "author": [{"family": "Mercado-Blanco", "given": "Jesús"}]}}})
+    online, _ = refs.verify(ms, fetch, pause=0)
+    codes_ = [x.code for x in refs.dedupe(f + online)]
+    assert "author-swapped" in codes_ and "mismatch-first-author" not in codes_

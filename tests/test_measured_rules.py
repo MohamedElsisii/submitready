@@ -223,3 +223,11 @@ def test_package_summary_counts_and_supplementary_line(tmp_path):
     assert len([b for b in r["blocking"] if "declarations" in b.lower() or "section" in b.lower()]) == 1
     xr = (tmp_path / "pkg" / "reports" / "crossrefs.md").read_text(encoding="utf-8")
     assert "ESM_2.xlsx: Online Resource 2 is never cited" in xr
+
+
+def test_statements_without_their_umbrella_heading(tmp_path):
+    p = build(tmp_path / "s.docx", ["Title", "Abstract", "Text.", "Introduction", "Text.", "Funding", "None.",
+                                    "Competing interests", "None.", "References", "1. A ref."],
+              headings=[("Abstract", 1), ("Introduction", 1), ("Funding", 1), ("Competing interests", 1), ("References", 1)])
+    r = result(p, {"type": "section_present", "section": "declarations"})
+    assert r["status"] == "FIX" and "the statements are there (Funding, Competing interests) but not under one heading" in r["found"]

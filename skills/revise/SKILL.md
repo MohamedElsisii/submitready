@@ -22,4 +22,5 @@ Follow the five rules in `${CLAUDE_PLUGIN_ROOT}/skills/submitready/SKILL.md`. Ab
 5. When the author has filled in the table, run:
    `python "${CLAUDE_PLUGIN_ROOT}/scripts/revision.py" status <manuscript>_response_to_reviewers.docx`
    List the comments still without a response, and those answered without saying where the text changed.
+   If the author wrote the response letter in their own layout instead of the table, add `--comments <manuscript>.comments.json`. It finds each comment in the letter (small wording changes are fine) and lists comments missing from the letter, comments with no answer, and answers that give no page, line or section. A reviewer's opening summary that is thanked but not quoted is listed apart, not as missing.
 6. Many editor comments are format rules (funding heading, CRediT, legends at the end, house reference style). Point the author to `/submitready:prepare` for the same journal: those checks find most of them automatically.
