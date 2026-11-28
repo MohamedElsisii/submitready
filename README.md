@@ -8,7 +8,7 @@
 
 SubmitReady is a free, open-source Claude skill that prepares a research manuscript for a specific journal: it reads the journal's live author guidelines, checks and formats your references, prepares supplementary files, and hands you a submission package with a report proving that your text was not changed.
 
-> Status: beta. Every command has been run on three real, published manuscripts (Epigenomics, JBSD, Stress Biology) and on 1,512 test files built from 36 open-access papers. Bugs found in those runs are fixed and covered by tests. Please report anything odd as a GitHub issue.
+> Status: beta. Every command has been run on real material: 3 published manuscripts (Epigenomics, JBSD, Stress Biology), 47 Word files with live EndNote, Zotero and Mendeley citations, 10 LaTeX papers, 6 real decision letters with the authors' replies, 3 before-and-after revisions, and 1,512 test files built from 36 open-access papers. Bugs found in those runs are fixed and covered by tests. Please report anything odd as a GitHub issue.
 
 ## Why
 
@@ -157,7 +157,7 @@ Adding a journal or a family is a good first contribution. Copy `journals/_TEMPL
 
 - **English manuscripts only.** Section names, abstracts and statements are recognized in English.
 - **Word and LaTeX.** Other formats (Google Docs, Pages, PDF) need to be saved as .docx first.
-- **EndNote and Zotero** are tested on files built to their format and on small real samples. Mendeley Cite is tested most. If you use EndNote, your feedback helps most.
+- **Mendeley Cite, Zotero and EndNote** are tested on real files: 3 manuscripts and 47 supplementary Word files from open-access papers (30 EndNote, 11 Zotero, 7 Mendeley). LaTeX is tested on 10 real papers (Bioinformatics, PLOS, Frontiers, Springer Nature and Elsevier templates). Other set-ups may still surprise it; please report them.
 - **Some publisher pages block automated reading** (Elsevier, Springer Link, Wiley, MDPI and others often do). Then SubmitReady says the page could not be read and asks you to open it or paste the text. It never fills the gap from memory.
 - **Headings typed as bold text** (not Word heading styles) are recognized, but heading levels can only be counted when Word heading styles are used.
 - **The journal finder ranks by similar papers**, not by prestige or acceptance chances. The journal you have in mind may rank lower than journals that publish more papers like yours; the list says why each one is there.

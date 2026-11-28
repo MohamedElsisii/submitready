@@ -94,3 +94,14 @@ each now covered by a test. The kinds of bug only real files show: Crossref reco
 name particles ("van", "El"), response letters written in the author's own layout, figures exported at screen
 resolution, and statements placed without their umbrella heading.
 
+## Other real material (2026-11-28)
+
+When no paper of your own uses a set-up, real open material stands in. It stays in `tests/private/` and is never committed.
+
+- **EndNote, Zotero and Mendeley:** Word files with live citations from the supplementary files of open-access papers
+  (Europe PMC). 47 files: every one locks, an untouched copy verifies, a planted edit is caught, and no reference
+  error is a false alarm.
+- **LaTeX:** 10 public papers on GitHub written for Bioinformatics, PLOS, Frontiers, Springer Nature and Elsevier.
+- **Revisions:** eLife decision letters with the authors' published replies, and before-and-after versions
+  (a PLOS Genetics revision kept in its authors' GitHub repository, and two Word manuscripts).
+
