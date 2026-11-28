@@ -32,6 +32,16 @@ jobs:
           path: |
             freshness.md
             freshness.json
+      - name: Summary in the log
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("freshness.json"))
+          print("COUNTS", d["counts"])
+          for r in d["results"]:
+              for m in r.get("missing", []):
+                  print("MISSING", r["snapshot"], m["id"], "|", m["quote"], "| CLOSEST", m.get("closest", ""), m.get("similarity", ""))
+          PY
       - name: Open or update the issue
         env:
           GH_TOKEN: ${{ github.token }}

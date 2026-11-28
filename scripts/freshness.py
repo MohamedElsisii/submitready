@@ -177,6 +177,24 @@ def snapshots(only: str = "") -> list[Path]:
     return [f for f in files if only.lower() in f.name.lower()]
 
 
+def closest(quote: str, text: str) -> dict:
+    """The page sentence most like a missing quote, so a person sees at once whether the rule changed or was reworded."""
+    import difflib
+    q = norm(quote)
+    best, ratio = "", 0.0
+    for sent in re.split(r"(?<=[.!?])\s+|\n+", text):
+        sent = sent.strip()
+        if not (20 <= len(sent) <= 600):
+            continue
+        n = norm(sent)
+        if not (set(q.split()) & set(n.split())):
+            continue
+        r = difflib.SequenceMatcher(None, q, n).ratio()
+        if r > ratio:
+            best, ratio = sent, r
+    return {"closest": best, "similarity": round(ratio, 2)} if ratio >= 0.5 else {}
+
+
 def check_snapshot(path: Path, get: Callable[[str], Page]) -> list[SourceResult]:
     d = json.loads(path.read_text(encoding="utf-8"))
     out = []
@@ -198,7 +216,7 @@ def check_snapshot(path: Path, get: Callable[[str], Page]) -> list[SourceResult]
             if quote_key(r["quote"]) in body:
                 res.found += 1
             else:
-                res.missing.append({"id": r.get("id", ""), "quote": r["quote"]})
+                res.missing.append({"id": r.get("id", ""), "quote": r["quote"], **closest(r["quote"], page.text)})
         if res.missing and (res.found == 0 and (res.total >= 3 or len(body) < 3000)):
             # Nothing at all matched: much more likely a partial page or a bot page than a full rewrite.
             res.status, res.note = "unclear", "none of the quotes were found; the page may not have loaded fully"
@@ -258,6 +276,8 @@ def report_markdown(rep: dict, stale_days: int = STALE_DAYS) -> str:
             lines.append(f"{r['found']} of {r['total']} quotes still found. Missing:")
             for m in r["missing"]:
                 lines.append(f"- `{m['id']}`: \"{m['quote']}\"")
+                if m.get("closest"):
+                    lines.append(f"  - closest on the page now ({int(m['similarity'] * 100)}% alike): \"{m['closest']}\"")
             lines.append("")
     blocked = [r for r in res if r["status"] in ("unreachable", "pdf", "unclear")]
     if blocked:

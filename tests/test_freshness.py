@@ -121,3 +121,10 @@ def test_a_requirements_file_can_be_checked_directly(tmp_path):
     rep = F.run(files=[rq], fetcher=lambda url: F.Page(url, "ok-text", page))
     r = rep["results"][0]
     assert r["status"] == "changed" and r["found"] == 1 and r["missing"][0]["id"] == "b"
+
+
+def test_a_missing_quote_shows_the_closest_sentence_on_the_page():
+    page = "Abstract. The abstract would normally be 150-250 words. Use plain language. " * 30
+    c = F.closest("The abstract would normally be 150–200 words.", page)
+    assert c["closest"].startswith("The abstract would normally be 150-250 words") and c["similarity"] > 0.8
+    assert F.closest("Something unrelated about peer review fees.", page) == {}
