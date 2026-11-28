@@ -311,12 +311,18 @@ def parse_plain(text: str) -> dict:
     m = PLAIN_DOI.search(t)
     if m:
         d["DOI"] = m.group(1).rstrip(".")
-    ym = re.search(r"\((\d{4})([a-z]?)\)", t) or re.search(r"(?<![\d/.])((?:19|20)\d{2})([a-z]?)(?![\d/])", t)
+    # "(2009)" in author-date styles; "Journal. 2009 Jan;12(3):45" in Vancouver; else the first year-like number
+    ym = (re.search(r"\((\d{4})([a-z]?)\)", t)
+          or re.search(r"(?<![\d/.])((?:19|20)\d{2})([a-z]?)(?:\s+[A-Z][a-z]{2,8}(?:\s+\d{1,2})?)?\s*[;:]", t)
+          or re.search(r"(?<![\d/.])((?:19|20)\d{2})([a-z]?)(?![\d/])", t))
     if ym:
         d["issued"] = {"date-parts": [[int(ym.group(1))]]}
         d["_year_label"] = ym.group(1) + ym.group(2)
     # family name = everything before the initials: "Roca Pereira JF," "van Dijk MC," "Smith AB,"
-    fm = re.match(r"\s*(.+?)\s+[A-Z\u00C0-\u00DE]{1,4}(?:-[A-Z\u00C0-\u00DE]{1,2})?\.?(?:,|\s*\(|\s+et al|\.\s)", t[:120])
+    # "Agapow, P.-M., and Burt, A. (2001)": family name, comma, then initials with full stops
+    fm = re.match(r"\s*([A-Z\u00C0-\u017F][^,()]{0,40}?),\s+(?:[A-Z\u00C0-\u00DE]\.[\s\-]?){1,4}", t[:120])
+    if not fm:
+        fm = re.match(r"\s*(.+?)\s+[A-Z\u00C0-\u00DE]{1,4}(?:-[A-Z\u00C0-\u00DE]{1,2})?\.?(?:,|\s*\(|\s+et al|\.\s)", t[:120])
     if not fm:
         fm = re.match(r"\s*([A-Z\u00C0-\u017F][\w\u00C0-\u017F'\-]+)", t)
     # an organisation as author: "R Core Team (2023)", "IUCN (2025)": no comma and no initials before the year
@@ -325,9 +331,13 @@ def parse_plain(text: str) -> dict:
         d["author"] = [{"literal": org.group(1).strip(), "family": org.group(1).strip()}]
     elif fm:
         d["author"] = [{"family": fm.group(1).strip(" ,")}]
+    # Vancouver: "Jaffe ES, Smith A. Title. Journal. 2009": the authors end with initials and a full stop
+    vanc = re.match(r"\s*((?:[^.,;()]+?\s[A-Z\u00C0-\u00DE]{1,4},\s*)*[^.,;()]+?\s[A-Z\u00C0-\u00DE]{1,4}(?:,?\s*et al)?)\.\s+(\S.*)", t)
     if ym and re.match(r"\(\d{4}", t[ym.start():]):
         rest = t[ym.end():].strip(" .")
         d["title"] = re.split(r"(?<=[a-z0-9\)])\.\s", rest, maxsplit=1)[0].strip()
+    elif vanc:
+        d["title"] = re.split(r"(?<=[\w\)\]}\'\"])[.?!]\s", vanc.group(2), maxsplit=1)[0].strip()
     else:
         parts = re.split(r"(?<=[a-z0-9\)])\.\s", t)
         d["title"] = parts[1].strip() if len(parts) > 1 else t
@@ -556,6 +566,20 @@ def read_ris(path: Path) -> list[Ref]:
     return refs
 
 
+BIB_ACCENTS = {"'": "\u0301", "`": "\u0300", "^": "\u0302", '"': "\u0308", "~": "\u0303", "c": "\u0327", "=": "\u0304"}
+
+
+def _bib_text(value: str) -> str:
+    """A BibTeX value as plain text: {\\textit{Arabidopsis}} -> Arabidopsis, {\\'e} -> \u00e9, -- -> \u2013."""
+    import unicodedata
+    v = re.sub(r"\{?\\([\'`^\"~=]|c\s)\s*\{?([A-Za-z])\}?\}?", lambda m: unicodedata.normalize(
+        "NFC", m.group(2) + BIB_ACCENTS[m.group(1).strip()]), value)
+    v = re.sub(r"\\(?:textit|textbf|emph|textsc|textrm|mathrm|mbox|textsuperscript|textsubscript)\s*\{", "{", v)
+    v = re.sub(r"\\(?:&|%|_|\$|#)", lambda m: m.group(0)[1:], v)
+    v = v.replace("---", "\u2014").replace("--", "\u2013")
+    return " ".join(v.replace("{", "").replace("}", "").split())
+
+
 def _bib_entries(text: str):
     """Yield (type, key, {field: value}) from BibTeX text; nested braces and quotes respected."""
     i = 0
@@ -602,7 +626,7 @@ def _bib_entries(text: str):
                 vm = re.compile(r"[^,}\n]+").match(text, pos)
                 value = vm.group(0).strip() if vm else ""
                 pos = vm.end() if vm else pos
-            fields[name] = " ".join(value.replace("{", "").replace("}", "").split())
+            fields[name] = _bib_text(value)
             cm = re.compile(r"\s*,").match(text, pos)
             if cm:
                 pos = cm.end()
@@ -643,9 +667,18 @@ def read_tex(path: Path) -> "ManuscriptRefs":
     import latex
 
     lib = [r for b in latex.bib_files(path) for r in read_bib(b)]
+    full = latex.read_project(path)
+    # PLOS, Bioinformatics and others ask for the reference list pasted into the .tex file
+    # (\begin{thebibliography} ... \bibitem{key} ...): those entries count like .bib entries
+    inline = [Ref(k, parse_plain(latex.detex(t)), f"{path.name}, \\bibitem{{{k}}}") for k, t in latex.bibitems(full)]
     by_key = {r.key: r for r in lib}
+    for r in inline:
+        by_key.setdefault(r.key, r)
     ms = ManuscriptRefs(library=lib)
-    _, body = latex.split_document(latex.read_project(path))
+    ms.bib_named = [n.strip() + ("" if n.strip().endswith(".bib") else ".bib")
+                    for b in re.findall(r"\\(?:bibliography|addbibresource)\s*\{([^}]*)\}", latex.strip_comments(full))
+                    for n in b.split(",") if n.strip()]
+    _, body = latex.split_document(full)
     for m in latex.CITE_RE.finditer(body):
         ms.citations += 1
         for k in m.group(1).split(","):
@@ -660,7 +693,32 @@ def read_tex(path: Path) -> "ManuscriptRefs":
             if r.cited == 0:
                 ms.refs.append(r)
             r.cited += 1
+    if not ms.citations and not inline:
+        return _tex_typed(body, path) or ms
     return ms
+
+
+def _tex_typed(body: str, path: Path) -> "ManuscriptRefs | None":
+    """References typed by hand in LaTeX (no \\cite, no \\bibitem): read the list under a References heading."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import latex
+
+    m = re.search(r"\\(?:section|chapter)\*?\s*\{\s*(references|bibliography|literature cited)\s*\}", body, re.I)
+    if not m:
+        return None
+    tail = body[m.end():]
+    nxt = re.search(r"\\(?:section|chapter)\*?\s*\{|\\end\{document\}", tail)
+    block = tail[:nxt.start()] if nxt else tail
+    entries = [latex.detex(e) for e in re.split(r"\n\s*\n|\\item\b|\\par\b|\\\\", block)]
+    # under a References heading every entry with a year counts (software and websites have no pages)
+    entries = [e for e in entries if len(e) > 20 and re.search(r"(?<!\d)(?:19|20)\d{2}[a-z]?(?!\d)", e)]
+    if len(entries) < 3:
+        return None
+    out = ManuscriptRefs(plain=True)
+    out.body_text = latex.detex(body[:m.start()])
+    for n, e in enumerate(entries, 1):
+        out.refs.append(Ref(f"ref-{n}", parse_plain(e), f"{path.name}, reference {n}"))
+    return out
 
 
 def read_csl_json(path: Path) -> list[Ref]:
@@ -1000,9 +1058,16 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             seen_title.setdefault(t, L)
     if ms.plain and ms.body_text:
         out += match_plain_citations(ms)
-    for k in ms.missing_keys:
-        add(Finding(f"\\cite{{{k}}}", "missing-key", "error",
-                    "Cited in the manuscript but not found in any .bib file; it will print as '?'", k))
+    if ms.missing_keys and ms.library == [] and getattr(ms, "bib_named", []):
+        # no .bib file at all: one clear finding instead of one per key
+        add(Finding("(bibliography)", "bib-missing", "error",
+                    f"The bibliography file {', '.join(ms.bib_named)} named in \\bibliography{{}} is not next to the "
+                    f"manuscript, so all {len(ms.missing_keys)} cited keys will print as '?'. Put the .bib file in the "
+                    "same folder and run again", ", ".join(ms.missing_keys[:5]) + (" ..." if len(ms.missing_keys) > 5 else "")))
+    else:
+        for k in ms.missing_keys:
+            add(Finding(f"\\cite{{{k}}}", "missing-key", "error",
+                        "Cited in the manuscript but not found in any .bib file or \\bibitem; it will print as '?'", k))
     for mo in ms.manual_overrides:
         add(Finding("(citation)", "manual-override", "warning",
                     "A citation was typed over by hand; it will not update with the style", mo))

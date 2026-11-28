@@ -228,7 +228,8 @@ def analyze_tex(path: Path) -> dict:
 
     full = latex.read_project(path)
     pre, body = latex.split_document(full)
-    title = latex.detex(latex.command_arg(pre, "title") or latex.command_arg(body, "title") or "")
+    macros = latex.simple_macros(pre)
+    title = latex.detex(latex.expand_macros(latex.title_of(pre, body) or "", macros))
     ab = latex.abstract_text(body)
     abstract = latex.detex(ab) if ab else ""
     kw = latex.command_arg(body, "keywords") or latex.command_arg(pre, "keywords")
@@ -236,7 +237,9 @@ def analyze_tex(path: Path) -> dict:
         m = re.search(r"\\begin\{keywords?\}(.*?)\\end\{keywords?\}", body, re.S) or \
             re.search(r"Keywords?\W*:\W*(.*)", body)
         kw = m.group(1) if m else ""
-    keywords = [k.strip(" .") for k in re.split(r"[;,\u2022|]|\\sep", latex.detex(kw)) if k.strip(" .")]
+    # Elsevier separates keywords with \\sep; split before the commands are stripped
+    keywords = [k.strip(" .") for part in re.split(r"\\sep\b", kw) for k in re.split(r"[;,\u2022|]", latex.detex(part))
+                if k.strip(" .")]
     # sections and main text
     order, main_words = [], 0
     floats = list(re.finditer(r"\\begin\{(figure|table)\*?\}(.*?)\\end\{\1\*?\}", body, re.S))

@@ -173,13 +173,51 @@ def _replace_sections_with_units(body: str) -> str:
 # ---------------------------------------------------------------- plain text for measuring
 def detex(s: str) -> str:
     s = CITE_RE.sub("[1]", s)
+    s = re.sub(r"\\href\s*\{[^}]*\}\s*\{", "{", s)     # \\href{url}{text} -> text
+    s = re.sub(r"\\url\s*\{([^}]*)\}", r"\1", s)
     s = re.sub(r"\$\$.*?\$\$|\\\[.*?\\\]", " EQUATION ", s, flags=re.S)
     s = re.sub(r"(?<!\\)\$[^$]*\$", " x ", s)
     s = unwrap(s, WRAPPERS + ["textsuperscript", "textsubscript"])
     s = re.sub(r"\\(?:ref|eqref|autoref|cref|Cref|pageref)\s*\{[^}]*\}", "1", s)
     s = re.sub(r"\\[a-zA-Z@]+\*?(\s*\[[^\]]*\])?", " ", s)
     s = s.replace("{", " ").replace("}", " ").replace("~", " ").replace("\\\\", " ")
+    s = s.replace("---", "\u2014").replace("--", "\u2013")   # LaTeX dashes
     return re.sub(r"\s+", " ", s).strip()
+
+
+def simple_macros(preamble: str) -> dict[str, str]:
+    """No-argument macros the author defined: \\newcommand{\\tool}{hemaClass} -> {"tool": "hemaClass"}."""
+    out = {}
+    for m in re.finditer(r"\\(?:re)?newcommand\*?\s*\{?\\([A-Za-z@]+)\}?\s*(?!\[)\{", preamble):
+        val, _ = balanced_arg(preamble, m.end() - 1)
+        if val is not None:
+            out[m.group(1)] = val
+    for m in re.finditer(r"\\def\s*\\([A-Za-z@]+)\s*\{", preamble):
+        val, _ = balanced_arg(preamble, m.end() - 1)
+        if val is not None:
+            out.setdefault(m.group(1), val)
+    return out
+
+
+def expand_macros(text: str, macros: dict[str, str], depth: int = 3) -> str:
+    for _ in range(depth):
+        new = re.sub(r"\\([A-Za-z@]+)(?:\{\})?(?![A-Za-z@])", lambda m: macros.get(m.group(1), m.group(0)), text)
+        if new == text:
+            break
+        text = new
+    return text
+
+
+def title_of(preamble: str, body: str) -> str | None:
+    """\\title{...}, or the PLOS template's {\\Large \\textbf\\newline{...}} at the top of the document."""
+    t = command_arg(preamble, "title") or command_arg(body, "title")
+    if t:
+        return t
+    m = re.search(r"\{\\Large\s*\\textbf\s*(?:\\newline)?\s*\{", body[:4000])
+    if m:
+        val, _ = balanced_arg(body, m.end() - 1)
+        return val
+    return None
 
 
 def bib_files(tex: Path) -> list[Path]:
@@ -196,6 +234,22 @@ def bib_files(tex: Path) -> list[Path]:
             p = p.with_suffix(".bib")
         if p.exists():
             out.append(p)
+    return out
+
+
+BIBITEM_RE = re.compile(r"\\bibitem\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}")
+
+
+def bibitems(full: str) -> list[tuple[str, str]]:
+    """(key, text) for each \\bibitem of an inline thebibliography."""
+    out = []
+    for env in re.finditer(r"\\begin\{thebibliography\}(.*?)\\end\{thebibliography\}", strip_comments(full), re.S):
+        block = env.group(1)
+        marks = list(BIBITEM_RE.finditer(block))
+        for n, m in enumerate(marks):
+            end = marks[n + 1].start() if n + 1 < len(marks) else len(block)
+            text = re.sub(r"\\newblock\s*", " ", block[m.end():end])
+            out.append((m.group(1).strip(), " ".join(text.split())))
     return out
 
 
@@ -223,6 +277,9 @@ def abstract_text(body: str) -> str | None:
     m = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", body, re.S)
     if m:
         return m.group(1)
+    a = command_arg(body, "abstract")        # Springer Nature sn-jnl: \\abstract{...}
+    if a:
+        return a
     m = re.search(r"\\(?:sub)*section\*?\s*\{\s*Abstract\s*\}(.*?)(?=\\(?:sub)*section\*?\s*\{|\\input|\\noindent\\textbf\{Key|\\textbf\{Key|Keywords?\s*:|\Z)",
                   body, re.S | re.I)
     return m.group(1) if m else None
@@ -238,9 +295,16 @@ def citation_style(tex: Path) -> str:
             return "author-date"
         if re.search(r"style\s*=\s*(numeric|ieee|nature|vancouver|science)", opts):
             return "numeric, square brackets"
+    dc = re.search(r"\\documentclass\s*\[([^\]]*)\]\s*\{sn-jnl\}", strip_comments(pre))
+    if dc:  # Springer Nature template: the reference style is a class option
+        o = dc.group(1)
+        if re.search(r"sn-(nature|mathphys-num|vancouver-num|aps)\b", o):
+            return "numeric, square brackets" if "nature" not in o else "numeric, superscript"
+        if re.search(r"sn-(basic|mathphys-ay|vancouver-ay|apa|chicago)\b", o):
+            return "author-date"
     has_nat, opts = has_package(pre, "natbib")
-    bst = re.search(r"\\bibliographystyle\s*\{([^}]*)\}", allx)
-    style = bst.group(1) if bst else ""
+    bsts = re.findall(r"\\bibliographystyle\s*\{([^}]*)\}", strip_comments(allx))
+    style = re.split(r"[/\\]", bsts[-1])[-1].removesuffix(".bst") if bsts else ""  # "/Users/x/stylefiles/plos2009"
     if has_nat:
         if "numbers" in opts:
             return "numeric, parentheses" if "round" in opts else "numeric, square brackets"
@@ -250,4 +314,10 @@ def citation_style(tex: Path) -> str:
         return "numeric, square brackets"
     if re.search(r"(apa|harv|chicago|authordate|agu)", style, re.I):
         return "author-date"
+    if not CITE_RE.search(body):
+        # citations typed by hand, for example after converting from another format
+        if len(re.findall(r"\([A-Z][^()]{0,80}?\b(?:19|20)\d{2}[a-z]?\)", body)) >= 3:
+            return "author-date (typed, not live citations)"
+        if len(re.findall(r"\[\d{1,3}(?:\s*[-\u2013,]\s*\d{1,3})*\]", body)) >= 3:
+            return "numeric, square brackets (typed, not live citations)"
     return "unknown"

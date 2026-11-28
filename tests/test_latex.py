@@ -160,3 +160,67 @@ def test_formatted_file_still_compiles(proj):
     p = subprocess.run(["latexmk", "-pdf", "-interaction=nonstopmode", "-quiet", out.name], cwd=d,
                        capture_output=True, timeout=180)
     assert (d / "main_fmt.pdf").exists(), p.stdout[-2000:]
+
+
+# ---- real-world LaTeX layouts (found on public papers, 2026-11-28) ----
+
+def _tex(tmp_path, preamble, body, name="ms.tex"):
+    p = tmp_path / name
+    p.write_text(preamble + "\n\\begin{document}\n" + body + "\n\\end{document}\n", encoding="utf-8")
+    return p
+
+
+def test_plos_inline_bibliography_title_and_macros(tmp_path):
+    p = _tex(tmp_path, "\\documentclass{article}\n\\newcommand{\\tool}{\\href{http://tool.org}{\\texttt{ToolX}}}\n"
+                       "\\bibliographystyle{/Users/someone/stylefiles/plos2015}",
+             "\\begin{flushleft}{\\Large\n\\textbf\\newline{\\tool{}: fast analysis of things}\n}\\end{flushleft}\n"
+             "\\section*{Abstract}Short abstract here.\n\\section*{Introduction}As shown \\cite{a1,b2}.\n"
+             "\\begin{thebibliography}{10}\n\\bibitem{a1}\nJaffe ES.\n\\newblock The 2008 WHO classification of lymphomas.\n"
+             "\\newblock Hematology. 2009 Jan;2009(1):523--531.\n\n\\bibitem{b2}\nSmith J, Lee K.\n\\newblock A second paper.\n"
+             "\\newblock Nature. 2019;5:1--2.\n\\end{thebibliography}")
+    f = prepare.analyze(p)
+    assert f["title"] == "ToolX : fast analysis of things"
+    assert latex.citation_style(p) == "numeric, square brackets"           # style given as a path
+    ms = refs.read_tex(p)
+    assert [r.key for r in ms.refs] == ["a1", "b2"] and not ms.missing_keys
+    d = ms.refs[0].data
+    assert d["_year_label"] == "2009" and d["title"].startswith("The 2008 WHO classification")
+
+
+def test_springer_nature_template_abstract_and_style(tmp_path):
+    p = _tex(tmp_path, "%%\\documentclass[sn-basic]{sn-jnl}\n\\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}",
+             "\\title{A title}\n\\abstract{One two three four five.}\n\\keywords{alpha, beta}\n\\maketitle\n"
+             "\\section{Introduction}Text \\cite{k}.")
+    assert prepare.analyze(p)["abstract_words"] == 5
+    assert latex.citation_style(p) == "numeric, square brackets"
+
+
+def test_elsevier_keywords_and_a_missing_bib_file(tmp_path):
+    p = _tex(tmp_path, "\\documentclass{elsarticle}",
+             "\\begin{frontmatter}\\title{T}\\begin{abstract}A b c.\\end{abstract}\n"
+             "\\begin{keyword}microgravity \\sep boundary layer \\sep \\textit{Arabidopsis thaliana}\\end{keyword}"
+             "\\end{frontmatter}\n\\section{Introduction}See \\cite{x1} and \\cite{x2,x3}.\n\\bibliography{refs}")
+    assert prepare.analyze(p)["keywords"] == ["microgravity", "boundary layer", "Arabidopsis thaliana"]
+    f = refs.audit(refs.read_tex(p), None)
+    errs = [x for x in f if x.severity == "error"]
+    assert len(errs) == 1 and errs[0].code == "bib-missing" and "refs.bib" in errs[0].message and "all 3" in errs[0].message
+
+
+def test_references_typed_by_hand_in_latex(tmp_path):
+    entries = "\n\n".join([
+        "Agapow, P.-M., and Burt, A. (2001). Indices of multilocus linkage disequilibrium. \\emph{Mol Ecol Notes} 1, 101--102.",
+        "Csardi, G., and Nepusz, T. (2006). The igraph software package for complex network research.",
+        "Goss, E. M. (2014). Genome-enabled analysis. \\emph{Phytopathology} 104, 1--8."])
+    p = _tex(tmp_path, "\\documentclass{article}",
+             "\\section{Introduction}Clones are common (Agapow and Burt, 2001; Csardi and Nepusz, 2006). See (Goss, 2014). Again (Goss, 2014).\n"
+             "\\section*{References}\n\n" + entries)
+    assert latex.citation_style(p) == "author-date (typed, not live citations)"
+    ms = refs.read_tex(p)
+    assert ms.plain and len(ms.refs) == 3                                 # software without pages still counts
+    assert ms.refs[0].data["author"][0]["family"] == "Agapow"
+    assert not [x for x in refs.audit(ms, None) if x.severity == "error"]
+
+
+def test_bib_markup_and_accents_become_plain_text():
+    assert refs._bib_text(r"The {\textit{Arabidopsis}} response") == "The Arabidopsis response"
+    assert refs._bib_text(r"Gr{\"u}nwald and {\'E}tienne, 101--102") == "Gr\u00fcnwald and \u00c9tienne, 101\u2013102"
