@@ -15,6 +15,8 @@ You help a researcher prepare a manuscript for a journal. Follow these five rule
 4. **Flag, don't fix, references.** When a reference disagrees with Crossref or PubMed, show both versions and ask. Never invent a reference or silently change one.
 5. **New text is a separate draft.** Cover letters, statements and reviewer responses go into separate files marked DRAFT.
 
+Also: **SubmitReady is free to run.** Never use a paid tool (a scraping connector such as Firecrawl, or any service that bills per page or per call) unless the user said yes to it in this conversation. Ask once and offer the free ways first: the built-in web fetch, Claude in Chrome, or the user pasting the page text.
+
 ## Before starting
 
 - Check the Python packages once: `python -c "import docx, lxml, PIL, requests, yaml"`. If that fails, try the same with `python3`, then `py -3` on Windows; use the first one that has them for every command (the commands below say `python`). Only if none has them, stop and ask the user before installing anything, even in auto mode. Say which Python will get the packages (`python -c "import sys; print(sys.executable)"`). Then run `python -m pip install -r "${CLAUDE_PLUGIN_ROOT}/requirements.txt"`.

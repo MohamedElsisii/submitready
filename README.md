@@ -155,6 +155,8 @@ Adding a journal or a family is a good first contribution. Copy `journals/_TEMPL
 
 SubmitReady's scripts run on your computer and never change your original file. Claude reads parts of your manuscript while it works, as with anything you open in Claude Code. Outside services receive only what a lookup needs: reference titles and DOIs go to Crossref and PubMed, and guideline pages are read from the journal's website. SubmitReady collects no usage data.
 
+**Cost.** SubmitReady is free. Crossref, PubMed, OpenAlex, Europe PMC and the journal pages it reads are free. It never uses a paid tool, such as a scraping service, unless you say yes when it asks.
+
 ## Contributing
 
 Journal profiles are community-contributed. See [CONTRIBUTING.md](CONTRIBUTING.md) and open an "Add my journal" issue.
