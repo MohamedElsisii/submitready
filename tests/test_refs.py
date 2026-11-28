@@ -658,3 +658,43 @@ def test_swapped_names_with_particles_and_one_line_per_problem():
     online, _ = refs.verify(ms, fetch, pause=0)
     codes_ = [x.code for x in refs.dedupe(f + online)]
     assert "author-swapped" in codes_ and "mismatch-first-author" not in codes_
+
+
+def test_two_records_of_one_paper_printed_once_is_a_note_not_an_error():
+    a = refs.Ref("100", {"type": "article-journal", "title": "MRI-based parcellation of white matter", "DOI": "10.1006/nimg.1998.0384",
+                         "author": [{"family": "Makris"}], "issued": {"date-parts": [[1999]]}, "container-title": "NeuroImage"}, "c1")
+    b = refs.Ref("11", dict(a.data), "c2")
+    ms = refs.ManuscriptRefs(refs=[a, b])
+    ms.printed = ["Makris, N. (1999). MRI-based parcellation of white matter. NeuroImage. https://doi.org/10.1006/nimg.1998.0384"]
+    assert [f.code for f in refs.audit(ms, None) if "dup" in f.code] == ["duplicate-record"]
+    ms.printed = ms.printed * 2                                       # printed twice: a real duplicate
+    assert [f.code for f in refs.audit(ms, None) if "dup" in f.code] == ["duplicate"]
+
+
+def test_doi_prefix_web_pages_and_endnote_names():
+    ms = refs.ManuscriptRefs(refs=[
+        refs.Ref("a", {"type": "article-journal", "title": "Life's Essential 8", "DOI": "doi:10.1161/CIR.0000000000001078",
+                       "author": [{"family": "Lloyd-Jones"}], "issued": {"date-parts": [[2022]]}, "container-title": "Circulation"}, "x"),
+        refs.Ref("b", {"type": "webpage", "title": "FastQC: a quality control tool", "URL": "https://example.org/fastqc"}, "x")])
+    f = {x.code: x for x in refs.audit(ms, None)}
+    assert "doi-invalid" not in f and f["doi-prefix"].suggested == "10.1161/CIR.0000000000001078"
+    assert "placeholder-entry" not in f and "web-no-date" in f
+    from lxml import etree
+    rec = etree.fromstring("<record><contributors><authors><author>Donald M. Lloyd-Jones</author>"
+                           "<author>Smith, Anna</author><author>Ludwig van Beethoven</author></authors></contributors>"
+                           "<titles><title>T</title></titles></record>")
+    au = refs._endnote_to_csl(rec)["author"]
+    assert au[0] == {"family": "Lloyd-Jones", "given": "Donald M."}
+    assert au[1] == {"family": "Smith", "given": "Anna"}
+    assert au[2] == {"family": "van Beethoven", "given": "Ludwig"}
+
+
+def test_console_output_and_table_numbers_are_not_typed_citations():
+    ms = refs.ManuscriptRefs(refs=[refs.Ref("a", {"type": "article-journal", "title": "A", "author": [{"family": "Forget"}]}, "x")],
+                             citations=1)
+    ms.text_units = ["[1] stats     graphics  grDevices utils     datasets  methods   base",
+                     "160 [116]", "0 [0]", "Median 12 [3] days", "As shown before [1]."]
+    f = refs.audit(ms, None)
+    assert not [x for x in f if x.code == "typed-number-wrong"]
+    typed = [x.found for x in f if x.code == "typed-citation"]
+    assert len(typed) == 1 and "As shown before" in typed[0]

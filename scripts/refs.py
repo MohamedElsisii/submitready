@@ -38,6 +38,7 @@ from typing import Callable
 VERSION = "0.1.0"
 DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
 DOI_URL_RE = re.compile(r"^(?:https?://)?(?:dx\.)?doi\.org/(10\.\S+)$", re.I)
+DOI_PREFIX_RE = re.compile(r"^\s*doi\s*:?\s*(10\.\S+)$", re.I)     # "doi:10.1161/..." or "DOI 10.1161/..."
 
 
 # ---------------------------------------------------------------- data model
@@ -70,6 +71,7 @@ class ManuscriptRefs:
     body_text: str = ""                       # manuscript text before the reference list (plain mode)
     manager: str = ""                         # "Mendeley", "Zotero", "EndNote" or "" (typed or a file)
     text_units: list[str] = field(default_factory=list)  # paragraphs outside the reference list, live citations as a token
+    printed: list[str] = field(default_factory=list)     # the reference list as Word shows it (live lists only)
 
 
 # ---------------------------------------------------------------- reference managers
@@ -209,7 +211,17 @@ def _endnote_to_csl(rec) -> dict:
     for a in rec.findall(".//contributors/authors/author"):
         name = "".join(a.itertext()).strip()
         fam, _, giv = name.partition(",")
-        authors.append({"family": fam.strip(), "given": giv.strip()} if giv else {"literal": fam.strip()})
+        if giv:
+            authors.append({"family": fam.strip(), "given": giv.strip()})
+        elif re.fullmatch(r"(?:[A-Z][\w'\-]*\.?\s+){1,3}(?:[a-z]{1,4}\s+)*[A-Z][\w'\-]+", name):
+            # EndNote reads "Donald M. Lloyd-Jones" (no comma) as given names, then the family name
+            words = name.split()
+            k = len(words) - 1
+            while k > 1 and words[k - 1].lower() in PARTICLES:
+                k -= 1
+            authors.append({"family": " ".join(words[k:]), "given": " ".join(words[:k])})
+        else:
+            authors.append({"literal": fam.strip()})
     y = re.search(r"(19|20)\d{2}", t(".//dates/year"))
     d = {"type": "article-journal", "title": t(".//titles/title"),
          "container-title": t(".//periodical/full-title") or t(".//titles/secondary-title"),
@@ -735,6 +747,10 @@ def load(path: Path) -> ManuscriptRefs:
             ms.text_units = [u.text for u in lock.extract(path)["units"]]
         except Exception:  # the reference checks still run without it
             ms.text_units = []
+        try:
+            ms.printed = printed_bibliography(path)
+        except Exception:
+            ms.printed = []
         return ms
     if suf == ".tex":
         return read_tex(path)
@@ -745,6 +761,34 @@ def load(path: Path) -> ManuscriptRefs:
 
 
 # ---------------------------------------------------------------- helpers
+def printed_bibliography(path: Path) -> list[str]:
+    """The reference list as Word shows it (inside the reference manager's bibliography field or control)."""
+    import zipfile
+    from lxml import etree
+    import lock
+    out = []
+    with zipfile.ZipFile(path) as z:
+        root = etree.fromstring(z.read("word/document.xml"))
+    ex = lock.Extractor()
+    for p in lock._paragraphs(root, "body"):
+        in_bib = ex.in_bibliography(p)
+        text, _ = ex.paragraph_text(p)
+        if in_bib or (ex.in_bibliography(p) and not text.strip()):
+            v = " ".join(lock._visible_text(p).split())
+            if v:
+                out.append(v)
+    return out
+
+
+def _printed_times(r: Ref, printed: list[str]) -> int:
+    """How many printed entries show this reference (by DOI, else by the start of its title)."""
+    doi = norm_doi(r.data.get("DOI", "")) if r.data.get("DOI") else ""
+    by_doi = sum(doi in p.lower() for p in printed) if doi else 0
+    t = norm_text(r.data.get("title", ""))[:40]
+    by_title = sum(t in norm_text(p) for p in printed) if len(t) >= 15 else 0
+    return max(by_doi, by_title)   # one copy may print without its DOI
+
+
 def label(r: Ref) -> str:
     a = (r.data.get("author") or [{}])[0]
     name = a.get("family") or a.get("literal") or "?"
@@ -763,7 +807,7 @@ def year(d: dict) -> str:
 def strip_doi(doi: str) -> str:
     """The bare DOI, original letter case kept (for suggestions)."""
     doi = doi.strip()
-    m = DOI_URL_RE.match(doi)
+    m = DOI_URL_RE.match(doi) or DOI_PREFIX_RE.match(doi)
     return (m.group(1) if m else doi).strip().rstrip(".")
 
 
@@ -842,6 +886,8 @@ def typed_reference_numbers(ms: ManuscriptRefs) -> list[Finding]:
     listed, checked, wrong = len(ms.refs), 0, 0
     for t in ms.text_units:
         m = re.match(r"\s*\[(\d{1,3})\]\s+([^\W\d][\w\u00C0-\u017F'\- ]{1,40}?)[,\s]", t)
+        if re.match(r"\s*\[\d+\]", t) and re.search(r"\S {2,}\S|^\s*\[\d+\]\s+[\"'\d]|\[\d+\]\s+[a-z][\w.]*_[\w.]+", t):
+            continue  # R console output ("[1] stats     graphics  utils"), not a citation
         if m:
             n = int(m.group(1))
             checked += 1
@@ -860,7 +906,13 @@ def typed_reference_numbers(ms: ManuscriptRefs) -> list[Finding]:
                                    "Typed numbers do not update when citations move", t[:80]))
             continue
         bare = re.sub(re.escape(CITE_TOKEN), " ", t)
+        toks = bare.split()
+        if toks and len(toks) <= 8 and sum(bool(re.fullmatch(r"[\d.,%()\[\]\u2013\-]+", x)) for x in toks) * 2 >= len(toks):
+            continue  # a table cell of numbers ("160 [116]", "0 [0]"): data, not citations
         for hit in re.finditer(r"(?<![\w\[])\[(\d{1,3}(?:\s*[-\u2013,]\s*\d{1,3})*)\](?!\w)", bare):
+            before = bare[:hit.start()].rstrip()
+            if hit.group(1) == "0" or re.search(r"[\d%]$", before):
+                continue  # "12 [3]" is a count with a percentage or range, not a citation
             out.append(Finding(f"[{hit.group(1)}] (typed)", "typed-citation", "warning",
                                "A citation number typed by hand among live citations; it will not update. "
                                "Insert it with your reference manager instead",
@@ -950,7 +1002,11 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
             continue
         typ = d.get("type", "")
         doi = (d.get("DOI") or "").strip()
-        if not d.get("author") and not d.get("issued") and not doi and not d.get("container-title"):
+        if d.get("URL") and typ in ("webpage", "post-weblog", "software", "dataset", "post"):
+            if not d.get("author") and not d.get("issued"):
+                add(Finding(L, "web-no-date", "warning", "Web page or software with only a title and a link: add who made "
+                            "it and the year (or version), so readers can find what you used", d.get("URL", "")))
+        elif not d.get("author") and not d.get("issued") and not doi and not d.get("container-title"):
             # e.g. a PDF dropped into the library: title "nihms-731362 ( ref 10)", nothing else
             add(Finding(L, "placeholder-entry", "error",
                         "This entry is only a name, with no authors, year, journal or DOI. "
@@ -960,6 +1016,9 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
         if doi:
             if DOI_URL_RE.match(doi):
                 add(Finding(L, "doi-as-url", "warning", "DOI is stored as a web link", doi, strip_doi(doi)))
+            elif DOI_PREFIX_RE.match(doi):
+                add(Finding(L, "doi-prefix", "warning", "DOI is stored with a 'doi:' prefix; keep only the DOI itself",
+                            doi, strip_doi(doi)))
             if not DOI_RE.match(norm_doi(doi)):
                 add(Finding(L, "doi-invalid", "error", "DOI does not look valid", doi))
         elif typ in JOURNAL_TYPES or d.get("_ris_type") == "GEN":
@@ -1048,10 +1107,20 @@ def audit(ms: ManuscriptRefs, library: list[Ref] | None = None) -> list[Finding]
         L = label(r)
         doi = norm_doi(r.data.get("DOI", "")) if r.data.get("DOI") else ""
         t = norm_text(r.data.get("_raw") or r.data.get("title", ""))
+        once = ms.printed and _printed_times(r, ms.printed) == 1
         if doi and doi in seen_doi:
-            add(Finding(L, "duplicate", "error", f"Same DOI as {seen_doi[doi]}", doi))
+            if once:   # two records of one paper (often from two EndNote libraries); the list shows it once
+                add(Finding(L, "duplicate-record", "info", f"Same paper as {seen_doi[doi]}, inserted from two library "
+                            "records. The reference list prints it once now; merge the two records in your library so "
+                            "it stays that way", doi))
+            else:
+                add(Finding(L, "duplicate", "error", f"Same DOI as {seen_doi[doi]}", doi))
         elif t and t in seen_title:
-            add(Finding(L, "duplicate", "error", f"Same title as {seen_title[t]}"))
+            if once:
+                add(Finding(L, "duplicate-record", "info", f"Same paper as {seen_title[t]}, inserted from two library "
+                            "records. The reference list prints it once now; merge the two records in your library"))
+            else:
+                add(Finding(L, "duplicate", "error", f"Same title as {seen_title[t]}"))
         if doi:
             seen_doi.setdefault(doi, L)
         if t:
