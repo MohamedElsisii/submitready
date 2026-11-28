@@ -8,7 +8,7 @@
 
 SubmitReady is a free, open-source Claude skill that prepares a research manuscript for a specific journal: it reads the journal's live author guidelines, checks and formats your references, prepares supplementary files, and hands you a submission package with a report proving that your text was not changed.
 
-> Status: in development. All four version 1 commands (`/lock`, `/refs`, `/prepare`, `/check`) work and are being tested on real manuscripts. Public release planned for early 2027.
+> Status: beta. Every command has been run on three real, published manuscripts (Epigenomics, JBSD, Stress Biology) and on 1,512 test files built from 36 open-access papers. Bugs found in those runs are fixed and covered by tests. Please report anything odd as a GitHub issue.
 
 ## Why
 
@@ -98,7 +98,7 @@ Then try your own manuscript the same way. Your original file is never changed: 
 | `/submitready:check` | Final pre-submission audit | v1 |
 | `/supp` | Numbers, checks and packages supplementary material | v2 |
 | `/cover` | Drafts a cover letter for your approval | v2 |
-| `/submitready:revise <letter>` | After a revise decision: splits the decision letter into numbered comments, word for word, and makes a response table with empty Response and Where changed columns for you to fill. Shows which paragraphs you changed and which comments still need an answer. It never writes a response for you | v1 |
+| `/submitready:revise <letter>` | After a revise decision: splits the decision letter into numbered comments, word for word, and makes a response table with empty Response and Where changed columns for you to fill. Shows which paragraphs you changed and which comments still need an answer, also in a response letter written in your own layout. It never writes a response for you | v1 |
 
 ## Journals
 
@@ -135,6 +135,8 @@ PLOS ONE, Frontiers in Genetics, Scientific Reports, International Journal of Mo
 
 `python scripts/families.py find "<journal>" --publisher "<publisher>"` shows which one a journal gets. See `journals/families/`.
 
+[COVERAGE.md](COVERAGE.md) lists, for every saved profile and family, how many rules SubmitReady measures and how many it leaves for you to check (with the guideline's own words). Rules that need judgment, such as what a title page must say or which reporting guideline applies, stay with you on purpose.
+
 ### Keeping the guidelines current
 
 Journals change their rules. Every saved rule quotes its guideline page and says when it was checked. `python scripts/freshness.py` reads each page again and lists any quoted rule that is no longer there. A GitHub check runs it once a month and opens an issue when a rule may have changed. Some publishers block automated visits; those pages are listed as "not checked", never as changed. The script only reads: a person checks the page and writes a new dated snapshot.
@@ -150,6 +152,16 @@ Adding a journal or a family is a good first contribution. Copy `journals/_TEMPL
 - If a journal wants plain text instead of live citations, the text lock still passes after Zotero's Unlink Citations or EndNote's Convert to Plain Text, as long as the visible text is the same
 - Tested on real files saved by Zotero 10 in Word (APA, Vancouver, and after Unlink Citations). EndNote is tested on files built to its format; if you use EndNote, your feedback helps most
 - Language: English
+
+## Known limits
+
+- **English manuscripts only.** Section names, abstracts and statements are recognized in English.
+- **Word and LaTeX.** Other formats (Google Docs, Pages, PDF) need to be saved as .docx first.
+- **EndNote and Zotero** are tested on files built to their format and on small real samples. Mendeley Cite is tested most. If you use EndNote, your feedback helps most.
+- **Some publisher pages block automated reading** (Elsevier, Springer Link, Wiley, MDPI and others often do). Then SubmitReady says the page could not be read and asks you to open it or paste the text. It never fills the gap from memory.
+- **Headings typed as bold text** (not Word heading styles) are recognized, but heading levels can only be counted when Word heading styles are used.
+- **The journal finder ranks by similar papers**, not by prestige or acceptance chances. The journal you have in mind may rank lower than journals that publish more papers like yours; the list says why each one is there.
+- **Files with tracked changes or comments are refused** until you accept or reject the changes and delete the comments. This keeps the text lock exact.
 
 ## Privacy
 

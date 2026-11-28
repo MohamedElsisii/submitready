@@ -18,6 +18,15 @@ The last line should end with `passed`. Some tests are skipped on purpose, for e
 
 Claude Code runs commands in your default Python. With conda, that is usually `base`, even if you activated another environment first. On first use SubmitReady checks for its packages and asks before installing them there.
 
+If the tests stop with `ImportError` from `PIL` (for example `undefined symbol` in `libtiff`), the image library in conda `base` is linked to a mismatched library. Reinstall it from pip, which brings its own copies:
+
+```
+python -m pip install --force-reinstall --no-deps "pillow>=10"
+python -c "from PIL import Image; print('Pillow OK')"
+```
+
+Already cloned? Run `git pull` inside the folder instead of `git clone`.
+
 Sign in to Claude Code with your Claude account (`/login`). If the banner says "API Usage Billing", every message is charged to an API account. Check the plugin too:
 
 ```
@@ -67,10 +76,21 @@ It reports crashes, any change to locked text, tracked changes or comments that 
 and facts that differ from the article's own XML. The files it makes come from real papers, so they stay
 in the work folder and are never committed.
 
-Last full run (2026-11-25): 36 CC BY articles, 1,512 files, no crashes, no locked-text changes,
+First full run (2026-11-25): 36 CC BY articles, 1,512 files, no crashes, no locked-text changes,
 no missed refusals. It found 5 real bugs, all fixed with tests:
 - live Zotero and EndNote field citations were called "typed";
 - a text box anchored in a heading hid that heading, so the abstract read 0 words;
 - text after the Keywords line was counted as abstract;
 - an abstract with no heading after it ran into the whole paper (now guessed, with a note);
 - the sample converter put graphical abstracts and highlights under the Abstract heading.
+
+Latest run (2026-11-28): 1,440 files, no problems.
+
+## Real manuscripts
+
+Real papers go in `tests/private/`, which git ignores. The three test papers (Epigenomics, JBSD, Stress Biology)
+found more than 20 bugs between 2026-11-25 and 2026-11-28, from the journal finder to the reference check,
+each now covered by a test. The kinds of bug only real files show: Crossref records with garbled letters,
+name particles ("van", "El"), response letters written in the author's own layout, figures exported at screen
+resolution, and statements placed without their umbrella heading.
+
