@@ -36,7 +36,12 @@
    "quote": "",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "font",
+    "names": [
+     "Times New Roman",
+     "Times"
+    ],
+    "size": 12
    }
   },
   {

@@ -87,7 +87,9 @@
    "quote": "The maximum title length should be 15 words.",
    "source": 1,
    "check": {
-    "type": "manual"
+    "type": "max_words",
+    "target": "title",
+    "value": 15
    }
   },
   {
@@ -96,7 +98,7 @@
    "quote": "The abstract — which should be no more than 200 words long and contain no references — should serve both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications.",
    "source": 1,
    "check": {
-    "type": "manual"
+    "type": "abstract_no_citations"
    }
   },
   {

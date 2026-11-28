@@ -71,7 +71,8 @@
       "quote": "Succinct, with no subheadings.",
       "source": 0,
       "check": {
-        "type": "manual"
+        "type": "no_subheadings",
+        "section": "introduction"
       }
     },
     {
@@ -211,7 +212,8 @@
       "quote": "You may insert up to 5 heading levels into your manuscript",
       "source": 0,
       "check": {
-        "type": "manual"
+        "type": "max_heading_levels",
+        "value": 5
       }
     },
     {

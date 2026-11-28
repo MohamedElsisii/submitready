@@ -242,7 +242,8 @@
    "quote": "",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "max_heading_levels",
+    "value": 3
    }
   },
   {

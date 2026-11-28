@@ -120,6 +120,18 @@ class Page:
     note: str = ""
 
 
+def decode(raw: bytes, ctype: str = "") -> str:
+    """Page bytes to text. Without a charset in the header, requests guesses Latin-1 and turns
+    "150\u2013200" into "150\u00e2\u0080\u0093200". Pages are almost always UTF-8, so try that first."""
+    m = re.search(r"charset=([\w-]+)", ctype or "", re.I)
+    for enc in ([m.group(1)] if m else []) + ["utf-8", "cp1252", "latin-1"]:
+        try:
+            return raw.decode(enc)
+        except (LookupError, UnicodeDecodeError):
+            continue
+    return raw.decode("utf-8", errors="replace")
+
+
 def fetch(url: str, timeout: int = 30) -> Page:
     import requests
     try:
@@ -132,7 +144,7 @@ def fetch(url: str, timeout: int = 30) -> Page:
     if "pdf" in ctype or url.lower().endswith(".pdf") or r.content[:4] == b"%PDF":
         t = pdf_text(r.content)
         return Page(url, "ok-text", t) if t else Page(url, "pdf", note="no PDF reader here")
-    text = html_text(r.text)
+    text = html_text(decode(r.content, ctype))
     if len(norm(text)) < 1500 and BOT_WALL.search(text):
         return Page(url, "unreachable", note="a bot check answered instead of the page")
     return Page(url, "ok-text", text)

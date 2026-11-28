@@ -38,7 +38,8 @@
    "quote": "This section should be succinct, with no subheadings.",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "no_subheadings",
+    "section": "introduction"
    }
   },
   {

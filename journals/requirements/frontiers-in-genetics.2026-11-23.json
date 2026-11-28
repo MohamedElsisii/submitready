@@ -87,7 +87,8 @@
    "quote": "",
    "source": 0,
    "check": {
-    "type": "manual"
+    "type": "no_subheadings",
+    "section": "introduction"
    }
   },
   {

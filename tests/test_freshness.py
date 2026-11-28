@@ -128,3 +128,10 @@ def test_a_missing_quote_shows_the_closest_sentence_on_the_page():
     c = F.closest("The abstract would normally be 150–200 words.", page)
     assert c["closest"].startswith("The abstract would normally be 150-250 words") and c["similarity"] > 0.8
     assert F.closest("Something unrelated about peer review fees.", page) == {}
+
+
+def test_pages_without_a_charset_are_read_as_utf8():
+    raw = "The abstract would normally be 150–200 words.".encode("utf-8")
+    assert F.decode(raw, "text/html") == "The abstract would normally be 150–200 words."
+    assert F.decode("café".encode("cp1252"), "text/html") == "café"
+    assert F.decode("x".encode("utf-16"), "text/html; charset=utf-16") == "x"

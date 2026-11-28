@@ -380,6 +380,7 @@ def analyze(path: Path) -> dict:
     order, seen = [], set()
     abstract_parts, kw_text = [], ""
     abstract_labels: list[str] = []
+    subheads: dict[str, int] = {}
     main_words, main_started, main_ended = 0, False, False
     captions = []
     where: dict[str, list[str]] = {}
@@ -435,6 +436,8 @@ def analyze(path: Path) -> dict:
                              "kind": "table" if m.group(1).lower().startswith("t") else "figure",
                              "supp": bool(m.group(2)), "n": int(m.group(3)), "section": current})
             continue
+        if p["heading"] and not p["section"] and not p["table"] and not p["bib"] and current:
+            subheads[current] = subheads.get(current, 0) + 1
         if p["heading"] or p["table"] or p["bib"]:
             continue
         if current == "abstract":
@@ -554,6 +557,8 @@ def analyze(path: Path) -> dict:
         "citation_samples": cite_samples,
         "references": refs,
         "abstract_labels": abstract_labels,
+        "abstract_citations": len(CITE_IN_TEXT.findall(" ".join(abstract_parts))),
+        "subheadings": subheads,
         "heading_levels": max(levels) if levels else None,
         "figure_captions": _caption_facts([c for c in captions if c["kind"] == "figure" and not c["supp"]], styles_bold),
         "body_font": _body_font(z, paras),
@@ -724,7 +729,8 @@ def check(facts: dict, req: dict) -> list[dict]:
     citation_format, supp_label_style, max_count, min_count, p_leading_zero,
     citation_punctuation (value "before" or "after"), figure_files, manual,
     abstract_structure (headings), max_heading_levels, caption_style (label, bold, no_punct_after_number,
-    no_end_punct), font (names, size, strict), doi_format (value "link"), supp_files (checked by check.py)."""
+    no_end_punct), font (names, size, strict), doi_format (value "link"), supp_files (checked by check.py),
+    abstract_no_citations, no_subheadings (section)."""
     out = []
     for r in req["requirements"]:
         c = r.get("check", {"type": "manual"})
@@ -885,6 +891,17 @@ def check(facts: dict, req: dict) -> list[dict]:
                     status, found = "PASS", f"{d['links']} DOIs, all as links"
                 else:
                     status, found = "CHECK", "the reference list shows no DOIs yet; the journal's reference style may add them"
+            elif t == "abstract_no_citations":
+                n = facts["abstract_citations"]
+                status, found = ("PASS" if not n else "FIX"), (f"{n} citation{'s' if n != 1 else ''} in the abstract" if n
+                                                                 else "no citations in the abstract")
+            elif t == "no_subheadings":
+                n = facts["subheadings"].get(c["section"], 0)
+                name = SECTION_NAMES.get(c["section"], c["section"])
+                status = "PASS" if not n else "FIX"
+                found = f"{n} subheading{'s' if n != 1 else ''} in the {name}" if n else f"no subheadings in the {name}"
+                if c["section"] not in facts["sections_found"]:
+                    status, found = "CHECK", f"no {name} section found"
             elif t == "supp_files":
                 status, found = "CHECK", "checked with the supplementary folder"
             elif t == "manual":

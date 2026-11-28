@@ -231,3 +231,16 @@ def test_statements_without_their_umbrella_heading(tmp_path):
               headings=[("Abstract", 1), ("Introduction", 1), ("Funding", 1), ("Competing interests", 1), ("References", 1)])
     r = result(p, {"type": "section_present", "section": "declarations"})
     assert r["status"] == "FIX" and "the statements are there (Funding, Competing interests) but not under one heading" in r["found"]
+
+
+def test_citations_in_the_abstract_and_subheadings_in_the_introduction(tmp_path):
+    p = build(tmp_path / "c.docx", ["Title", "Abstract", "Methylation matters (Smith et al. 2020). We test it [3].",
+                                    "Introduction", "Background text.", "Earlier work", "More text.", "Methods", "We did it."],
+              headings=[("Abstract", 1), ("Introduction", 1), ("Earlier work", 2), ("Methods", 1)])
+    assert result(p, {"type": "abstract_no_citations"})["found"] == "2 citations in the abstract"
+    r = result(p, {"type": "no_subheadings", "section": "introduction"})
+    assert r["status"] == "FIX" and r["found"] == "1 subheading in the Introduction"
+    assert result(p, {"type": "no_subheadings", "section": "methods"})["status"] == "PASS"
+    q = build(tmp_path / "d.docx", ["Title", "Abstract", "Plain words only.", "Introduction", "Text."],
+              headings=[("Abstract", 1), ("Introduction", 1)])
+    assert result(q, {"type": "abstract_no_citations"})["status"] == "PASS"
