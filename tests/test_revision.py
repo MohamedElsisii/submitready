@@ -152,7 +152,7 @@ def test_changes_and_hints(tmp_path):
     d = _split(tmp_path, LETTER_A)
     ch = R.changes(a, b, d)
     kinds = [r["kind"] for r in ch["rows"]]
-    assert kinds.count("changed") == 2
+    assert kinds == ["changed", "added", "removed"]          # an unrelated new sentence is added, not "changed"
     assert ch["hints"].get("R2.2") == [1]                     # "Validate on METABRIC." -> the new sentence
     md = R.changes_markdown(ch, d)
     assert "METABRIC" in md and "R2.2: change #2" in md
@@ -196,3 +196,49 @@ def test_status_reads_a_response_letter_in_your_own_layout(tmp_path):
     assert r["no_where"] == ["R1.2"] and r["no_response"] == ["R2.1A"]
     assert "R1.G" in r["general_not_quoted"] and "R1.G" not in r["not_in_letter"]
     assert R.main(["status", str(letter)]) == 2                       # asks for --comments instead of saying "none"
+
+
+LETTER_ELIFE = """Decision letter after peer review:
+Thank you for submitting your article "A test" for consideration by eLife.
+Essential revisions:
+1) The Discussion should be restructured around the data shown here, not the model alone.
+2) Explain how dwell time relates to the overall kinetics for a general audience.
+Reviewer #1 (Recommendations for the authors):
+The text is quite dense and, in many places, difficult to read for the non-specialist reader, especially given the many references to specific residues and structures.
+Overall, the text could be far more impactful if it focused more tightly on the implications of the results themselves and what they mean for the field.
+Reviewer #2 (Recommendations for the authors):
+Figures and legends:
+Figure 1: the light green bars are not explained.
+Figure 5: the green and red protons are not explained.
+Reviewer #3 (Recommendations for the authors):
+To strengthen this work, I would suggest the authors do the following:
+i) Comment on whether the rotations observed relate to synthesis.
+ii) Show gels confirming that subunit-a is present.
+[Editors' note: the authors submitted for reconsideration following the decision after peer review.]
+Thank you for submitting the paper again.
+"""
+
+REPLY_ELIFE = ["Essential revisions:", "1) The Discussion should be restructured around the data shown here, not the model alone.",
+               "2) Explain how dwell time relates to the overall kinetics for a general audience.", "All completed as requested.",
+               "Reviewer #1 (Recommendations for the authors):",
+               "The text is quite dense and, in many places, difficult to read for the non-specialist reader, especially given the many references to specific residues and structures.",
+               "We added explanations for non-specialists.",
+               "Overall, the text could be far more impactful if it focused more tightly on the implications of the results themselves and what they mean for the field.",
+               "We revised the Discussion (lines 300-320).",
+               "Figures and legends:", "Figure 1: the light green bars are not explained.", "Corrected.",
+               "Figure 5: the green and red protons are not explained.", "A sentence was added to the legend of Figure 5.",
+               "i) Comment on whether the rotations observed relate to synthesis.", "Added to the Discussion.",
+               "ii) Show gels confirming that subunit-a is present.", "Done."]
+
+
+def test_elife_letter_and_reply(tmp_path):
+    d = _split(tmp_path, LETTER_ELIFE)
+    ids = [c["id"] for c in d["comments"]]
+    assert ids == ["E.1", "E.2", "R1.G", "R1.1", "R2.1", "R2.2", "R3.G", "R3.i", "R3.ii"]
+    assert not any("reconsideration" in c["comment"] or "again" in c["comment"] for c in d["comments"])
+    reply = _docx(tmp_path / "reply.docx", REPLY_ELIFE)
+    r = R.status_letter(reply, d)
+    assert r["found"] == 8 and not r["not_in_letter"] and r["general_not_quoted"] == ["R3.G"]
+    assert r["no_response"] == []                    # "Corrected." and "Done." are answers
+    assert "E.1" in r["answered_together"]           # "All completed as requested." after E.2
+    assert "R1.1" not in r["no_where"] and "R2.1" in r["no_where"]

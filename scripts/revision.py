@@ -32,12 +32,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 PLACEHOLDER = re.compile(r"^\s*(author'?s?'? response( and action taken)?|response to reviewer|"
                          r"page and line number\(?s?\)? for changes made|reply)\s*:?\s*$", re.I)
-REVIEWER = re.compile(r"^\s*(?:reviewer|referee)\s*(?:#|no\.?|:)?\s*(\d+)\s*:?\s*$", re.I)
+# "Reviewer 1", "Referee: 2", "Reviewer #1 (Recommendations for the authors):" (eLife)
+REVIEWER = re.compile(r"^\s*(?:reviewer|referee)\s*(?:#|no\.?|:)?\s*(\d+)\s*(?:\([^)]{0,60}\))?\s*:?\s*$", re.I)
+# a consolidated list from the editors ("Essential revisions:" in eLife letters)
+EDITOR_LIST = re.compile(r"^\s*(essential|required|summary of) revisions?\s*:?\s*$", re.I)
 EDITOR = re.compile(r"^\s*(?:(?:associate|academic|handling|managing|section|guest)\s+)?editor(?:'s)?"
                     r"(?:\s+comments?(?:\s+to\s+(?:the\s+)?authors?)?)?\s*:?\s*(\d+)?\s*:?\s*$", re.I)
 BLOCK_START = re.compile(r"^\s*(?:referee\(s\)'?\s+comments|comments to (?:the )?authors?|reviewers?'? comments)\b.*:?\s*$", re.I)
-LABEL = re.compile(r"^\s*(general|specific|minor|major|additional)\s+comments?\s*:?\s*$", re.I)
-NUM = re.compile(r"^\s*(\d{1,2})[.)]\s+(.*)$")
+LABEL = re.compile(r"^\s*(general|specific|minor|major|additional)\s+(?:comments?|recommendations?|points?|issues?)\s*:?\s*$"
+                   r"|^\s*([A-Z][\w,&/ -]{2,40}):\s*$", re.I)    # "Figures and legends:", "Essential text edits:"
+NUM = re.compile(r"^\s*\(?(\d{1,2}|(?:i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii))[.)]\s+(.*)$")
 LETTER = re.compile(r"^\s*([A-H])[.)]\s+(.*)$")
 BULLET = re.compile(r"^\s*(?:[-•–*]|\(\w\))\s*(\S.*)$")
 CITED_REF = re.compile(r"^\s*[A-Z][\w'\-]+,\s+(?:[A-Z]\.\s*)+,.*\((?:19|20)\d{2}[a-z]?\)")   # "Saxena, N., ... (2013)."
@@ -84,6 +88,10 @@ def _blocks(lines: list[str]) -> tuple[list[str], list[dict]]:
             cur = {"who": f"Reviewer {m.group(1)}", "lines": []}
             blocks.append(cur)
             continue
+        if EDITOR_LIST.match(line):
+            cur = {"who": "Editor", "lines": []}
+            blocks.append(cur)
+            continue
         if e and len(line) < 70:
             n = e.group(1)
             if cur is not None and cur["who"].startswith("Editor") and not cur["lines"]:
@@ -95,6 +103,10 @@ def _blocks(lines: list[str]) -> tuple[list[str], list[dict]]:
         if cur is None:
             if BLOCK_START.match(line):
                 continue
+            pre.append(line)
+            continue
+        if cur is not None and re.match(r"^\s*(\[editors?['\u2019]?\s+note|thank you for (submitting|sending|your)|dear\s)", line, re.I):
+            cur = None   # the editor's letter again (a second round), not a reviewer's point
             pre.append(line)
             continue
         if SERVICES.search(line) and cur is not None:
@@ -136,6 +148,7 @@ def _comments_in_block(block: dict) -> list[dict]:
     group = ""                      # "General", "Specific", ...
     num = ""                        # current number, for lettered sub-items
     heading = ""                    # "Results 3.1" or "2.9": where the comment points
+    listed = False
     cur = None
 
     def start(cid: str, text: str, where: str = "") -> dict:
@@ -146,8 +159,12 @@ def _comments_in_block(block: dict) -> list[dict]:
     for i, ln in enumerate(lines):
         lab = LABEL.match(ln)
         if lab:
-            group = lab.group(1).capitalize()
+            group = (lab.group(1) or lab.group(2)).strip().capitalize()
+            listed = bool(lab.group(2))      # "Figures and legends:": each paragraph below is its own point
             cur = None
+            continue
+        if not has_num and not has_bullet and listed and group != "General":
+            cur = start(str(len([c for c in out if c["id"] != "G"]) + 1), ln.strip(), heading)
             continue
         s = SECTION_LABEL.match(ln)
         if s and not has_num:
@@ -181,9 +198,18 @@ def _comments_in_block(block: dict) -> list[dict]:
             continue
         if cur is None:
             if group == "General" or not out:
+                if not has_num and not has_bullet and not group and general and len(ln.split()) >= 25 \
+                        and len(general[-1].split()) >= 25:
+                    # a review in plain paragraphs: the first is the summary, each later one is a point
+                    cur = start(str(len(out) + 1), ln.strip(), heading)
+                    continue
                 general.append(ln.strip())
                 continue
             cur = start(str(len(out) + 1), ln.strip(), heading)
+            continue
+        if not has_num and not has_bullet and not group and cur is not None and len(ln.split()) >= 25 \
+                and len(" ".join(cur["lines"]).split()) >= 25:
+            cur = start(str(len([c for c in out if c["id"] != "G"]) + 1), ln.strip(), heading)
             continue
         cur["lines"].append(ln.strip())
 
@@ -302,22 +328,33 @@ def status_letter(response: Path, comments: dict) -> dict:
         if best >= need:
             found[c["id"]] = at
     order = sorted(found.items(), key=lambda x: x[1])
-    no_resp, no_where = [], []
+    no_resp, no_where, together = [], [], []
+    pending: list[str] = []          # comments quoted back to back, waiting for one shared answer
     for k, (cid, i) in enumerate(order):
         end = order[k + 1][1] if k + 1 < len(order) else len(paras)
-        after = [t for t in paras[i + 1:end] if not LABEL_ONLY.match(t)]
-        answer = [t for t in after if len(t.split()) >= 4]
+        after = [t for t in paras[i + 1:end] if not LABEL_ONLY.match(t) and not LABEL.match(t) and not REVIEWER.match(t)]
+        answer = [t for t in after if t.strip(" .")]     # "Corrected." is an answer
         if not answer:
-            no_resp.append(cid)
-        elif not any(WHERE_GIVEN.search(t) for t in paras[i + 1:end]) and not cid.endswith(".G") \
+            nxt = order[k + 1][1] if k + 1 < len(order) else None
+            if nxt is not None and nxt == i + 1:
+                pending.append(cid)       # the next comment follows at once: they may share one answer
+                continue
+            no_resp += pending + [cid]
+            pending = []
+            continue
+        together += pending
+        pending = []
+        if not any(WHERE_GIVEN.search(t) for t in paras[i + 1:end]) and not cid.endswith(".G") \
                 and not re.search(r"\.S\d+$", cid):
             no_where.append(cid)
     missing = [c["id"] for c in comments["comments"] if c["id"] not in found and not c.get("optional")]
     # a reviewer's opening summary is often thanked rather than quoted: list it apart
     general = [m for m in missing if m.endswith(".G")]
     missing = [m for m in missing if not m.endswith(".G")]
+    no_resp += pending
     return {"format": "letter", "comments": len(comments["comments"]), "found": len(found),
-            "not_in_letter": missing, "general_not_quoted": general, "no_response": no_resp, "no_where": no_where}
+            "not_in_letter": missing, "general_not_quoted": general, "no_response": no_resp, "no_where": no_where,
+            "answered_together": together}
 
 
 def status(response_docx: Path) -> dict:
@@ -358,11 +395,22 @@ def changes(original: Path, revised: Path, comments: dict | None = None) -> dict
         if op == "equal":
             continue
         if op == "replace":
-            for k in range(max(a2 - a1, b2 - b1)):
-                o = old[a1 + k] if a1 + k < a2 else ""
-                n = new[b1 + k] if b1 + k < b2 else ""
-                kind = "changed" if o and n else ("removed" if o else "added")
-                rows.append({"kind": kind, "paragraph": b1 + k + 1 if n else None, "old": o, "new": n})
+            # pair each revised paragraph with the most similar old one in the block, in order;
+            # the rest were added or removed (counting by position pairs unrelated paragraphs)
+            i = a1
+            for j in range(b1, b2):
+                best, at = 0.0, None
+                for k in range(i, a2):
+                    r = difflib.SequenceMatcher(None, old[k], new[j], autojunk=False).quick_ratio()
+                    if r > best:
+                        best, at = r, k
+                if at is not None and best >= 0.5:
+                    rows += [{"kind": "removed", "paragraph": None, "old": old[k], "new": ""} for k in range(i, at)]
+                    rows.append({"kind": "changed", "paragraph": j + 1, "old": old[at], "new": new[j]})
+                    i = at + 1
+                else:
+                    rows.append({"kind": "added", "paragraph": j + 1, "old": "", "new": new[j]})
+            rows += [{"kind": "removed", "paragraph": None, "old": old[k], "new": ""} for k in range(i, a2)]
         elif op == "insert":
             rows += [{"kind": "added", "paragraph": j + 1, "old": "", "new": new[j]} for j in range(b1, b2)]
         elif op == "delete":
@@ -382,6 +430,13 @@ def changes(original: Path, revised: Path, comments: dict | None = None) -> dict
             hit = [i for i, r in enumerate(rows) if ct & _terms(r["new"] or r["old"])]
             if hit:
                 hints[c["id"]] = hit[:5]
+    if revised.suffix.lower() == ".tex":   # show what the reader sees, not the markup
+        import latex
+        def plain(t: str) -> str:
+            t = re.sub(r"(?<!\\)\$([^$]{1,80})\$", r"\1", t)          # keep short inline math as written
+            return latex.detex(t.replace("``", "\u201c").replace("''", "\u201d"))
+        for r in rows:
+            r["old"], r["new"] = plain(r["old"]), plain(r["new"])
     return {"original": original.name, "revised": revised.name, "rows": rows, "hints": hints}
 
 
@@ -460,7 +515,9 @@ def main(argv=None) -> int:
                   f"Without a response: {', '.join(r['no_response']) or 'none'}. "
                   f"Answered but no page, line or section given: {', '.join(r['no_where']) or 'none'}."
                   + (f" General comments not quoted (usually fine if you thank the reviewer): {', '.join(r['general_not_quoted'])}."
-                     if r["general_not_quoted"] else ""))
+                     if r["general_not_quoted"] else "")
+                  + (f" Answered together with the comment after them: {', '.join(r['answered_together'])}."
+                     if r["answered_together"] else ""))
             return 0 if not (r["not_in_letter"] or r["no_response"]) else 1
         print(f"{r['comments']} comments. Without a response: {', '.join(r['no_response']) or 'none'}. "
               f"Answered but no place given: {', '.join(r['no_where']) or 'none'}.")
