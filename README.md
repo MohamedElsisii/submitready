@@ -8,7 +8,7 @@
 
 SubmitReady is a free, open-source Claude skill that prepares a research manuscript for a specific journal: it reads the journal's live author guidelines, checks and formats your references, prepares supplementary files, and hands you a submission package with a report proving that your text was not changed.
 
-> Status: beta. Every command has been run on real material: 3 published manuscripts (Epigenomics, JBSD, Stress Biology), 47 Word files with live EndNote, Zotero and Mendeley citations, 10 LaTeX papers, 6 real decision letters with the authors' replies, 3 before-and-after revisions, and 1,512 test files built from 36 open-access papers. Bugs found in those runs are fixed and covered by tests. Please report anything odd as a GitHub issue.
+> Status: beta. Every command has been run on real material: 3 published manuscripts (Epigenomics, JBSD, Stress Biology), 47 Word files with live EndNote, Zotero and Mendeley citations, 10 LaTeX papers, 5 real decision letters (4 with the authors' replies), 3 before-and-after revisions, and 1,512 test files built from 36 open-access papers. Bugs found in those runs are fixed and covered by tests. Please report anything odd as a GitHub issue.
 
 ## Why
 
